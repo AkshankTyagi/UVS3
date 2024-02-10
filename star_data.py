@@ -12,24 +12,31 @@ import pandas as pd
 FILENAME = r'hip_main.dat'
 
 # read hipparcos catalogue 'hip_main.dat'
-def read_hipparcos_data(fname=r'hip_main.dat', threshold=6.5):
+def read_hipparcos_data(FILENAME = r'hip_main.dat', threshold=10.5):
     # Field H1: Hipparcos Catalogue (HIP) identifier
     # Field H5: V magnitude
     # Fields H8–9:  The right ascension, α , and declination, δ (in degrees)    
     try:
         df = pd.read_csv(FILENAME, header=None,
-                         sep = '|', skipinitialspace=True).iloc[:, [1, 5, 8, 9]]
-        df.columns = ['hip', 'mag', 'ra_deg', 'de_deg']
+                         sep = '|', skipinitialspace=True).iloc[:, [1, 5, 8, 9, 11, 37, 76]]
+        df.columns = ['hip', 'mag', 'ra_deg', 'de_deg', "trig_parallax", 'B-V', 'Spectral_type']
 
         df['mar_size'] = 2*(threshold - df['mag'])
         # filter data above
+
         q = 'mag <= @threshold'
         df = df.query(q) 
 
-        # convert all columns of DataFrame
-        df = df.apply(pd.to_numeric)
-        
-        return df    
+        # Convert numeric columns
+        numeric_cols = ['mag', 'ra_deg', 'de_deg', 'trig_parallax', 'B-V', 'mar_size']
+        for col in numeric_cols:
+            df.loc[:, col] = pd.to_numeric(df[col], errors='coerce')
+        # pd.set_option('display.max_rows', None) 
+        # pd.set_option('display.max_columns', None)  # Show all columns
+        # pd.set_option('display.width', None)  # Adjust width to fit all columns
+        print(df)
+        return df  
+    
     except FileNotFoundError:
         print("df is empty. File not found.")
 
@@ -48,6 +55,7 @@ def filter_by_fov(mdf, ra, de, width, height ):
     xmin, ymin, xmax, ymax = get_frame_boundaries( width, height, ra, de)
     frame_boundaries = [xmin, ymin, xmax, ymax]
     # print(frame_boundaries)
+
     # extract useful columns
     mdf = mdf[['ra_deg', 'de_deg', 'mar_size']]
     # filter data within the boundaries    
@@ -56,6 +64,19 @@ def filter_by_fov(mdf, ra, de, width, height ):
     # print(mdf)
     # return filtered data
     return mdf, frame_boundaries
+
+# def get_star_data(ra, dec , FILENAME = r'hip_main.dat'):
+#     try:
+#         df = pd.read_csv(FILENAME, header=None,
+#                          sep = '|', skipinitialspace=True).iloc[:, [1, 5, 8, 9, 11, 37, 76]]
+#         df.columns = ['hip', 'mag', 'ra_deg', 'de_deg', ]
+
+#         df['mar_size'] = 2*(threshold - df['mag'])
+#         # filter data above
+#         print (df)
+#         q = 'mag <= @threshold'
+#         df = df.query(q) 
+    
 
 # get valid frame boundaries
 def get_frame_boundaries(w, h, x, y):

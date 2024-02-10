@@ -20,7 +20,7 @@ def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
     return azm, ele
 
 # main animate function
-def animate(time_arr, state_vectors, celestial_coordinates, r):
+def animate(time_arr, state_vectors, celestial_coordinates, r, df ):
     # init 3D earth and satellite view
     def init_orbit(ax):
         azm, ele = read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1')

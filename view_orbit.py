@@ -21,6 +21,7 @@ def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
 
     global roll_rate_hrs, width, height
 
+    hipp_file = config.get(param_set, 'Hipparcos_catalogue')
     sat_name = config.get(param_set, 'sat_name')
     roll = config.get(param_set, 'roll')
     if (roll == True):
@@ -32,9 +33,10 @@ def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
     T_slice = config.get(param_set, 't_slice')
     width = float(config.get(param_set, 'width'))
     height = float(config.get(param_set, 'height'))
+    Threshold = float(config.get(param_set,'Star_mag_threshold'))
     
     print('sat_name:', sat_name, ', roll:',roll,',  roll_rate_hrs:',roll_rate_hrs, ',  N_revolutions:',N_revolutions, ',  N_frames:', N_frames, ',  T_slice:', T_slice)
-    return sat_name, float(T_slice), N_frames, float(N_revolutions), roll
+    return hipp_file, sat_name, float(T_slice), N_frames, float(N_revolutions), roll, Threshold
 
 def read_satellite_TLE(filename='Satellite_TLE.txt', sat_name = 'ISS'):
     config.read(filename)
@@ -137,13 +139,13 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, roll=False):
 
 def main():
     global data
-    sat_name, t_slice, n_frames, N_revolutions, roll = read_parameter_file('init_parameter.txt','Params_1')
+    hipp_file, sat_name, t_slice, n_frames, N_revolutions, roll, Threshold  = read_parameter_file('init_parameter.txt','Params_1')
     line1, line2 = read_satellite_TLE('Satellite_TLE.txt', sat_name)
     
     # create satellite object
     satellite = get_satellite(line1, line2)
     # read star data
-    df = read_hipparcos_data()
+    df = read_hipparcos_data(hipp_file, Threshold)
     
     # time period for one revolution
     t_period = N_revolutions* 2 * np.pi * (a**3/mu)**0.5
@@ -167,7 +169,7 @@ def main():
     time_arr, state_vectors, celestial_coordinates = get_simulation_data(satellite, df, start, t_period, t_slice, roll)
     # print (celestial_coordinates)
     # animate
-    animate(time_arr, state_vectors, celestial_coordinates, r)
+    animate(time_arr, state_vectors, celestial_coordinates, r, df)
     return
 
 # main
