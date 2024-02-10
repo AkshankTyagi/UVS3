@@ -16,7 +16,7 @@ config['Params_1'] = {
     # Camera Field of View in Deg default 9.3 X 7
     'width': 0.5, #RA width
     'height': 7, #Dec height
-    'Star_mag_threshold' : 8.5, #threshold for what apaarent magnitude stars we want to look at
+    'Star_mag_threshold' : 7.5, #threshold for what apaarent magnitude stars we want to look at
 
     #Animation parameters
     # set view

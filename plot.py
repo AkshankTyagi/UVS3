@@ -20,7 +20,7 @@ def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
     return azm, ele
 
 # main animate function
-def animate(time_arr, state_vectors, celestial_coordinates, r, df ):
+def animate(time_arr, state_vectors, celestial_coordinates, r ):
     # init 3D earth and satellite view
     def init_orbit(ax):
         azm, ele = read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1')
@@ -224,6 +224,15 @@ def get_cles_data_by_frame(i, data):
         ra, dec, size = c[0], c[1], c[2]
         # stack as np columns for scatter plot
         cles_pos = np.column_stack((ra, dec))
+        # Print Stellar Data of the stars in the FOV
+        hip, mag, parallax, B_V, Spectral_type = c[3], c[4], c[5],c[6], c[7]
+        if (len(c[0])>1):
+            print('  The stars in the FOV are:')
+            for i in range(len(c[0])):     
+                print( str(i+1) + ') Hipp_number='+str(hip[i])+'; Ra & Dec:'+str(ra[i])+' '+str(dec[i])+'; Johnson Mag='+str(mag[i])+'; trig Paraalax='+str(parallax[i])+'; Color index(B-V)='+str(B_V[i])+'; Spectral_Type:'+str(Spectral_type[i]) )
+        else:
+            print('  The star in the FOV is:')
+            print('  Hipp_number='+str(hip[0])+'; Ra & Dec:'+str(ra[0])+' '+str(dec[0])+'; Johnson Mag='+str(mag[0])+'; trig Paraalax='+str(parallax[0])+'; Color index(B-V)='+str(B_V[0])+'; Spectral_Type:'+str(Spectral_type[0]) )
         # return
         return cles_pos, size, frame_boundary 
     else:

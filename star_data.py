@@ -9,7 +9,7 @@ import pandas as pd
 
 # Hipparcos Catalogue [hip_main.dat]
 # http://cdsarc.u-strasbg.fr/ftp/cats/I/239/ 
-FILENAME = r'hip_main.dat'
+
 
 # read hipparcos catalogue 'hip_main.dat'
 def read_hipparcos_data(FILENAME = r'hip_main.dat', threshold=10.5):
@@ -19,22 +19,13 @@ def read_hipparcos_data(FILENAME = r'hip_main.dat', threshold=10.5):
     try:
         df = pd.read_csv(FILENAME, header=None,
                          sep = '|', skipinitialspace=True).iloc[:, [1, 5, 8, 9, 11, 37, 76]]
-        df.columns = ['hip', 'mag', 'ra_deg', 'de_deg', "trig_parallax", 'B-V', 'Spectral_type']
+        df.columns = ['hip', 'mag', 'ra_deg', 'de_deg', 'trig_parallax', 'B-V', 'Spectral_type']
 
         df['mar_size'] = 2*(threshold - df['mag'])
         # filter data above
 
         q = 'mag <= @threshold'
         df = df.query(q) 
-
-        # Convert numeric columns
-        numeric_cols = ['mag', 'ra_deg', 'de_deg', 'trig_parallax', 'B-V', 'mar_size']
-        for col in numeric_cols:
-            df.loc[:, col] = pd.to_numeric(df[col], errors='coerce')
-        # pd.set_option('display.max_rows', None) 
-        # pd.set_option('display.max_columns', None)  # Show all columns
-        # pd.set_option('display.width', None)  # Adjust width to fit all columns
-        print(df)
         return df  
     
     except FileNotFoundError:
@@ -57,7 +48,7 @@ def filter_by_fov(mdf, ra, de, width, height ):
     # print(frame_boundaries)
 
     # extract useful columns
-    mdf = mdf[['ra_deg', 'de_deg', 'mar_size']]
+    mdf = mdf[['ra_deg', 'de_deg', 'mar_size','hip','mag', 'trig_parallax', 'B-V', 'Spectral_type']]
     # filter data within the boundaries    
     q = 'ra_deg >= @xmin & ra_deg <= @xmax & de_deg >= @ymin & de_deg <= @ymax' 
     mdf = mdf.query(q)

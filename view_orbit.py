@@ -140,6 +140,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, roll=False):
 def main():
     global data
     hipp_file, sat_name, t_slice, n_frames, N_revolutions, roll, Threshold  = read_parameter_file('init_parameter.txt','Params_1')
+    print('Threshold_Mag of visible stars- ',Threshold)
     line1, line2 = read_satellite_TLE('Satellite_TLE.txt', sat_name)
     
     # create satellite object
@@ -169,7 +170,7 @@ def main():
     time_arr, state_vectors, celestial_coordinates = get_simulation_data(satellite, df, start, t_period, t_slice, roll)
     # print (celestial_coordinates)
     # animate
-    animate(time_arr, state_vectors, celestial_coordinates, r, df)
+    animate(time_arr, state_vectors, celestial_coordinates, r)
     return
 
 # main
