@@ -1,5 +1,6 @@
 # Functions to calculate state vectors, ra, dec and plot
 # Author: Ravi Ram
+# Jayant Murthy Sirs code ascl:1512.012
 
 import sys
 import numpy as np
@@ -21,7 +22,7 @@ def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
 
     global roll_rate_hrs, width, height
 
-    hipp_file = config.get(param_set, 'Hipparcos_catalogue')
+    hipp_file = config.get(param_set, 'hipparcos_catalogue')
     sat_name = config.get(param_set, 'sat_name')
     roll = config.get(param_set, 'roll')
     if (roll == True):
@@ -33,7 +34,7 @@ def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
     T_slice = config.get(param_set, 't_slice')
     width = float(config.get(param_set, 'width'))
     height = float(config.get(param_set, 'height'))
-    Threshold = float(config.get(param_set,'Star_mag_threshold'))
+    Threshold = float(config.get(param_set,'star_mag_threshold'))
     
     print('sat_name:', sat_name, ', roll:',roll,',  roll_rate_hrs:',roll_rate_hrs, ',  N_revolutions:',N_revolutions, ',  N_frames:', N_frames, ',  T_slice:', T_slice)
     return hipp_file, sat_name, float(T_slice), N_frames, float(N_revolutions), roll, Threshold

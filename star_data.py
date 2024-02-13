@@ -9,7 +9,7 @@ import pandas as pd
 
 # Hipparcos Catalogue [hip_main.dat]
 # http://cdsarc.u-strasbg.fr/ftp/cats/I/239/ 
-
+# FILENAME = r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\hip_main.dat'
 
 # read hipparcos catalogue 'hip_main.dat'
 def read_hipparcos_data(FILENAME = r'hip_main.dat', threshold=10.5):
@@ -31,14 +31,6 @@ def read_hipparcos_data(FILENAME = r'hip_main.dat', threshold=10.5):
     except FileNotFoundError:
         print("df is empty. File not found.")
 
-# def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
-#     global width, height
-#     config.read(filename)
-#     sat_name = config.get(param_set, 'sat_name')
-#     width = float(config.get(param_set, 'width'))
-#     height = float(config.get(param_set, 'height'))
-#     return 
-
 # camera fov : 9.31◦ × 7◦
 def filter_by_fov(mdf, ra, de, width, height ): 
     # frame field of view
@@ -46,7 +38,7 @@ def filter_by_fov(mdf, ra, de, width, height ):
     xmin, ymin, xmax, ymax = get_frame_boundaries( width, height, ra, de)
     frame_boundaries = [xmin, ymin, xmax, ymax]
     # print(frame_boundaries)
-
+    # if mdf[0]:
     # extract useful columns
     mdf = mdf[['ra_deg', 'de_deg', 'mar_size','hip','mag', 'trig_parallax', 'B-V', 'Spectral_type']]
     # filter data within the boundaries    
@@ -56,18 +48,6 @@ def filter_by_fov(mdf, ra, de, width, height ):
     # return filtered data
     return mdf, frame_boundaries
 
-# def get_star_data(ra, dec , FILENAME = r'hip_main.dat'):
-#     try:
-#         df = pd.read_csv(FILENAME, header=None,
-#                          sep = '|', skipinitialspace=True).iloc[:, [1, 5, 8, 9, 11, 37, 76]]
-#         df.columns = ['hip', 'mag', 'ra_deg', 'de_deg', ]
-
-#         df['mar_size'] = 2*(threshold - df['mag'])
-#         # filter data above
-#         print (df)
-#         q = 'mag <= @threshold'
-#         df = df.query(q) 
-    
 
 # get valid frame boundaries
 def get_frame_boundaries(w, h, x, y):

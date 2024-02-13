@@ -3,7 +3,7 @@ from configparser import ConfigParser
 config = ConfigParser()
 
 config['Params_1'] = {
-    'Hipparcos_catalogue' : 'hip_main.dat',
+    'hipparcos_catalogue' : r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\hip_main.dat',
     'sat_name' : 'Astrosat',
     'roll' : False,
     'roll_rate_hrs' : False,
@@ -16,7 +16,7 @@ config['Params_1'] = {
     # Camera Field of View in Deg default 9.3 X 7
     'width': 0.5, #RA width
     'height': 7, #Dec height
-    'Star_mag_threshold' : 7.5, #threshold for what apaarent magnitude stars we want to look at
+    'star_mag_threshold' : 6.5, #threshold for what apaarent magnitude stars we want to look at
 
     #Animation parameters
     # set view
