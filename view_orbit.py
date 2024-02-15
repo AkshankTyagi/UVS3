@@ -16,6 +16,7 @@ config = ConfigParser()
 
 from star_data import *
 from plot import *
+from star_spectrum import *
 
 def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
     config.read(filename)

@@ -10,6 +10,8 @@ import matplotlib.animation as animation
 from configparser import ConfigParser
 config = ConfigParser()
 
+from star_spectrum import *
+
 def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
     config.read(filename)
     global sat_name, Interval
@@ -230,9 +232,13 @@ def get_cles_data_by_frame(i, data):
             print('  The stars in the FOV are:')
             for i in range(len(c[0])):     
                 print( str(i+1) + ') Hipp_number='+str(hip[i])+'; Ra & Dec:'+str(ra[i])+' '+str(dec[i])+'; Johnson Mag='+str(mag[i])+'; trig Paraalax='+str(parallax[i])+'; Color index(B-V)='+str(B_V[i])+'; Spectral_Type:'+str(Spectral_type[i]) )
+                Temp = GET_STAR_TEMP(str(Spectral_type[i]))
+                print('temperature of star in relative scale: ', Temp)
         else:
             print('  The star in the FOV is:')
             print('  Hipp_number='+str(hip[0])+'; Ra & Dec:'+str(ra[0])+' '+str(dec[0])+'; Johnson Mag='+str(mag[0])+'; trig Paraalax='+str(parallax[0])+'; Color index(B-V)='+str(B_V[0])+'; Spectral_Type:'+str(Spectral_type[0]) )
+            Temp = GET_STAR_TEMP(str(Spectral_type[0]))
+            print('temperature of star in relative scale: ', Temp)
         # return
         return cles_pos, size, frame_boundary 
     else:
