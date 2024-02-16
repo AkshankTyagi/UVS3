@@ -17,6 +17,8 @@ config = ConfigParser()
 from star_data import *
 from plot import *
 from star_spectrum import *
+from Params_configparser import *
+# include hip_main.dat
 
 def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
     config.read(filename)
@@ -24,6 +26,7 @@ def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
     global roll_rate_hrs, width, height
 
     hipp_file = config.get(param_set, 'hipparcos_catalogue')
+    castelli_file = config.get(param_set, 'Castelli_data')
     sat_name = config.get(param_set, 'sat_name')
     roll = config.get(param_set, 'roll')
     if (roll == True):
@@ -38,7 +41,7 @@ def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
     Threshold = float(config.get(param_set,'star_mag_threshold'))
     
     print('sat_name:', sat_name, ', roll:',roll,',  roll_rate_hrs:',roll_rate_hrs, ',  N_revolutions:',N_revolutions, ',  N_frames:', N_frames, ',  T_slice:', T_slice)
-    return hipp_file, sat_name, float(T_slice), N_frames, float(N_revolutions), roll, Threshold
+    return hipp_file, castelli_file, sat_name, float(T_slice), N_frames, float(N_revolutions), roll, Threshold
 
 def read_satellite_TLE(filename='Satellite_TLE.txt', sat_name = 'ISS'):
     config.read(filename)
@@ -141,7 +144,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, roll=False):
 
 def main():
     global data
-    hipp_file, sat_name, t_slice, n_frames, N_revolutions, roll, Threshold  = read_parameter_file('init_parameter.txt','Params_1')
+    hipp_file, castelli_dir, sat_name, t_slice, n_frames, N_revolutions, roll, Threshold  = read_parameter_file('init_parameter.txt','Params_1')
     print('Threshold_Mag of visible stars- ',Threshold)
     line1, line2 = read_satellite_TLE('Satellite_TLE.txt', sat_name)
     
@@ -170,7 +173,11 @@ def main():
     start = np.datetime64(datetime.datetime.now())
     # times, state_vectors, celestial_coordinates  
     time_arr, state_vectors, celestial_coordinates = get_simulation_data(satellite, df, start, t_period, t_slice, roll)
-    # print (celestial_coordinates)
+    Spectra = GET_SPECTRA(castelli_dir,celestial_coordinates)
+    # print(Spectra.frame)
+    # print(Spectra.wavelength)
+    # print(Spectra.spectra_per_star)
+
     # animate
     animate(time_arr, state_vectors, celestial_coordinates, r)
     return

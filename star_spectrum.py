@@ -1,3 +1,30 @@
+from astropy.io import fits
+import os
+import matplotlib.pyplot as plt
+import numpy as np
+
+class StellarSpectrum:
+    def __init__(self, v1 =0, v2= [], v3= []):
+        self.temperature = v1
+        self.spectrum = v2
+        self.wavelength = v3
+
+class Spectral_FOV:
+    def __init__(self):
+        self.frame = []
+        self.wavelength = []
+        self.spectra_per_star= []
+
+N_CASTELLI_MODELS = 76
+# Castelli_data--
+# spec_dir= r"C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\Castelli\ckp00"
+
+def index_greater_than(lst, value):
+    for i, elem in enumerate(lst):
+        if elem >= value:
+            return i
+    return None  
+
 def GET_STAR_TEMP(sptype):
     temperature = 0 
 
@@ -170,7 +197,107 @@ def GET_STAR_TEMP(sptype):
 
     return temperature
 
-# Example usage
+def READ_CASTELLI_SPECTRA(spec_dir):
+    stellar_spectra = [{"temp": None, "spectrum": None, "wavelength": None} for i in range(N_CASTELLI_MODELS)]
+
+    temper = [50000 - i*1000 for i in range(38)] + [13000 - (i - 37)*250 for i in range(38, 76)]
+    gindex = [12]*5 + [11]*6 + [10]*53 + [11]*12  # g_effective = (g_index[]-2) *5)))
+    # print(list(zip(temper, gindex)))
+
+    for i in range(len(temper)):
+        filename = f"{spec_dir}/ckp00_{temper[i]}.fits"
+        stellar_spectra[i]["temp"] = temper[i]
+        with fits.open(filename) as hdul:
+            data = hdul[1].data
+            stellar_spectra[i]["spectrum"] = data.field(gindex[i] - 1)
+            stellar_spectra[i]["wavelength"] = data.field(0)
+    return stellar_spectra 
+
+def GET_SPECTRA(spec_dir, data):
+    all_spectra = READ_CASTELLI_SPECTRA(spec_dir)
+    spectral_FOV = Spectral_FOV()
+
+    for i in range(len(data)):
+        spectral_FOV.frame.append(str(i+1))
+        spectral_flux = []
+        spectral_wavelength = []
+
+        _, d, _ = zip(data[i])
+        if d[0]:
+            c = list(zip(*d[0]))
+            spectral_type = c[7]
+
+            if (len(spectral_type)>1):
+                print(f' Frame {i+1}) The spectra of stars in the FOV are:')
+                for j in range(len(spectral_type)):     
+                    t_index = GET_STAR_TEMP(spectral_type[j])
+                    stellar_spectra = StellarSpectrum()
+                    data1 = all_spectra[t_index]
+                    stellar_spectra.temperature = float(data1['temp'])
+                    stellar_spectra.wavelength = np.array(data1['wavelength'])
+                    stellar_spectra.spectrum = np.array(data1['spectrum'])
+                    print(f"{j+1}) Spectral type: {spectral_type[j]};   Temperature index: {t_index}   ;   Temperature= {stellar_spectra.temperature}")
+                    print (f"wavelength: {stellar_spectra.wavelength} \nSpectra: {stellar_spectra.spectrum}", end="\n \n")
+
+                    spectral_wavelength = stellar_spectra.wavelength
+                    spectral_flux.append(stellar_spectra.spectrum)
+                spectral_FOV.spectra_per_star.append(spectral_flux)
+                spectral_FOV.wavelength.append(spectral_wavelength)
+            else:
+                print(f' Frame {i +1})  The spectra of star in the FOV is:')
+                t_index = GET_STAR_TEMP(spectral_type[0])
+                stellar_spectra = StellarSpectrum()
+                data1 = all_spectra[t_index]
+                stellar_spectra.temperature = float(data1['temp'])
+                stellar_spectra.wavelength = np.array(data1['wavelength'])
+                stellar_spectra.spectrum = np.array(data1['spectrum'])
+                print(f" Spectral type: {spectral_type[0]}; Temperature index: {t_index}  ; Temperature= {stellar_spectra.temperature}")
+                print (f"wavelength: {stellar_spectra.wavelength} \nSpectra: {stellar_spectra.spectrum}", end="\n \n")
+
+                spectral_wavelength = stellar_spectra.wavelength
+                spectral_flux.append(stellar_spectra.spectrum)
+                spectral_FOV.spectra_per_star.append(spectral_flux)
+                spectral_FOV.wavelength.append(spectral_wavelength)
+
+        else:
+            print('Frame',i +1,'is EMPTY', end="\n \n")
+            spectral_FOV.wavelength.append([0])
+            spectral_FOV.spectra_per_star.append([[0]])
+    
+    return spectral_FOV
+
+
+# # Example usage
 # hipline = {"sp_type": "sdB3V", "temperature": 0}
-# temperature = GET_STAR_TEMP(hipline)
+# temperature = GET_STAR_TEMP(hipline['sp_type'])
 # print(f"Temperature: {temperature}")
+
+
+# all_spectra = READ_CASTELLI_SPECTRA(Castelli_data)
+
+# stellar_spectra = StellarSpectrum()
+# data1 = all_spectra[temperature]
+# print(data1)
+# stellar_spectra.temperature = float(data1['temp'])
+# stellar_spectra.wavelength = np.array(data1['wavelength'])
+# stellar_spectra.spectrum = np.array(data1['spectrum'])
+
+# print (stellar_spectra.temperature,'\n',
+#         stellar_spectra.wavelength,'\n',
+#         stellar_spectra.spectrum)
+
+# low_UV = index_greater_than(stellar_spectra.wavelength, 100)
+# high_UV = index_greater_than(stellar_spectra.wavelength, 3800)
+# low_vis = index_greater_than(stellar_spectra.wavelength, 3800)
+# high_vis = index_greater_than(stellar_spectra.wavelength, 7500)
+
+# fig, ax = plt.subplots()
+# # ax.plot(wavelength[low_UV:high_UV], Surface_Flux[low_UV:high_UV], color='blue', label = r'ckp00_3500')
+# ax.plot(stellar_spectra.wavelength[low_UV:high_UV], stellar_spectra.spectrum[low_UV:high_UV], color='blue', label = stellar_spectra.temperature)
+# # ax.plot(stellar_spectra.wavelength, stellar_spectra.spectrum, color='blue', label = stellar_spectra.temperature)
+
+# ax.set_xlabel(r'Wavelength- A')
+# ax.set_ylabel(r'Surface Flux')
+# # ax.set_xscale('log')
+# # ax.set_yscale('log')
+# plt.show()

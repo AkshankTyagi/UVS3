@@ -231,18 +231,19 @@ def get_cles_data_by_frame(i, data):
         if (len(c[0])>1):
             print('  The stars in the FOV are:')
             for i in range(len(c[0])):     
-                print( str(i+1) + ') Hipp_number='+str(hip[i])+'; Ra & Dec:'+str(ra[i])+' '+str(dec[i])+'; Johnson Mag='+str(mag[i])+'; trig Paraalax='+str(parallax[i])+'; Color index(B-V)='+str(B_V[i])+'; Spectral_Type:'+str(Spectral_type[i]) )
-                Temp = GET_STAR_TEMP(str(Spectral_type[i]))
-                print('temperature of star in relative scale: ', Temp)
+                print( f"{str(i+1)}) Hipp_number= {str(hip[i])}; Ra & Dec: {str(ra[i])} {str(dec[i])}; Johnson Mag= {str(mag[i])}; trig Paraalax= {str(parallax[i])}; Color index(B-V)= {str(B_V[i])}; Spectral_Type: {str(Spectral_type[i])}" , end="\n")
+                # Temp = GET_STAR_TEMP(str(Spectral_type[i]))
+                # print('  Temperature Index of star: ', Temp)
         else:
             print('  The star in the FOV is:')
-            print('  Hipp_number='+str(hip[0])+'; Ra & Dec:'+str(ra[0])+' '+str(dec[0])+'; Johnson Mag='+str(mag[0])+'; trig Paraalax='+str(parallax[0])+'; Color index(B-V)='+str(B_V[0])+'; Spectral_Type:'+str(Spectral_type[0]) )
-            Temp = GET_STAR_TEMP(str(Spectral_type[0]))
-            print('temperature of star in relative scale: ', Temp)
+            print( f"  Hipp_number= {str(hip[0])}; Ra & Dec: {str(ra[0])} {str(dec[0])}; Johnson Mag= {str(mag[0])}; trig Paraalax= {str(parallax[0])}; Color index(B-V)= {str(B_V[0])}; Spectral_Type: {str(Spectral_type[0])}" , end="\n")
+            # print('  Hipp_number='+str(hip[0])+'; Ra & Dec:'+str(ra[0])+' '+str(dec[0])+'; Johnson Mag='+str(mag[0])+'; trig Paraalax='+str(parallax[0])+'; Color index(B-V)='+str(B_V[0])+'; Spectral_Type:'+str(Spectral_type[0]) )
+            # Temp = GET_STAR_TEMP(str(Spectral_type[0]))
+            # print('  Temperature Index of star: ', Temp)
         # return
         return cles_pos, size, frame_boundary 
     else:
-        print('Frame',frame[0]+1,'is EMPTY')
+        print('Frame',frame[0]+1,'is EMPTY', end="\n")
         no_star = [0,0]
         zero_size =(0.0001,)
         return no_star, zero_size, frame_boundary
