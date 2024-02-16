@@ -22,7 +22,7 @@ def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
     return azm, ele
 
 # main animate function
-def animate(time_arr, state_vectors, celestial_coordinates, r ):
+def animate(time_arr, state_vectors, celestial_coordinates, spectra, r ):
     # init 3D earth and satellite view
     def init_orbit(ax):
         azm, ele = read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1')
@@ -91,9 +91,41 @@ def animate(time_arr, state_vectors, celestial_coordinates, r ):
         # return
         return ax, sky    
     
+    def init_Spectra(ax):
+        global flux
+        
+        # set labels
+        ax.set_xlabel('Wavelength ($A^\circ$')
+        ax.set_ylabel('Flux ')
+        
+        # set titles
+        ax.set_title('Spectrum of the stars in the Sky view')
+
+        X_wavelength, Y_Spectra_per_star, ra, dec = get_spectral_data_by_frame(0, spectra)
+        _, _, Size = get_cles_data_by_frame(0, celestial_coordinates) 
+        # ra = np.array(ra)
+        # dec = np.array(dec)
+        Size = Size[0]
+        if (X_wavelength[0]!=0):
+            # y_offset = [float(float(d) - Size[1]) * (Size[3] - Size[1]) for d in np.array(dec)]
+            # flux = ax4.plot(np.log10(X_wavelength), np.log10(Y_Spectra_per_star[0]), label = f'{ra[0]},{dec[0]}')
+            for i in range(len(Y_Spectra_per_star)):
+                y_offset = (dec[i] - Size[1])*(Size[3] - Size[1])
+        #       Y_spectra = Y_Spectra_per_star[i]
+                flux = ax4.plot(np.log10(X_wavelength), Y_Spectra_per_star[i]+ [y_offset]*len(Y_Spectra_per_star[i]), label = f'ra: {ra[0]}  ; dec: {dec[0]}')
+        else:
+            wavelengths = np.linspace(10, 150000, 1000)
+            y_zeros = np.zeros_like(wavelengths)
+            flux= ax.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='y = 0')
+            ax.set_ylim(0, 5)
+        ax.legend()
+        # ax.clear()
+
+        return ax, flux
+    
     # initialize plot
     def init():
-        global fig, ax2, ax3
+        global fig, ax2, ax3, ax4
         global orbit, satellite, sky
         global X, Y, Z
         global RA, DEC
@@ -105,7 +137,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, r ):
         plt.rc('font', **font)
             
         # Create 2x2 sub plots
-        gs = gridspec.GridSpec(1, 2, width_ratios=[3, 1]) # , wspace=0.5, hspace=0.5, , width_ratios=[1, 2]
+        gs = gridspec.GridSpec(2, 2, width_ratios=[3, 1]) # , wspace=0.5, hspace=0.5, , width_ratios=[1, 2]
 
         # fig and ax
         fig = plt.figure(figsize=(12,6)) # figsize=(8,6)
@@ -119,13 +151,16 @@ def animate(time_arr, state_vectors, celestial_coordinates, r ):
         # initialize sky
         ax3, sky = init_sky(ax3)
 
+        ax4 = fig.add_subplot(gs[1, 0] )
+        # initialize Spectrum Plot
+        ax4, flux = init_Spectra(ax4)
         # to avoid subplot title overlap with x-tick
         fig.tight_layout()
         
         # return
-        return fig, satellite, orbit, sky
+        return fig, satellite, orbit, sky, flux
 
-    def update(i, satellite, orbit, sky):
+    def update(i, satellite, orbit, sky, flux):
         # stack as np columns for scatter plot
         xyi, xi, yi, zi = get_pos_data_by_frame(i)
         # print ('frame number',i+1,'- satellite path:', xi, yi, zi)
@@ -153,21 +188,41 @@ def animate(time_arr, state_vectors, celestial_coordinates, r ):
         ax3.set_ylim(Size[1], Size[3])    
         # ax3.set_xlim(min(P[:,0]), max(P[:,0]))
         # ax3.set_ylim(min(P[:,1]), max(P[:,1]))
-        
+
+        # get updated spectral data by frame
+        X_wavelength, Y_Spectra_per_star, ra, dec = get_spectral_data_by_frame(i, spectra)
+        # ra = np.array(ra)
+        # dec = np.array(dec)
+        # Update Spectral plot
+        if (X_wavelength[0]!=0):
+            ax4.clear()
+            # y_offset = [float(float(d) - Size[1]) * (Size[3] - Size[1]) for d in np.array(dec)]
+            # flux = ax4.plot(np.log10(X_wavelength), np.log10(Y_Spectra_per_star[0]), label = f'{ra[0]},{dec[0]}')
+            for i in range(len(Y_Spectra_per_star)):
+                y_offset = (dec[i] - Size[1])*(Size[3] - Size[1])
+                flux = ax4.plot(np.log10(X_wavelength), Y_Spectra_per_star[i]+ [y_offset]*len(Y_Spectra_per_star[i]), label = f'ra: {ra[0]}  ; dec: {dec[0]}')
+        else:
+            ax4.clear()
+            wavelengths = np.linspace(10, 150000, 1000)
+            y_zeros = np.zeros_like(wavelengths)
+            flux= ax4.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='y = 0')
+            ax4.set_ylim(0, 5)
+        ax4.legend()
+
         # return
-        return satellite, orbit, sky, 
+        return satellite, orbit, sky, flux
 
     # run animation
     def run():
         # plot init
-        fig, satellite, orbit, sky = init()
+        fig, satellite, orbit, sky, flux = init()
         # total no of frames
         frame_count = len(X)
         # print (frame_count)
         # create animation using the animate() function
         ani = animation.FuncAnimation(fig, update,
                                       frames=frame_count, interval= Interval, 
-                                      fargs=(satellite, orbit, sky, ),
+                                      fargs=(satellite, orbit, sky, flux ),
                                       blit=False, repeat=False)
         # save
         #ani.save('satellite.gif', writer="ffmpeg")
@@ -248,4 +303,12 @@ def get_cles_data_by_frame(i, data):
         zero_size =(0.0001,)
         return no_star, zero_size, frame_boundary
 
+# get Spectral data of the stars for the given frame index 
+def get_spectral_data_by_frame(i, spectral_FOV):
+    frame = spectral_FOV.frame[i], 
+    Wavelength = spectral_FOV.wavelength[i]
+    Spectra_per_star = spectral_FOV.spectra_per_star[i]
+    ra = spectral_FOV.ra[i]
+    dec = spectral_FOV.dec[i]
 
+    return Wavelength, Spectra_per_star,ra, dec

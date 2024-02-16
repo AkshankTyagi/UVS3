@@ -179,7 +179,7 @@ def main():
     # print(Spectra.spectra_per_star)
 
     # animate
-    animate(time_arr, state_vectors, celestial_coordinates, r)
+    animate(time_arr, state_vectors, celestial_coordinates, Spectra, r)
     return
 
 # main

@@ -23,7 +23,7 @@ config['Params_1'] = {
     # set view
     'azm': 40,
     'ele': 25,
-    'interval_bw_Frames' : 500 # milliSec
+    'interval_bw_Frames' : 1000 # milliSec
 }
 
 config['Params_2'] ={

@@ -8,13 +8,15 @@ class StellarSpectrum:
         self.temperature = v1
         self.spectrum = v2
         self.wavelength = v3
-        
+
 
 class Spectral_FOV:
     def __init__(self):
         self.frame = []
         self.wavelength = []
         self.spectra_per_star= []
+        self.ra = []
+        self.dec = []
 
 N_CASTELLI_MODELS = 76
 # Castelli_data--
@@ -226,6 +228,9 @@ def GET_SPECTRA(spec_dir, data):
         _, d, _ = zip(data[i])
         if d[0]:
             c = list(zip(*d[0]))
+            ra, dec = c[0], c[1]
+            spectral_FOV.ra.append(ra)
+            spectral_FOV.dec.append(dec)
             spectral_type = c[7]
 
             if (len(spectral_type)>1):
@@ -264,6 +269,8 @@ def GET_SPECTRA(spec_dir, data):
             print('Frame',i +1,'is EMPTY', end="\n \n")
             spectral_FOV.wavelength.append([0])
             spectral_FOV.spectra_per_star.append([[0]])
+            spectral_FOV.ra.append([0])
+            spectral_FOV.dec.append([0])
     
     return spectral_FOV
 
