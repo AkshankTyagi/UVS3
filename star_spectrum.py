@@ -8,6 +8,7 @@ class StellarSpectrum:
         self.temperature = v1
         self.spectrum = v2
         self.wavelength = v3
+        
 
 class Spectral_FOV:
     def __init__(self):
