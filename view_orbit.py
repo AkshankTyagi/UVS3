@@ -14,16 +14,17 @@ from sgp4.earth_gravity import wgs72
 from configparser import ConfigParser
 config = ConfigParser()
 
+from Params_configparser import *
 from star_data import *
 from plot import *
 from star_spectrum import *
-from Params_configparser import *
+
 # include hip_main.dat
 
 def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
     config.read(filename)
 
-    global roll_rate_hrs, width, height
+    global roll_rate_hrs
 
     hipp_file = config.get(param_set, 'hipparcos_catalogue')
     castelli_file = config.get(param_set, 'Castelli_data')
@@ -36,12 +37,12 @@ def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
     N_revolutions = config.get(param_set, 'number of Revolutions')
     N_frames = config.get(param_set, 'N_frames')
     T_slice = config.get(param_set, 't_slice')
-    width = float(config.get(param_set, 'width'))
-    height = float(config.get(param_set, 'height'))
-    Threshold = float(config.get(param_set,'star_mag_threshold'))
+    # width = float(config.get(param_set, 'width'))
+    # height = float(config.get(param_set, 'height'))
+    # Threshold = float(config.get(param_set,'star_mag_threshold'))
     
     print('sat_name:', sat_name, ', roll:',roll,',  roll_rate_hrs:',roll_rate_hrs, ',  N_revolutions:',N_revolutions, ',  N_frames:', N_frames, ',  T_slice:', T_slice)
-    return hipp_file, castelli_file, sat_name, float(T_slice), N_frames, float(N_revolutions), roll, Threshold
+    return hipp_file, castelli_file, sat_name, float(T_slice), N_frames, float(N_revolutions), roll #, Threshold
 
 def read_satellite_TLE(filename='Satellite_TLE.txt', sat_name = 'ISS'):
     config.read(filename)
@@ -135,7 +136,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, roll=False):
 
     for frame, (r, d) in enumerate(zip(ra, dec)):
         # print(frame, (r, d))
-        tdf_values, frame_boundary = filter_by_fov(df, r, d, width, height)
+        tdf_values, frame_boundary = filter_by_fov(df, r, d)
         tdf_values = tdf_values.values.tolist()
         # print (tdf_values)
         frame_row_list.append([frame, tdf_values, frame_boundary ])
@@ -144,14 +145,13 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, roll=False):
 
 def main():
     global data
-    hipp_file, castelli_dir, sat_name, t_slice, n_frames, N_revolutions, roll, Threshold  = read_parameter_file('init_parameter.txt','Params_1')
-    print('Threshold_Mag of visible stars- ',Threshold)
+    hipp_file, castelli_dir, sat_name, t_slice, n_frames, N_revolutions, roll  = read_parameter_file('init_parameter.txt','Params_1')
     line1, line2 = read_satellite_TLE('Satellite_TLE.txt', sat_name)
     
     # create satellite object
     satellite = get_satellite(line1, line2)
     # read star data
-    df = read_hipparcos_data(hipp_file, Threshold)
+    df = read_hipparcos_data(hipp_file)
     
     # time period for one revolution
     t_period = N_revolutions* 2 * np.pi * (a**3/mu)**0.5
@@ -173,7 +173,7 @@ def main():
     start = np.datetime64(datetime.datetime.now())
     # times, state_vectors, celestial_coordinates  
     time_arr, state_vectors, celestial_coordinates = get_simulation_data(satellite, df, start, t_period, t_slice, roll)
-    Spectra = GET_SPECTRA(castelli_dir,celestial_coordinates)
+    Spectra = GET_SPECTRA(castelli_dir, celestial_coordinates)
     # print(Spectra.frame)
     # print(Spectra.wavelength)
     # print(Spectra.spectra_per_star)

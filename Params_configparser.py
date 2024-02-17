@@ -5,19 +5,23 @@ config = ConfigParser()
 config['Params_1'] = {
     'hipparcos_catalogue' : r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\hip_main.dat', #path to the Hipparcos file
     'Castelli_data' : r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\Castelli\ckp00', #path to the ckp00 file of the Castelli Kurucz Atlas
-    'sat_name' : 'Astrosat',
+    'sat_name' : 'ISS',
     'roll' : False,
     'roll_rate_hrs' : False,
-    # Directional Cosines of Detector from the velocity of Satellite 
-    'number of Revolutions' : 1,
+    # TBA Directional Cosines of Detector from the velocity of Satellite 
+    'number of Revolutions' : 0.1,
     # Specify either Number of frames or period in sec after which the next Frame is given
     'N_frames' : False,
-    't_slice' : 300, # Seconds,
+    't_slice' : 2, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
     'width': 0.5, #RA width
     'height': 7, #Dec height
-    'star_mag_threshold' : 6.5, #threshold for what apaarent magnitude stars we want to look at
+    'star_mag_threshold' : 8.5, #threshold for what apaarent magnitude stars we want to look at
+    
+    # Spectrum Parameters (UV Band Wavelengths in Angstroms)
+    'limit_min': 100,
+    'limit_max': 3800,
 
     #Animation parameters
     # set view
@@ -26,28 +30,6 @@ config['Params_1'] = {
     'interval_bw_Frames' : 1000 # milliSec
 }
 
-config['Params_2'] ={
-    'Hipparcos_catalogue' : 'hip_main.dat',
-    'sat_name' : 'RISAT-2B',
-    'roll' : False,
-    'roll_rate_hrs' : False,
-    # Directional Cosines of Detector from the velocity of Satellite 
-    'number of Revolutions' : 1,
-    # Specify either Number of frames or period in sec after which the next Frame is given
-    'N_frames' : False,
-    't_slice' : 100, # Seconds
-
-    # Camera Field of View in Deg
-    'width': 9.31, #RA width
-    'height': 7, #Dec height
-    'Star_mag_threshold' : 8.5,
-
-    #Animation parameters
-    # set view
-    'azm': 60,
-    'ele': 55,
-    'interval_bw_Frames' : 50 # milliSec
-}
 
 with open('init_parameter.txt',"w") as f:
     config.write(f)

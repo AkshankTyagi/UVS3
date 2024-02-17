@@ -1,7 +1,8 @@
 from astropy.io import fits
-import os
 import matplotlib.pyplot as plt
 import numpy as np
+from configparser import ConfigParser
+
 
 class StellarSpectrum:
     def __init__(self, v1 =0, v2= [], v3= []):
@@ -21,6 +22,17 @@ class Spectral_FOV:
 N_CASTELLI_MODELS = 76
 # Castelli_data--
 # spec_dir= r"C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\Castelli\ckp00"
+
+def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
+    config = ConfigParser()
+    config.read(filename)
+    global spec_dir 
+    spec_dir = config.get(param_set, 'Castelli_data')
+    # Wavelength range:
+    min_lim = float(config.get(param_set, 'limit_min'))
+    max_lim = float(config.get(param_set, 'limit_max'))
+    return min_lim, max_lim
+_, _ = read_parameter_file()
 
 def index_greater_than(lst, value):
     for i, elem in enumerate(lst):
@@ -214,11 +226,16 @@ def READ_CASTELLI_SPECTRA(spec_dir):
             data = hdul[1].data
             stellar_spectra[i]["spectrum"] = data.field(gindex[i] - 1)
             stellar_spectra[i]["wavelength"] = data.field(0)
+
     return stellar_spectra 
 
 def GET_SPECTRA(spec_dir, data):
     all_spectra = READ_CASTELLI_SPECTRA(spec_dir)
     spectral_FOV = Spectral_FOV()
+
+    wave_min , wave_max = read_parameter_file()
+    low_lim = index_greater_than(all_spectra[0]['wavelength'], wave_min)
+    high_lim = index_greater_than(all_spectra[0]['wavelength'], wave_max)
 
     for i in range(len(data)):
         spectral_FOV.frame.append(str(i+1))
@@ -234,31 +251,31 @@ def GET_SPECTRA(spec_dir, data):
             spectral_type = c[7]
 
             if (len(spectral_type)>1):
-                print(f' Frame {i+1}) The spectra of stars in the FOV are:')
+                # print(f' Frame {i+1}) The spectra of stars in the FOV are:')
                 for j in range(len(spectral_type)):     
                     t_index = GET_STAR_TEMP(spectral_type[j])
                     stellar_spectra = StellarSpectrum()
                     data1 = all_spectra[t_index]
                     stellar_spectra.temperature = float(data1['temp'])
-                    stellar_spectra.wavelength = np.array(data1['wavelength'])
-                    stellar_spectra.spectrum = np.array(data1['spectrum'])
-                    print(f"{j+1}) Spectral type: {spectral_type[j]};   Temperature index: {t_index}   ;   Temperature= {stellar_spectra.temperature}")
-                    print (f"wavelength: {stellar_spectra.wavelength} \nSpectra: {stellar_spectra.spectrum}", end="\n \n")
+                    stellar_spectra.wavelength = np.array(data1['wavelength'][low_lim:high_lim])
+                    stellar_spectra.spectrum = np.array(data1['spectrum'][low_lim:high_lim])
+                    # print(f"{j+1}) Spectral type: {spectral_type[j]};   Temperature index: {t_index}   ;   Temperature= {stellar_spectra.temperature}")
+                    # print (f"wavelength: {stellar_spectra.wavelength} \nSpectra: {stellar_spectra.spectrum}", end="\n \n")
 
                     spectral_wavelength = stellar_spectra.wavelength
                     spectral_flux.append(stellar_spectra.spectrum)
                 spectral_FOV.spectra_per_star.append(spectral_flux)
                 spectral_FOV.wavelength.append(spectral_wavelength)
             else:
-                print(f' Frame {i +1})  The spectra of star in the FOV is:')
+                # print(f' Frame {i +1})  The spectra of star in the FOV is:')
                 t_index = GET_STAR_TEMP(spectral_type[0])
                 stellar_spectra = StellarSpectrum()
                 data1 = all_spectra[t_index]
                 stellar_spectra.temperature = float(data1['temp'])
-                stellar_spectra.wavelength = np.array(data1['wavelength'])
-                stellar_spectra.spectrum = np.array(data1['spectrum'])
-                print(f" Spectral type: {spectral_type[0]}; Temperature index: {t_index}  ; Temperature= {stellar_spectra.temperature}")
-                print (f"wavelength: {stellar_spectra.wavelength} \nSpectra: {stellar_spectra.spectrum}", end="\n \n")
+                stellar_spectra.wavelength = np.array(data1['wavelength'][low_lim:high_lim])
+                stellar_spectra.spectrum = np.array(data1['spectrum'][low_lim:high_lim])
+                # print(f" Spectral type: {spectral_type[0]}; Temperature index: {t_index}  ; Temperature= {stellar_spectra.temperature}")
+                # print (f"wavelength: {stellar_spectra.wavelength} \nSpectra: {stellar_spectra.spectrum}", end="\n \n")
 
                 spectral_wavelength = stellar_spectra.wavelength
                 spectral_flux.append(stellar_spectra.spectrum)

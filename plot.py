@@ -8,11 +8,11 @@ import matplotlib.gridspec as gridspec
 import matplotlib.animation as animation
 
 from configparser import ConfigParser
-config = ConfigParser()
 
 from star_spectrum import *
 
 def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
+    config = ConfigParser()
     config.read(filename)
     global sat_name, Interval
     sat_name = config.get(param_set, 'sat_name')
@@ -25,7 +25,7 @@ def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
 def animate(time_arr, state_vectors, celestial_coordinates, spectra, r ):
     # init 3D earth and satellite view
     def init_orbit(ax):
-        azm, ele = read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1')
+        azm, ele = read_parameter_file()
 
         # set titles
         title = sat_name + ' Satellite position @ ' + time_arr[0].item().strftime('%Y-%m-%d - %H:%M:%S.')        
@@ -91,12 +91,13 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectra, r ):
         # return
         return ax, sky    
     
+    # init Spectral plot for all stars in the FOV
     def init_Spectra(ax):
         global flux
         
         # set labels
-        ax.set_xlabel('Wavelength ($A^\circ$')
-        ax.set_ylabel('Flux ')
+        ax.set_xlabel('log$_{10}$[ Wavelength ($\AA$)]')
+        ax.set_ylabel('log$_{10}$[ Flux (FLAM)] + offset')
         
         # set titles
         ax.set_title('Spectrum of the stars in the Sky view')
@@ -110,11 +111,10 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectra, r ):
             # y_offset = [float(float(d) - Size[1]) * (Size[3] - Size[1]) for d in np.array(dec)]
             # flux = ax4.plot(np.log10(X_wavelength), np.log10(Y_Spectra_per_star[0]), label = f'{ra[0]},{dec[0]}')
             for i in range(len(Y_Spectra_per_star)):
-                y_offset = (dec[i] - Size[1])*(Size[3] - Size[1])
-        #       Y_spectra = Y_Spectra_per_star[i]
-                flux = ax4.plot(np.log10(X_wavelength), Y_Spectra_per_star[i]+ [y_offset]*len(Y_Spectra_per_star[i]), label = f'ra: {ra[0]}  ; dec: {dec[0]}')
+                y_offset = (dec[i] - Size[1])*(Size[3] - Size[1]) 
+                flux = ax4.plot(np.log10(X_wavelength),  np.log10(Y_Spectra_per_star[i]), label = f'ra: {ra[i]}  ; dec: {dec[i]}') # + [y_offset]*len(Y_Spectra_per_star[i])
         else:
-            wavelengths = np.linspace(10, 150000, 1000)
+            wavelengths = np.linspace(100, 4000, 1000)
             y_zeros = np.zeros_like(wavelengths)
             flux= ax.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='y = 0')
             ax.set_ylim(0, 5)
@@ -137,23 +137,26 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectra, r ):
         plt.rc('font', **font)
             
         # Create 2x2 sub plots
-        gs = gridspec.GridSpec(2, 2, width_ratios=[3, 1]) # , wspace=0.5, hspace=0.5, , width_ratios=[1, 2]
+        gs = gridspec.GridSpec(2, 2, width_ratios=[2.5, 1]) # , wspace=0.5, hspace=0.5, , width_ratios=[1, 2]
 
         # fig and ax
-        fig = plt.figure(figsize=(12,6)) # figsize=(8,6)
+        fig = plt.figure(figsize=(14,7)) # figsize=(8,6)
+
         # row 0, col 0
         ax2 = fig.add_subplot(gs[0, 0], projection='3d' )
         # set layout
-        ax2, satellite, orbit = init_orbit(ax2)        
+        ax2, satellite, orbit = init_orbit(ax2)  
+
         # row 0, col 1
-        ax3 = fig.add_subplot(gs[0, 1], facecolor="black")
-        
+        ax3 = fig.add_subplot(gs[0, 1], facecolor="black", aspect= 0.15 )
         # initialize sky
         ax3, sky = init_sky(ax3)
 
-        ax4 = fig.add_subplot(gs[1, 0] )
+        # row 1, col 0
+        ax4 = fig.add_subplot(gs[1, 0])
         # initialize Spectrum Plot
         ax4, flux = init_Spectra(ax4)
+
         # to avoid subplot title overlap with x-tick
         fig.tight_layout()
         
@@ -191,8 +194,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectra, r ):
 
         # get updated spectral data by frame
         X_wavelength, Y_Spectra_per_star, ra, dec = get_spectral_data_by_frame(i, spectra)
-        # ra = np.array(ra)
-        # dec = np.array(dec)
+
         # Update Spectral plot
         if (X_wavelength[0]!=0):
             ax4.clear()
@@ -200,14 +202,19 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectra, r ):
             # flux = ax4.plot(np.log10(X_wavelength), np.log10(Y_Spectra_per_star[0]), label = f'{ra[0]},{dec[0]}')
             for i in range(len(Y_Spectra_per_star)):
                 y_offset = (dec[i] - Size[1])*(Size[3] - Size[1])
-                flux = ax4.plot(np.log10(X_wavelength), Y_Spectra_per_star[i]+ [y_offset]*len(Y_Spectra_per_star[i]), label = f'ra: {ra[0]}  ; dec: {dec[0]}')
+                flux = ax4.plot(np.log10(X_wavelength), np.log10(Y_Spectra_per_star[i]), label = f'ra: {ra[i]}  ; dec: {dec[i]}') #+ [y_offset]*len(Y_Spectra_per_star[i])
         else:
             ax4.clear()
-            wavelengths = np.linspace(10, 150000, 1000)
+            wavelengths = np.linspace(100, 4000, 1000)
             y_zeros = np.zeros_like(wavelengths)
             flux= ax4.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='y = 0')
             ax4.set_ylim(0, 5)
         ax4.legend()
+        # set labels
+        ax4.set_xlabel('log$_{10}$[ Wavelength ($\AA$)]')
+        ax4.set_ylabel('log$_{10}$[ Flux (FLAM)] + offset')
+        # set title
+        ax4.set_title('Spectrum of the stars in the Sky view')
 
         # return
         return satellite, orbit, sky, flux
@@ -286,15 +293,14 @@ def get_cles_data_by_frame(i, data):
         if (len(c[0])>1):
             print('  The stars in the FOV are:')
             for i in range(len(c[0])):     
-                print( f"{str(i+1)}) Hipp_number= {str(hip[i])}; Ra & Dec: {str(ra[i])} {str(dec[i])}; Johnson Mag= {str(mag[i])}; trig Paraalax= {str(parallax[i])}; Color index(B-V)= {str(B_V[i])}; Spectral_Type: {str(Spectral_type[i])}" , end="\n")
-                # Temp = GET_STAR_TEMP(str(Spectral_type[i]))
-                # print('  Temperature Index of star: ', Temp)
+                Temp = GET_STAR_TEMP(str(Spectral_type[i]))
+                print( f"{str(i+1)}) Hipp_number= {str(hip[i])}; Ra & Dec: {str(ra[i])} {str(dec[i])}; Johnson Mag= {str(mag[i])}; trig Paraalax= {str(parallax[i])}; Color(B-V)= {str(B_V[i])}; Spectral_Type: {str(Spectral_type[i])}; Temper: {Temp}" , end="\n")
+
         else:
             print('  The star in the FOV is:')
-            print( f"  Hipp_number= {str(hip[0])}; Ra & Dec: {str(ra[0])} {str(dec[0])}; Johnson Mag= {str(mag[0])}; trig Paraalax= {str(parallax[0])}; Color index(B-V)= {str(B_V[0])}; Spectral_Type: {str(Spectral_type[0])}" , end="\n")
-            # print('  Hipp_number='+str(hip[0])+'; Ra & Dec:'+str(ra[0])+' '+str(dec[0])+'; Johnson Mag='+str(mag[0])+'; trig Paraalax='+str(parallax[0])+'; Color index(B-V)='+str(B_V[0])+'; Spectral_Type:'+str(Spectral_type[0]) )
-            # Temp = GET_STAR_TEMP(str(Spectral_type[0]))
-            # print('  Temperature Index of star: ', Temp)
+            Temp = GET_STAR_TEMP(str(Spectral_type[0]))
+            print( f"  Hipp_number= {str(hip[0])}; Ra & Dec: {str(ra[0])} {str(dec[0])}; Johnson Mag= {str(mag[0])}; trig Paraalax= {str(parallax[0])}; Color(B-V)= {str(B_V[0])}; Spectral_Type: {str(Spectral_type[0])}; Temper: {Temp}", end="\n")
+
         # return
         return cles_pos, size, frame_boundary 
     else:
