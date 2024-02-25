@@ -9,7 +9,8 @@ import matplotlib.animation as animation
 
 from configparser import ConfigParser
 
-from star_spectrum import *
+from star_spectrum import * 
+from star_spectrum import GET_STAR_TEMP
 
 def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
     config = ConfigParser()
@@ -91,7 +92,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectra, r ):
         # return
         return ax, sky    
     
-    # init Spectral plot for all stars in the FOV
+    # init Intrinsic Spectral plot for all stars in the FOV
     def init_Spectra(ax):
         global flux
         
@@ -104,29 +105,65 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectra, r ):
 
         X_wavelength, Y_Spectra_per_star, ra, dec = get_spectral_data_by_frame(0, spectra)
         _, _, Size = get_cles_data_by_frame(0, celestial_coordinates) 
-        # ra = np.array(ra)
-        # dec = np.array(dec)
         Size = Size[0]
+
         if (X_wavelength[0]!=0):
             # y_offset = [float(float(d) - Size[1]) * (Size[3] - Size[1]) for d in np.array(dec)]
             # flux = ax4.plot(np.log10(X_wavelength), np.log10(Y_Spectra_per_star[0]), label = f'{ra[0]},{dec[0]}')
             for i in range(len(Y_Spectra_per_star)):
                 y_offset = (dec[i] - Size[1])*(Size[3] - Size[1]) 
-                flux = ax4.plot(np.log10(X_wavelength),  np.log10(Y_Spectra_per_star[i]), label = f'ra: {ra[i]}  ; dec: {dec[i]}') # + [y_offset]*len(Y_Spectra_per_star[i])
+                # flux = ax.plot(np.log10(X_wavelength), Y_Spectra_per_star[i], label = f'ra: {ra[i]}  ; dec: {dec[i]}') #+ [y_offset]*len(Y_Spectra_per_star[i])
+                flux = ax.plot(np.log10(X_wavelength),  np.log10(Y_Spectra_per_star[i]), label = f'ra: {ra[i]}  ; dec: {dec[i]}') # + [y_offset]*len(Y_Spectra_per_star[i])
+                ax.set_ylim(-1, 11)
         else:
             wavelengths = np.linspace(100, 4000, 1000)
             y_zeros = np.zeros_like(wavelengths)
             flux= ax.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='y = 0')
-            ax.set_ylim(0, 5)
+            ax.set_ylim(-1, 11)
         ax.legend()
         # ax.clear()
 
         return ax, flux
     
+    # init # of Photons plot
+    def init_photons(ax):
+        global phots
+        
+        # set labels
+        ax.set_xlabel('log$_{10}$[ Wavelength ($\AA$)]')
+        ax.set_ylabel('log$_{10}$[Number of Photons] + offset')
+        
+        # set titles
+        ax.set_title('# of Photons from the stars in the Sky view')
+
+        X_wavelength, Y_photons_per_star, ra, dec = get_photons_data_by_frame(0, spectra)
+        # _, _, Size = get_cles_data_by_frame(0, celestial_coordinates) 
+        # Size = Size[0]
+
+        
+        if (X_wavelength[0]!=0):
+            # y_offset = [float(float(d) - Size[1]) * (Size[3] - Size[1]) for d in np.array(dec)]
+            # flux = ax4.plot(np.log10(X_wavelength), np.log10(Y_Spectra_per_star[0]), label = f'{ra[0]},{dec[0]}')
+            for i in range(len(Y_photons_per_star)):
+                # y_offset = (dec[i] - Size[1])*(Size[3] - Size[1]) 
+                # phots = ax.plot(np.log10(X_wavelength), Y_Spectra_per_star[i], label = f'ra: {ra[i]}  ; dec: {dec[i]}') #+ [y_offset]*len(Y_Spectra_per_star[i])
+                phots = ax.plot(np.log10(X_wavelength),  np.log10(Y_photons_per_star[i]), label = f'ra: {ra[i]}  ; dec: {dec[i]}') # + [y_offset]*len(Y_Spectra_per_star[i])
+                ax.set_ylim(-3, 9)
+        else:
+            wavelengths = np.linspace(100, 4000, 1000)
+            y_zeros = np.zeros_like(wavelengths) 
+            phots= ax.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='y = 0')
+            ax.set_ylim(-2, 11)
+        ax.legend()
+        # ax.clear()
+
+        return ax, phots
+    
+
     # initialize plot
     def init():
-        global fig, ax2, ax3, ax4
-        global orbit, satellite, sky
+        global fig, ax2, ax3, ax4, ax5
+        global orbit, satellite, sky, flux, phots
         global X, Y, Z
         global RA, DEC
         
@@ -137,7 +174,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectra, r ):
         plt.rc('font', **font)
             
         # Create 2x2 sub plots
-        gs = gridspec.GridSpec(2, 2, width_ratios=[2.5, 1]) # , wspace=0.5, hspace=0.5, , width_ratios=[1, 2]
+        gs = gridspec.GridSpec(2, 2, width_ratios=[1, 1]) # , wspace=0.5, hspace=0.5, , width_ratios=[1, 2]
 
         # fig and ax
         fig = plt.figure(figsize=(14,7)) # figsize=(8,6)
@@ -157,13 +194,18 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectra, r ):
         # initialize Spectrum Plot
         ax4, flux = init_Spectra(ax4)
 
+        # row 1, col 1
+        ax5 = fig.add_subplot(gs[1, 1])
+        # initialize Photons Plot
+        ax5, phots = init_photons(ax5)
+
         # to avoid subplot title overlap with x-tick
         fig.tight_layout()
         
         # return
-        return fig, satellite, orbit, sky, flux
+        return fig, satellite, orbit, sky, flux, phots
 
-    def update(i, satellite, orbit, sky, flux):
+    def update(i, satellite, orbit, sky, flux, phots):
         # stack as np columns for scatter plot
         xyi, xi, yi, zi = get_pos_data_by_frame(i)
         # print ('frame number',i+1,'- satellite path:', xi, yi, zi)
@@ -200,15 +242,17 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectra, r ):
             ax4.clear()
             # y_offset = [float(float(d) - Size[1]) * (Size[3] - Size[1]) for d in np.array(dec)]
             # flux = ax4.plot(np.log10(X_wavelength), np.log10(Y_Spectra_per_star[0]), label = f'{ra[0]},{dec[0]}')
-            for i in range(len(Y_Spectra_per_star)):
-                y_offset = (dec[i] - Size[1])*(Size[3] - Size[1])
-                flux = ax4.plot(np.log10(X_wavelength), np.log10(Y_Spectra_per_star[i]), label = f'ra: {ra[i]}  ; dec: {dec[i]}') #+ [y_offset]*len(Y_Spectra_per_star[i])
+            for j in range(len(Y_Spectra_per_star)):
+                # y_offset = (dec[i] - Size[1])*(Size[3] - Size[1])
+                # flux = ax4.plot(np.log10(X_wavelength), Y_Spectra_per_star[i], label = f'ra: {ra[i]}  ; dec: {dec[i]}') #+ [y_offset]*len(Y_Spectra_per_star[i])
+                flux = ax4.plot(np.log10(X_wavelength), np.log10(Y_Spectra_per_star[j]), label = f'ra: {ra[j]}  ; dec: {dec[j]}') #+ [y_offset]*len(Y_Spectra_per_star[i])
+                ax4.set_ylim(-1, 11)        
         else:
             ax4.clear()
             wavelengths = np.linspace(100, 4000, 1000)
             y_zeros = np.zeros_like(wavelengths)
             flux= ax4.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='y = 0')
-            ax4.set_ylim(0, 5)
+            ax4.set_ylim(-1, 11)
         ax4.legend()
         # set labels
         ax4.set_xlabel('log$_{10}$[ Wavelength ($\AA$)]')
@@ -216,20 +260,44 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectra, r ):
         # set title
         ax4.set_title('Spectrum of the stars in the Sky view')
 
+        # get updated photons data by frame
+        X_wavelength, Y_photons_per_star, ra, dec = get_photons_data_by_frame(i, spectra)
+        if (X_wavelength[0]!=0):
+            ax5.clear()
+            # y_offset = [float(float(d) - Size[1]) * (Size[3] - Size[1]) for d in np.array(dec)]
+            # flux = ax4.plot(np.log10(X_wavelength), np.log10(Y_Spectra_per_star[0]), label = f'{ra[0]},{dec[0]}')
+            for k in range(len(Y_photons_per_star)):
+                # y_offset = (dec[i] - Size[1])*(Size[3] - Size[1]) 
+                # phots = ax5.plot(np.log10(X_wavelength), Y_Spectra_per_star[i], label = f'ra: {ra[i]}  ; dec: {dec[i]}') #+ [y_offset]*len(Y_Spectra_per_star[i])
+                phots = ax5.plot(np.log10(X_wavelength),  np.log10(Y_photons_per_star[k]), label = f'ra: {ra[k]}  ; dec: {dec[k]}') # + [y_offset]*len(Y_Spectra_per_star[i])
+                ax5.set_ylim(-2, 11)
+        else:
+            ax5.clear()
+            wavelengths = np.linspace(100, 4000, 1000)
+            y_zeros = np.zeros_like(wavelengths) 
+            phots= ax5.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='y = 0')
+            ax5.set_ylim(-2, 11)
+        ax5.legend()
+        # set labels
+        ax5.set_xlabel('log$_{10}$[ Wavelength ($\AA$)]')
+        ax5.set_ylabel('log$_{10}$[Number of Photons] + offset')
+        # set titles
+        ax5.set_title('# of Photons from the stars in the Sky view')
+
         # return
-        return satellite, orbit, sky, flux
+        return satellite, orbit, sky, flux, phots
 
     # run animation
     def run():
         # plot init
-        fig, satellite, orbit, sky, flux = init()
+        fig, satellite, orbit, sky, flux, phots = init()
         # total no of frames
         frame_count = len(X)
         # print (frame_count)
         # create animation using the animate() function
         ani = animation.FuncAnimation(fig, update,
                                       frames=frame_count, interval= Interval, 
-                                      fargs=(satellite, orbit, sky, flux ),
+                                      fargs=(satellite, orbit, sky, flux, phots ),
                                       blit=False, repeat=False)
         # save
         #ani.save('satellite.gif', writer="ffmpeg")
@@ -294,12 +362,12 @@ def get_cles_data_by_frame(i, data):
             print('  The stars in the FOV are:')
             for i in range(len(c[0])):     
                 Temp = GET_STAR_TEMP(str(Spectral_type[i]))
-                print( f"{str(i+1)}) Hipp_number= {str(hip[i])}; Ra & Dec: {str(ra[i])} {str(dec[i])}; Johnson Mag= {str(mag[i])}; trig Paraalax= {str(parallax[i])}; Color(B-V)= {str(B_V[i])}; Spectral_Type: {str(Spectral_type[i])}; Temper: {Temp}" , end="\n")
+                print( f"{str(i+1)}) Hipp_number= {str(hip[i])}; Ra & Dec: {str(ra[i])} {str(dec[i])}; Johnson Mag= {str(mag[i])}; trig Paraalax= {str(parallax[i])}; Color(B-V)= {str(B_V[i])}; Spectral_Type: {str(Spectral_type[i])}; T_index: {Temp}" , end="\n")
 
         else:
             print('  The star in the FOV is:')
             Temp = GET_STAR_TEMP(str(Spectral_type[0]))
-            print( f"  Hipp_number= {str(hip[0])}; Ra & Dec: {str(ra[0])} {str(dec[0])}; Johnson Mag= {str(mag[0])}; trig Paraalax= {str(parallax[0])}; Color(B-V)= {str(B_V[0])}; Spectral_Type: {str(Spectral_type[0])}; Temper: {Temp}", end="\n")
+            print( f"  Hipp_number= {str(hip[0])}; Ra & Dec: {str(ra[0])} {str(dec[0])}; Johnson Mag= {str(mag[0])}; trig Paraalax= {str(parallax[0])}; Color(B-V)= {str(B_V[0])}; Spectral_Type: {str(Spectral_type[0])}; T_index: {Temp}", end="\n")
 
         # return
         return cles_pos, size, frame_boundary 
@@ -318,3 +386,13 @@ def get_spectral_data_by_frame(i, spectral_FOV):
     dec = spectral_FOV.dec[i]
 
     return Wavelength, Spectra_per_star,ra, dec
+
+# get photon number data of the stars for the given frame index 
+def get_photons_data_by_frame(i, spectral_FOV):
+    frame = spectral_FOV.frame[i], 
+    Wavelength = spectral_FOV.wavelength[i]
+    photon_per_star = spectral_FOV.photons[i]
+    ra = spectral_FOV.ra[i]
+    dec = spectral_FOV.dec[i]
+
+    return Wavelength, photon_per_star,ra, dec

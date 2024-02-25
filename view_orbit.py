@@ -13,11 +13,12 @@ from sgp4.earth_gravity import wgs72
 
 from configparser import ConfigParser
 config = ConfigParser()
+import pickle
 
 from Params_configparser import *
-from star_data import *
-from plot import *
-from star_spectrum import *
+from star_data import *#, filter_by_fov, read_hipparcos_data
+from plot import *#,animate
+from star_spectrum import *#,GET_SPECTRA
 
 # include hip_main.dat
 
@@ -177,6 +178,9 @@ def main():
     # print(Spectra.frame)
     # print(Spectra.wavelength)
     # print(Spectra.spectra_per_star)
+    # with open('star_data.pkl',"wb") as f:
+    #     data = celestial_coordinates
+    #     pickle.dump(data, f)
 
     # animate
     animate(time_arr, state_vectors, celestial_coordinates, Spectra, r)

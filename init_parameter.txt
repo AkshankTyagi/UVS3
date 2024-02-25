@@ -1,30 +1,18 @@
 [Params_1]
-hipparcos_catalogue = hip_main.dat
-sat_name = Astrosat
+hipparcos_catalogue = C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\hip_main.dat
+castelli_data = C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\Castelli\ckp00
+sat_name = ISS
 roll = False
 roll_rate_hrs = False
 number of revolutions = 1
 n_frames = False
-t_slice = 300
+t_slice = 800
 width = 0.5
 height = 7
-star_mag_threshold = 7.5
+star_mag_threshold = 6.5
+limit_min = 100
+limit_max = 3800
 azm = 40
 ele = 25
-interval_bw_frames = 500
-
-[Params_2]
-hipparcos_catalogue = hip_main.dat
-sat_name = RISAT-2B
-roll = False
-roll_rate_hrs = False
-number of revolutions = 1
-n_frames = False
-t_slice = 100
-width = 9.31
-height = 7
-star_mag_threshold = 8.5
-azm = 60
-ele = 55
-interval_bw_frames = 50
+interval_bw_frames = 1000
 
