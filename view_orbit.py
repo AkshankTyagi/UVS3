@@ -22,7 +22,9 @@ from star_spectrum import *#,GET_SPECTRA
 
 # include hip_main.dat
 
-def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
+params_file = r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\init_parameter.txt'
+
+def read_parameter_file(filename=params_file, param_set = 'Params_1'):
     config.read(filename)
 
     global roll_rate_hrs
@@ -146,7 +148,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, roll=False):
 
 def main():
     global data
-    hipp_file, castelli_dir, sat_name, t_slice, n_frames, N_revolutions, roll  = read_parameter_file('init_parameter.txt','Params_1')
+    hipp_file, castelli_dir, sat_name, t_slice, n_frames, N_revolutions, roll  = read_parameter_file(params_file,'Params_1')
     line1, line2 = read_satellite_TLE('Satellite_TLE.txt', sat_name)
     
     # create satellite object

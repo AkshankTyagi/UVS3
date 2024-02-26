@@ -29,8 +29,9 @@ N_CASTELLI_MODELS = 76
 
 # Castelli_data--
 # spec_dir= r"C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\Castelli\ckp00"
+params_file = r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\init_parameter.txt'
 
-def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
+def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     config = ConfigParser()
     config.read(filename)
     global Castelli_data 

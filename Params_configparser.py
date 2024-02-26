@@ -12,12 +12,12 @@ config['Params_1'] = {
     'number of Revolutions' : 1,
     # Specify either Number of frames or period in sec after which the next Frame is given
     'N_frames' : False,
-    't_slice' : 300, # Seconds,
+    't_slice' : 100, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
     'width': 0.5, #RA width
     'height': 7, #Dec height
-    'star_mag_threshold' : 7.5, #threshold for what apaarent magnitude stars we want to look at
+    'star_mag_threshold' : 8, #threshold for what apaarent magnitude stars we want to look at
     
     # Spectrum Parameters (UV Band Wavelengths in Angstroms)
     'limit_min': 100,
@@ -27,9 +27,9 @@ config['Params_1'] = {
     # set view
     'azm': 40,
     'ele': 25,
-    'interval_bw_Frames' : 1000 # milliSec
+    'interval_bw_Frames' : 500 # milliSec
 }
 
 
-with open('init_parameter.txt',"w") as f:
+with open(r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\init_parameter.txt',"w") as f:
     config.write(f)

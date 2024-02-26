@@ -10,8 +10,9 @@ from configparser import ConfigParser
 # Hipparcos Catalogue [hip_main.dat]
 # http://cdsarc.u-strasbg.fr/ftp/cats/I/239/ 
 # FILENAME = r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\hip_main.dat'
+params_file = r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\init_parameter.txt'
 
-def read_parameter_file(filename='init_parameter.txt', param_set = 'Params_1'):
+def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     config = ConfigParser()
     config.read(filename)
     global hipp_file , star_mag_threshold
