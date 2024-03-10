@@ -1,10 +1,12 @@
 from configparser import ConfigParser
+from view_orbit import get_folder_loc
+folder_loc = get_folder_loc()
 
 config = ConfigParser()
 
 config['Params_1'] = {
-    'hipparcos_catalogue' : r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\hip_main.dat', #path to the Hipparcos file
-    'Castelli_data' : r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\Castelli\ckp00', #path to the ckp00 file of the Castelli Kurucz Atlas
+    'hipparcos_catalogue' : f'{folder_loc}hip_main.dat', #path to the Hipparcos file
+    'Castelli_data' : f'{folder_loc}Castelli\ckp00', #path to the ckp00 file of the Castelli Kurucz Atlas
     'sat_name' : 'Astrosat',
     'roll' : False,
     'roll_rate_hrs' : False,
@@ -27,9 +29,9 @@ config['Params_1'] = {
     # set view
     'azm': 40,
     'ele': 25,
-    'interval_bw_Frames' : 500 # milliSec
+    'interval_bw_Frames' : 2000 # milliSec
 }
 
 
-with open(r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\init_parameter.txt',"w") as f:
+with open(f'{folder_loc}init_parameter.txt',"w") as f:
     config.write(f)

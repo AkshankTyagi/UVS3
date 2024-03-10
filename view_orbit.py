@@ -15,14 +15,21 @@ from configparser import ConfigParser
 config = ConfigParser()
 import pickle
 
+def get_folder_loc():
+    folder_loc = r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\\'
+    return folder_loc
+
 from Params_configparser import *
+from Satellite_configparser import *
 from star_data import *#, filter_by_fov, read_hipparcos_data
 from plot import *#,animate
 from star_spectrum import *#,GET_SPECTRA
 
-# include hip_main.dat
-
-params_file = r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\init_parameter.txt'
+# include the parameter file and sattelite TLE file
+folder_loc = get_folder_loc()
+params_file = f'{folder_loc}init_parameter.txt'
+sat_file = f'{folder_loc}Satellite_TLE.txt'
+print(params_file)
 
 def read_parameter_file(filename=params_file, param_set = 'Params_1'):
     config.read(filename)
@@ -47,7 +54,7 @@ def read_parameter_file(filename=params_file, param_set = 'Params_1'):
     print('sat_name:', sat_name, ', roll:',roll,',  roll_rate_hrs:',roll_rate_hrs, ',  N_revolutions:',N_revolutions, ',  N_frames:', N_frames, ',  T_slice:', T_slice)
     return hipp_file, castelli_file, sat_name, float(T_slice), N_frames, float(N_revolutions), roll #, Threshold
 
-def read_satellite_TLE(filename='Satellite_TLE.txt', sat_name = 'ISS'):
+def read_satellite_TLE(filename= sat_file, sat_name = 'ISS'):
     config.read(filename)
     line1 = config.get(sat_name, 'line1')
     line2 = config.get(sat_name, 'line2')
@@ -149,7 +156,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, roll=False):
 def main():
     global data
     hipp_file, castelli_dir, sat_name, t_slice, n_frames, N_revolutions, roll  = read_parameter_file(params_file,'Params_1')
-    line1, line2 = read_satellite_TLE('Satellite_TLE.txt', sat_name)
+    line1, line2 = read_satellite_TLE(sat_file, sat_name)
     
     # create satellite object
     satellite = get_satellite(line1, line2)

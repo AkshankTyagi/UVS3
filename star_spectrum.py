@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from configparser import ConfigParser
 import math
-
+from view_orbit import get_folder_loc
+folder_loc = get_folder_loc()
 
 class StellarSpectrum:
     def __init__(self, v1 =0, v2= []):
@@ -29,7 +30,8 @@ N_CASTELLI_MODELS = 76
 
 # Castelli_data--
 # spec_dir= r"C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\Castelli\ckp00"
-params_file = r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\init_parameter.txt'
+# params_file = r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\init_parameter.txt'
+params_file = f'{folder_loc}init_parameter.txt'
 
 def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     config = ConfigParser()

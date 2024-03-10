@@ -14,8 +14,10 @@ from configparser import ConfigParser
 
 from star_spectrum import * 
 from star_spectrum import GET_STAR_TEMP
+from view_orbit import get_folder_loc
+folder_loc = get_folder_loc()
 
-params_file = r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\init_parameter.txt'
+params_file = f'{folder_loc}init_parameter.txt'
 
 def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     config = ConfigParser()
@@ -144,21 +146,21 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
             ax_pos=[]
             wave_min = min(X_wavelength)
             wave_max = max(X_wavelength)
-            # photons_max =0
-            # for i in range(n):
-            #     MaxP = max(Y_photons_per_star[i])
-            #     if (MaxP >photons_max):
-            #         photons_max = MaxP
+            photons_max =0
+            for i in range(n):
+                MaxP = max(Y_photons_per_star[i])
+                if (MaxP >photons_max):
+                    photons_max = MaxP
             color_data = (X_wavelength - wave_min)/(wave_max- wave_min)
 
             # Create a custom colormap based only on Violet-Indigo-Blue from spectrum
-            colors = plt.cm.rainbow(np.linspace(0, 1,  2000))
+            colors = plt.cm.rainbow(np.linspace(0, 1,  1500))
             colors = colors[0:int(len(X_wavelength))]
 
             if n == 1:  # only 1 star in the Fov
                 spectra = ax.add_subplot( )
                 ax_pos = spectra
-                photons_max = max(Y_photons_per_star[0])
+                # photons_max = max(Y_photons_per_star[0])
                 #calculate alpha value from stars flux of photons, for each wavelength
                 alpha_val = calc_inv_opacity(Y_photons_per_star[0],len(Y_photons_per_star[0]), photons_max)  
                 
@@ -173,7 +175,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
                 spectra = ax5.subplots(n, 1, sharex=True)
 
                 for i, axs in enumerate(spectra): #plot spectra for each star 1 by 1
-                    photons_max = max(Y_photons_per_star[i])
+                    # photons_max = max(Y_photons_per_star[i])
                     alpha_val = calc_inv_opacity(Y_photons_per_star[i],len(Y_photons_per_star[i]), photons_max)
                     colors2 = calc_obs_color(colors, alpha_val, len(X_wavelength))
                     flux_cmap = mc.ListedColormap(colors2)                    
@@ -184,10 +186,10 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
                     axs.set_ylabel(f'Star {i+1}: RA= {ra[i]}')
                     ax_pos.append(axs)
             # Add colorbar
-            norm = mc.Normalize(vmin=wave_min, vmax=wave_max)
-            scalar_mappable = plt.cm.ScalarMappable(norm=norm, cmap=mc.ListedColormap(colors))
-            scalar_mappable.set_array([])  # Optional: set an empty array to the ScalarMappable
-            ax.colorbar(scalar_mappable, ax = ax_pos, label='Wavelength ($\AA$)')
+            # norm = mc.Normalize(vmin=wave_min, vmax=wave_max)
+            # scalar_mappable = plt.cm.ScalarMappable(norm=norm, cmap=mc.ListedColormap(colors))
+            # scalar_mappable.set_array([])  # Optional: set an empty array to the ScalarMappable
+            # ax.colorbar(scalar_mappable, orientation='horizontal', ax = ax_pos, label='Wavelength ($\AA$)')
 
         else:
             spectra = ax5.add_subplot( )
@@ -202,10 +204,10 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
             spectra.set_xlabel('wavelength')
             spectra.set_ylabel(f'No Star present')
             # Add colorbar
-            norm = mc.Normalize(vmin=10, vmax=3800)
-            scalar_mappable = plt.cm.ScalarMappable(norm=norm, cmap=flux_cmap)
-            scalar_mappable.set_array([])  # Optional: set an empty array to the ScalarMappable
-            ax.colorbar(scalar_mappable, ax = spectra, label='Wavelength ($\AA$)')
+            # norm = mc.Normalize(vmin=100, vmax=3800)
+            # scalar_mappable = plt.cm.ScalarMappable(norm=norm, cmap=flux_cmap)
+            # scalar_mappable.set_array([])  # Optional: set an empty array to the ScalarMappable
+            # ax.colorbar(scalar_mappable,orientation='horizontal', ax = spectra, label='Wavelength ($\AA$)')
 
         return ax, spectra
 
@@ -214,8 +216,8 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
         global phots
         
         # set labels
-        ax.set_xlabel('log$_{10}$[ Wavelength ($\AA$)]')
-        ax.set_ylabel('log$_{10}$[Number of Photons] + offset')
+        ax.set_xlabel('Wavelength ($\AA$)')
+        ax.set_ylabel('Number of Photons')
         
         # set titles
         ax.set_title('# of Photons from the stars in the Sky view')
@@ -225,18 +227,20 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
         # Size = Size[0]
         
         if (X_wavelength[0]!=0):
+            wave_min = min(X_wavelength)
+            wave_max = max(X_wavelength)
             # y_offset = [float(float(d) - Size[1]) * (Size[3] - Size[1]) for d in np.array(dec)]
             # flux = ax4.plot(np.log10(X_wavelength), np.log10(Y_Spectra_per_star[0]), label = f'{ra[0]},{dec[0]}')
             for i in range(len(Y_photons_per_star)):
                 # y_offset = (dec[i] - Size[1])*(Size[3] - Size[1]) 
                 # phots = ax.plot(np.log10(X_wavelength), Y_Spectra_per_star[i], label = f'ra: {ra[i]}  ; dec: {dec[i]}') #+ [y_offset]*len(Y_Spectra_per_star[i])
-                phots = ax.plot(X_wavelength,  np.log10(Y_photons_per_star[i]), label = f'ra: {ra[i]}  ; dec: {dec[i]}') # + [y_offset]*len(Y_Spectra_per_star[i])
-                ax.set_ylim(-2, 13)
+                phots = ax.plot(X_wavelength,  Y_photons_per_star[i], label = f'ra: {ra[i]}  ; dec: {dec[i]}') # + [y_offset]*len(Y_Spectra_per_star[i])
+                ax.set_xlim(wave_min, wave_max)
         else:
-            wavelengths = np.linspace(100, 4000, 1000)
+            wavelengths = np.linspace(100, 3800, 1000)
             y_zeros = np.zeros_like(wavelengths) 
             phots= ax.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='y = 0')
-            ax.set_ylim(-2, 13)
+            ax.set_xlim(min(wavelengths), max(wavelengths))
         ax.legend()
         # ax.clear()
 
@@ -257,14 +261,14 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
         plt.rc('font', **font)
             
         # Create 2x2 sub plots
-        gs = gridspec.GridSpec(2, 2, width_ratios=[1, 1]) # , wspace=0.5, hspace=0.5, , width_ratios=[1, 2]
+        gs = gridspec.GridSpec(2, 2, wspace=0.5, width_ratios=[1, 2], ) # , hspace=0.5, , width_ratios=[1, 2]
         # fig and ax
         fig = plt.figure(layout='constrained', figsize=(14,7)) # figsize=(8,6)
-        subfigs = fig.subfigures(2, 2, wspace=0.07, hspace= 0.03, width_ratios=[2, 1]) #, gridspec_kw={'width_ratios': [1, 1], 'height_ratios': [1, 1]})
+        subfigs = fig.subfigures(2, 2, wspace=0.07, hspace= 0.03, width_ratios=[1, 2], height_ratios= [1, 1]) #, gridspec_kw={'width_ratios': [1, 1], 'height_ratios': [1, 1]})
 
         # fig = plt.figure(layout='constrained', figsize=(10, 4))
         # subfigs = fig.subfigures(1, 2, wspace=0.07)
-        print(np.shape(subfigs))
+        # print(np.shape(subfigs))
 
         # axsLeft = subfigs[0].subplots(1, 2, sharey=True)
 
@@ -275,8 +279,9 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
         ax2, satellite, orbit = init_orbit(ax2)  
 
         # row 0, col 1
-        ax3 = subfigs[0,1].add_subplot( facecolor="black", aspect= 0.15)
-        # ax3 = fig.add_subplot(gs[0, 1], facecolor="black", aspect= 0.15 )
+        ax3 = subfigs[1,0].add_subplot( facecolor="black", aspect= 0.15)
+        # ax3 = fig.add_subplot(gs[1, 0], facecolor="black", aspect= 0.15 )
+
         # initialize sky
         ax3, sky = init_sky(ax3)
 
@@ -286,8 +291,10 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
         # ax4, flux = init_Spectra(ax4)
 
         # row 1, col 0
-        ax4 = subfigs[1,0].add_subplot()
-        # ax4 = fig.add_subplot(gs[1, 0])
+    
+        ax4 = subfigs[0,1].add_subplot()
+        # ax4.set_aspect('equal', adjustable='box') 
+        # ax4 = fig.add_subplot(gs[0, 1])
         # initialize Photons Plot
         ax4, phots = init_photons(ax4)
 
@@ -336,23 +343,26 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
         X_wavelength, Y_photons_per_star, ra, dec = get_photons_data_by_frame(i, spectral_fov)
         if (X_wavelength[0]!=0):
             ax4.clear()
+            wave_min = min(X_wavelength)
+            wave_max = max(X_wavelength)
             # y_offset = [float(float(d) - Size[1]) * (Size[3] - Size[1]) for d in np.array(dec)]
             # flux = ax4.plot(np.log10(X_wavelength), np.log10(Y_Spectra_per_star[0]), label = f'{ra[0]},{dec[0]}')
             for k in range(len(Y_photons_per_star)):
                 # y_offset = (dec[i] - Size[1])*(Size[3] - Size[1]) 
                 # phots = ax4.plot(np.log10(X_wavelength), Y_Spectra_per_star[i], label = f'ra: {ra[i]}  ; dec: {dec[i]}') #+ [y_offset]*len(Y_Spectra_per_star[i])
-                phots = ax4.plot(X_wavelength,  np.log10(Y_photons_per_star[k]), label = f'ra: {ra[k]}  ; dec: {dec[k]}') # + [y_offset]*len(Y_Spectra_per_star[i])
-                ax4.set_ylim(-2, 13)
+                phots = ax4.plot(X_wavelength,  Y_photons_per_star[k], label = f'ra: {ra[k]}  ; dec: {dec[k]}') # + [y_offset]*len(Y_Spectra_per_star[i])
+                ax4.set_xlim(wave_min, wave_max)
         else:
             ax4.clear()
-            wavelengths = np.linspace(100, 4000, 1000)
+            wavelengths = np.linspace(100, 3800, 1000)
             y_zeros = np.zeros_like(wavelengths) 
             phots= ax4.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='y = 0')
-            ax4.set_ylim(-2, 13)
+            ax4.set_xlim(min(wavelengths), max(wavelengths))
+            
         ax4.legend()
         # set labels
-        ax4.set_xlabel('log$_{10}$[ Wavelength ($\AA$)]')
-        ax4.set_ylabel('log$_{10}$[Number of Photons] + offset')
+        ax4.set_xlabel('Wavelength ($\AA$)')
+        ax4.set_ylabel('Number of Photons')
         # set titles
         ax4.set_title('# of Photons from the stars in the Sky view')
 
@@ -366,22 +376,22 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
             ax_pos =[]
             wave_min = min(X_wavelength)
             wave_max = max(X_wavelength)
-            # photons_max =0
-            # for i in range(n):
-            #     MaxP = max(Y_photons_per_star[i])
-            #     if (MaxP >photons_max):
-            #         photons_max = MaxP
-            # print (photons_max)
+            photons_max =0
+            for i in range(n):
+                MaxP = max(Y_photons_per_star[i])
+                if (MaxP >photons_max):
+                    photons_max = MaxP
+            print (photons_max)
             color_data = (X_wavelength - wave_min)/(wave_max- wave_min)
 
             # Create a custom colormap based only on Violet-Indigo-Blue from spectrum
-            colors = plt.cm.rainbow(np.linspace(0, 1,  2000))
+            colors = plt.cm.rainbow(np.linspace(0, 1,  1500))
             colors = colors[0:int(len(X_wavelength))]
 
             if n == 1:  # only 1 star in the Fov
                 spectra = ax5.add_subplot( )
                 ax_pos = spectra
-                photons_max = max(Y_photons_per_star[0])
+                # photons_max = max(Y_photons_per_star[0])
                 alpha_val = calc_inv_opacity(Y_photons_per_star[0],len(Y_photons_per_star[0]), photons_max)
                 colors2 = calc_obs_color(colors, alpha_val, len(X_wavelength))
                 flux_cmap = mc.ListedColormap(colors2)
@@ -392,7 +402,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
             else:
                 spectra = ax5.subplots(n, 1, sharex=True)
                 for i, axs in enumerate(spectra): #plot spectra for each star 1 by 1
-                    photons_max = max(Y_photons_per_star[i])
+                    # photons_max = max(Y_photons_per_star[i])
                     alpha_val = calc_inv_opacity(Y_photons_per_star[i],len(Y_photons_per_star[i]), photons_max)
                     colors2 = calc_obs_color(colors, alpha_val, len(X_wavelength))
                     flux_cmap = mc.ListedColormap(colors2)
@@ -403,10 +413,10 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
                     axs.set_ylabel(f'Star {i+1},  RA = {ra[i]}')
                     ax_pos.append(axs)
             #add colorbar
-            norm = mc.Normalize(vmin=wave_min, vmax=wave_max)
-            scalar_mappable = plt.cm.ScalarMappable(norm=norm, cmap=mc.ListedColormap(colors))
-            scalar_mappable.set_array([])  # Optional: set an empty array to the ScalarMappable
-            ax5.colorbar(scalar_mappable, ax = ax_pos, label='Wavelength ($\AA$)')
+            # norm = mc.Normalize(vmin=wave_min, vmax=wave_max)
+            # scalar_mappable = plt.cm.ScalarMappable(norm=norm, cmap=mc.ListedColormap(colors))
+            # scalar_mappable.set_array([])  # Optional: set an empty array to the ScalarMappable
+            # ax5.colorbar(scalar_mappable,orientation='horizontal', ax = ax_pos, label='Wavelength ($\AA$)')
         else:
             spectra = ax5.add_subplot( )
 
@@ -421,10 +431,10 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
             spectra.set_ylim(0, 1)  # Set y-axis limits to 0 and 1
             spectra.set_ylabel(f'No Star present')
 
-            norm = mc.Normalize(vmin=10, vmax=3800)
-            scalar_mappable = plt.cm.ScalarMappable(norm=norm, cmap=flux_cmap)
-            scalar_mappable.set_array([])  # Optional: set an empty array to the ScalarMappable
-            ax5.colorbar(scalar_mappable, ax = spectra, label='Wavelength ($\AA$)')
+            # norm = mc.Normalize(vmin=10, vmax=3800)
+            # scalar_mappable = plt.cm.ScalarMappable(norm=norm, cmap=flux_cmap)
+            # scalar_mappable.set_array([])  # Optional: set an empty array to the ScalarMappable
+            # ax5.colorbar(scalar_mappable, orientation='horizontal', ax = spectra, label='Wavelength ($\AA$)')
 
         # return
         return satellite, orbit, sky, phots, spectra

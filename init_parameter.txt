@@ -1,6 +1,6 @@
 [Params_1]
-hipparcos_catalogue = C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\hip_main.dat
-castelli_data = C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\Castelli\ckp00
+hipparcos_catalogue = C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\\hip_main.dat
+castelli_data = C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\\Castelli\ckp00
 sat_name = Astrosat
 roll = False
 roll_rate_hrs = False
@@ -14,5 +14,5 @@ limit_min = 100
 limit_max = 3800
 azm = 40
 ele = 25
-interval_bw_frames = 500
+interval_bw_frames = 2000
 
