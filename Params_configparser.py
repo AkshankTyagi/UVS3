@@ -7,14 +7,14 @@ config = ConfigParser()
 config['Params_1'] = {
     'hipparcos_catalogue' : f'{folder_loc}hip_main.dat', #path to the Hipparcos file
     'Castelli_data' : f'{folder_loc}Castelli\ckp00', #path to the ckp00 file of the Castelli Kurucz Atlas
-    'sat_name' : 'Astrosat',
+    'sat_name' : 'ISS',
     'roll' : False,
     'roll_rate_hrs' : False,
     # TBA Directional Cosines of Detector from the velocity of Satellite 
     'number of Revolutions' : 1,
     # Specify either Number of frames or period in sec after which the next Frame is given
     'N_frames' : False,
-    't_slice' : 100, # Seconds,
+    't_slice' : 300, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
     'width': 0.5, #RA width
@@ -29,7 +29,8 @@ config['Params_1'] = {
     # set view
     'azm': 40,
     'ele': 25,
-    'interval_bw_Frames' : 2000 # milliSec
+    'longitudinal_spectral_width' : 0.8, #Declination width of spectral spread to fall on detector in degrees
+    'interval_bw_Frames' : 500 # milliSec
 }
 
 

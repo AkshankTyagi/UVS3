@@ -24,6 +24,7 @@ class Spectral_FOV:
         self.dec = []
         self.scale = []
         self.photons = []
+        self.frame_size = []
 
 ERG_TO_PHOT = 50306871.92
 N_CASTELLI_MODELS = 76
@@ -52,10 +53,12 @@ def index_greater_than(lst, value):
     return None  
 
 def GET_STAR_TEMP(sptype):
+    sptype = str(sptype)
     temperature = 0 
 
     if sptype.startswith("sd"):
         sptype = sptype[2:]
+    
 
     if sptype.startswith("O3"):
         temperature = 5
@@ -255,7 +258,9 @@ def GET_SPECTRA(spec_dir, data):
         scale_per_star = []
         photons_per_star = []
 
-        _, d, _ = zip(data[i])
+        _, d, frame_size = zip(data[i])
+        spectral_FOV.frame_size = frame_size
+        
         if d[0]:
             c = list(zip(*d[0]))
             ra, dec = c[0], c[1]
@@ -320,6 +325,7 @@ def GET_SPECTRA(spec_dir, data):
             spectral_FOV.photons.append([[0]])
     
     return spectral_FOV
+
 def GET_SCALE_FACTOR(j, c, waveL_range, stellar_spectra):
 
     V_mag, parallax, B_V= c[4][j], c[5][j],c[6][j]
