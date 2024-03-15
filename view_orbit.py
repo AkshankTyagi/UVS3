@@ -1,6 +1,7 @@
-# Functions to calculate state vectors, ra, dec and plot
-# Author: Ravi Ram
-# Jayant Murthy Sirs code ascl:1512.012
+# Main propogator file to run the animation, contains few General functions like Get Folder location used by all other files.
+# Functions to calculate state vectors of satellite, RA, Dec of FOV and plot the animation.
+# Author: Ravi Ram(starfield view from satellite in orbit), Akshank Tyagi(Spectroscopic analysis)
+# Jayant Murthy code ascl:1512.012
 
 import sys
 import numpy as np
@@ -13,14 +14,16 @@ from sgp4.earth_gravity import wgs72
 
 from configparser import ConfigParser
 config = ConfigParser()
-import pickle
+# import pickle
 
 def get_folder_loc():
     folder_loc = r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\\'
     return folder_loc
 
+# Run the parameter File updators
 from Params_configparser import *
 from Satellite_configparser import *
+# Import Functions from other code files
 from star_data import *#, filter_by_fov, read_hipparcos_data
 from plot import *#,animate
 from star_spectrum import *#,GET_SPECTRA

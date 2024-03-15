@@ -221,9 +221,9 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
         # Create 2x2 sub plots
         gs = gridspec.GridSpec(2, 2, wspace=0.2, hspace=0.3, width_ratios=[1, 2.5] ) # , , width_ratios=[1, 2]
         # fig and ax
-        fig = plt.figure(figsize=(12,6))
+        # fig = plt.figure(figsize=(12,6))
 
-        fig = plt.figure(layout='constrained', figsize=(12,6)) # figsize=(8,6)
+        fig = plt.figure(layout='constrained', figsize=(12.7,6.5)) # figsize=(8,6)
         subfigs = fig.subfigures(2, 2, wspace=0, hspace= 0.03, width_ratios=[1, 2]) #, gridspec_kw={'width_ratios': [1, 1], 'height_ratios': [1, 1]})
         # fig = plt.figure(layout='constrained', figsize=(10, 4))
         # subfigs = fig.subfigures(1, 2, wspace=0.07)
@@ -344,16 +344,6 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
         # return
         return satellite, orbit, sky, phots, spectra
     # Press space bar to pause animation
-    def toggle_pause(event, *args, **kwargs):
-        global ani, paused
-        if event.key == ' ':
-            if paused:
-                ani.resume()
-                print("animation resumed")
-            else:
-                ani.pause()
-                print("animation paused")
-            paused = not paused
 
     # run animation
     def run():
@@ -366,7 +356,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
         global ani, paused
         paused = False
         fig.canvas.mpl_connect('key_press_event', toggle_pause)
-        
+
         # create animation using the animate() function
         ani = animation.FuncAnimation(fig, update,
                                       frames=frame_count, interval= Interval, 
@@ -378,10 +368,21 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
         plt.show()
         print("animation complete")
         # save
-        # ani.save('satellite.gif', writer="ffmpeg")
-        # print("saved")
+        ani.save(f'{folder_loc}satellite.gif', writer="ffmpeg")
+        print("saved")
         return ani
     
+    def toggle_pause(event, *args, **kwargs):
+        global ani, paused
+        if event.key == ' ':
+            if paused:
+                ani.resume()
+                print("animation resumed")
+            else:
+                ani.pause()
+                print("animation paused")
+            paused = not paused
+
     # run animation
     run()
 
@@ -565,7 +566,7 @@ def get_photons_brightness(wavelength, photon_data, photon_max):
         elif (num_photons >= 0.5 * photon_max):
             rel[i] = 1 - (photon_max - num_photons)/(5*photon_max) #5
         elif (num_photons >= 0.01 * photon_max):
-            rel[i] = 1 - (photon_max - num_photons)/(4*photon_max) #4
+            rel[i] = 1 - (photon_max - num_photons)/(3.5*photon_max) #4
         elif (num_photons >= 0.0005 * photon_max):
             rel[i] = 1 - (photon_max - num_photons)/(2.5*photon_max) #2.5
         elif (num_photons >= 0.00001 * photon_max):
