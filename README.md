@@ -1,6 +1,6 @@
 # Spectroscopic data animation of the starfield view from a satellite in Earth orbit
 > Animated plot of the starfield as viewed in the velocity direction of a satelitte using TLE propagated data.
-> Obtains the details for star in Field of View  and their intrinsic stellar spectra then plots Number of photons recieved vs wavelegth, and the Absorption Spectra of the FOV light
+> Obtains the details for stars in Field of View  and their intrinsic stellar spectra then plots Number of photons recieved vs wavelegth, and the Absorption Spectra of the FOV light
 
 ## Table of contents
 * [General info](#general-info)
