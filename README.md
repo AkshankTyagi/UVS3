@@ -14,7 +14,7 @@
 
 
 ## General info
-A parameter file <init_parameter.txt> is created using configparser module in python by running <Params_configparser.py> file
+A parameter file [init_parameter.txt] is created using configparser module in python by running [Params_configparser.py] file
 As the satellite moves around the orbit, the sky view rendered as seen by a camera positioned in the direction of velocity vector.  
 TLE (Two-Line Elements) is used for calculating positions around orbit. For any given valid satellite in space, TLE's can be acquired from [Celestrak](https://celestrak.org/NORAD/documentation/gp-data-formats.php) using its NORAD id. 
 TLE of the satellites can be added to the parameter file <Satellite.txt> using the creator Python file <Satellite_configparser.py>.
