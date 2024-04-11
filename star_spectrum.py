@@ -359,6 +359,9 @@ def GET_SCALE_FACTOR(j, c, waveL_range, stellar_spectra):
         scale = 3.64e-9 * pow(10, -0.4 * (V_mag - 3.1 * ebv)) / vflux
         scale = scale * distance**2
 
+# 3.336 x 10^{-19} x lambda^{2} x (4pi)^{-1}
+
+        # photon number calculated with
         for w in  range (len(waveL_range)):
             photon_number = stellar_spectra[w] * scale * 4 * math.pi * ERG_TO_PHOT * waveL_range[w]
             tot_photons.append(photon_number)

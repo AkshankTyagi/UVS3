@@ -219,12 +219,12 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
         plt.rc('font', **font)
             
         # Create 2x2 sub plots
-        gs = gridspec.GridSpec(2, 2, wspace=0.2, hspace=0.3, width_ratios=[1, 2.5] ) # , , width_ratios=[1, 2]
+        gs = gridspec.GridSpec(2, 2, wspace=0.2, hspace=0.3, width_ratios=[1, 1] ) # , , width_ratios=[1, 2]
         # fig and ax
         # fig = plt.figure(figsize=(12,6))
 
         fig = plt.figure(layout='constrained', figsize=(12.7,6.5)) # figsize=(8,6)
-        subfigs = fig.subfigures(2, 2, wspace=0, hspace= 0.03, width_ratios=[1, 2]) #, gridspec_kw={'width_ratios': [1, 1], 'height_ratios': [1, 1]})
+        subfigs = fig.subfigures(2, 2, wspace=0, hspace= 0.03, width_ratios=[1, 1]) #, gridspec_kw={'width_ratios': [1, 1], 'height_ratios': [1, 1]})
         # fig = plt.figure(layout='constrained', figsize=(10, 4))
         # subfigs = fig.subfigures(1, 2, wspace=0.07)
         # print(np.shape(subfigs))
@@ -368,8 +368,8 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
         plt.show()
         print("animation complete")
         # save
-        ani.save(f'{folder_loc}satellite.gif', writer="ffmpeg")
-        print("saved")
+        # ani.save(f'{folder_loc}satellite.gif', writer="ffmpeg")
+        # print("saved")
         return ani
     
     def toggle_pause(event, *args, **kwargs):
