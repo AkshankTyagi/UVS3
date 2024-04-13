@@ -17,8 +17,9 @@ config = ConfigParser()
 # import pickle
 
 def get_folder_loc():
-    folder_loc = r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\\'
-    return folder_loc
+    folder_loc = fr'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\\'
+    params_file = fr'{folder_loc}init_parameter.txt'
+    return folder_loc, params_file
 
 # Run the parameter File updators
 from Params_configparser import *
@@ -27,12 +28,12 @@ from Satellite_configparser import *
 from star_data import *#, filter_by_fov, read_hipparcos_data
 from plot import *#,animate
 from star_spectrum import *#,GET_SPECTRA
+from diffused_data import *
 
 # include the parameter file and sattelite TLE file
-folder_loc = get_folder_loc()
-params_file = f'{folder_loc}init_parameter.txt'
+folder_loc, params_file = get_folder_loc()
 sat_file = f'{folder_loc}Satellite_TLE.txt'
-print(params_file)
+
 
 def read_parameter_file(filename=params_file, param_set = 'Params_1'):
     config.read(filename)
@@ -50,9 +51,6 @@ def read_parameter_file(filename=params_file, param_set = 'Params_1'):
     N_revolutions = config.get(param_set, 'number of Revolutions')
     N_frames = config.get(param_set, 'N_frames')
     T_slice = config.get(param_set, 't_slice')
-    # width = float(config.get(param_set, 'width'))
-    # height = float(config.get(param_set, 'height'))
-    # Threshold = float(config.get(param_set,'star_mag_threshold'))
     
     print('sat_name:', sat_name, ', roll:',roll,',  roll_rate_hrs:',roll_rate_hrs, ',  N_revolutions:',N_revolutions, ',  N_frames:', N_frames, ',  T_slice:', T_slice)
     return hipp_file, castelli_file, sat_name, float(T_slice), N_frames, float(N_revolutions), roll #, Threshold
@@ -61,7 +59,6 @@ def read_satellite_TLE(filename= sat_file, sat_name = 'ISS'):
     config.read(filename)
     line1 = config.get(sat_name, 'line1')
     line2 = config.get(sat_name, 'line2')
-
     return line1, line2
 
 # get satellite object from TLE (2 lines data)
@@ -150,6 +147,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, roll=False):
     for frame, (r, d) in enumerate(zip(ra, dec)):
         # print(frame, (r, d))
         tdf_values, frame_boundary = filter_by_fov(df, r, d)
+        # print(frame, frame_boundary)
         tdf_values = tdf_values.values.tolist()
         # print (tdf_values)
         frame_row_list.append([frame, tdf_values, frame_boundary ])
@@ -185,8 +183,11 @@ def main():
     # simulation starts from current time to one full orbit
     start = np.datetime64(datetime.datetime.now())
     # times, state_vectors, celestial_coordinates  
-    time_arr, state_vectors, celestial_coordinates = get_simulation_data(satellite, df, start, t_period, t_slice, roll)
-    Spectra = GET_SPECTRA(castelli_dir, celestial_coordinates)
+    time_arr, state_vectors, celestial_data = get_simulation_data(satellite, df, start, t_period, t_slice, roll)
+    Spectra = GET_SPECTRA(castelli_dir, celestial_data)
+    # print(celestial_data)
+    diffused_data = get_diffused_in_FOV(celestial_data)
+
     # print(Spectra.frame)
     # print(Spectra.wavelength)
     # print(Spectra.spectra_per_star)
@@ -195,7 +196,7 @@ def main():
     #     pickle.dump(data, f)
 
     # animate
-    animate(time_arr, state_vectors, celestial_coordinates, Spectra, r)
+    animate(time_arr, state_vectors, celestial_data, Spectra, diffused_data, r)
     return
 
 # main

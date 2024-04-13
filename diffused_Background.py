@@ -4,13 +4,10 @@ from configparser import ConfigParser
 from astropy.io import fits
 from astropy.wcs import WCS
 import csv
-
+import matplotlib.pyplot as plt
+import matplotlib.colors as mc
 
 from view_orbit import get_folder_loc
-
-folder_loc = get_folder_loc()
-params_file = f'{folder_loc}init_parameter.txt'
-
 
 # def DEGRAD(deg):
 #     return math.radians(deg)
@@ -18,12 +15,16 @@ params_file = f'{folder_loc}init_parameter.txt'
 # def RADDEG(rad):
 #     return math.degrees(rad)
 
+folder_loc, params_file = get_folder_loc()
+
 def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     config = ConfigParser()
     config.read(filename)
     global sat_name, Interval, spectra_width
     sat_name = config.get(param_set, 'sat_name')
-    return sat_name
+    diffused_wavelength = config.get(param_set, 'BG_wavelength')
+    return diffused_wavelength
+
 
 def invert_gal_to_eq(gl, gb):
 
@@ -58,7 +59,6 @@ def invert_gal_to_eq(gl, gb):
     
     return ra, dec
 
-
 def get_world_coordinates(x, y, fits_file):
     with fits.open(fits_file) as hdul:
         wcs = WCS(hdul[0].header)  # Create WCS object from FITS header
@@ -68,74 +68,133 @@ def get_world_coordinates(x, y, fits_file):
         # print(ra,dec)
         return ra, dec
 
-gl= [0] #longitude
-gb= [0] #latitude
-ra, dec = invert_gal_to_eq(gl,gb)
-print (gl,gb,'--->',ra,dec)
+def plot_diffused_bg(filename):
+    with fits.open(filename) as hdul:
+        data = hdul[0].data
+        data= data/10000
 
-# Example usage
-x_pixel = [1800]
-y_pixel = [900]
+        colors = [(0, 0, 0), (0, 0, 1)]  # Black to blue
+        cmap_name = 'black_to_blue'
+        BtoB_cmap = mc.LinearSegmentedColormap.from_list(cmap_name, colors)
+        print(1)
+        plt.imshow(data, cmap= BtoB_cmap, vmin=0, vmax= 0.3)
+        
+        plt.show()
 
-wavelength = 2300
-fits_filename = f"{folder_loc}diffused_data\scattered_1e10_{wavelength}_a40_g6\scattered.fits"
+
+## Example usage
+
+wavelength = read_parameter_file()
+fits_filename = f"{folder_loc}diffused_UV_data\scattered_1e10_{wavelength}_a40_g6\scattered.fits"
 print(fits_filename)
 
+# plot_diffused_bg(fits_filename)
 
-glon, glat = get_world_coordinates(x_pixel, y_pixel, fits_filename)
-ra, dec = invert_gal_to_eq(glon,glat)
-print("RA:", ra)
-print("Dec:", dec)
+# gl= [0] #longitude
+# gb= [0] #latitude
+# ra, dec = invert_gal_to_eq(gl,gb)
+# print (gl,gb,'--->',ra,dec)
 
-x_range= 3600
-x_array = np.arange(1, 3601)
-print(x_array)
-y_range = 1800
+# x_pixel = [1800]
+# y_pixel = [900]
 
+# glon, glat = get_world_coordinates(x_pixel, y_pixel, fits_filename)
+# ra, dec = invert_gal_to_eq(glon,glat)
+# print("RA:", ra)
+# print("Dec:", dec)
 
-ra_grid = []
-dec_grid = []
+# x_range= 3600
+# x_array = np.arange(1, 3601)
+# y_range = 1800
 
-with fits.open(fits_filename) as hdul:
-    global values
-    # Print the header of the PrimaryHDU (HDU 0)
-    fits.info(fits_filename)
-    values = hdul[0].data
+# # Obtain the Flux values
+# with fits.open(fits_filename) as hdul:
+#     global values
+#     # Print the header of the PrimaryHDU (HDU 0)
+#     fits.info(fits_filename)
+#     values = hdul[0].data
 
-print("values_recieved")
-# csv_file = fr"{folder_loc}diffused_data\flux_{wavelength}.csv"
-with open(fr"{folder_loc}diffused_data\flux_{wavelength}.csv", 'w', newline='') as csvfile:
+# print("values_obtained")
+
+# # from the Pixels converting to galctic to Equatorial coordinates + flux grid
+# grid = []
+# for i in range( y_range+1):
+#     if i%20== 0:
+#         print("line-",i)
+#     glon, glat = get_world_coordinates(x_array, [i]*3600, fits_filename)
+#     # print(glon, glat)
+#     ra_line, dec_line = invert_gal_to_eq(glon,glat)
+    
+#     line = zip(values[i-1],ra_line, dec_line)
+#     grid.append(line)
+
+# print("cordinate_transformation_done")
+
+# write the csv file with flux and respective coordinate
+# with open(fr"{folder_loc}diffused_UV_data\flux_{wavelength}.csv", 'w', newline='') as csvfile:
+#     csv_writer = csv.writer(csvfile)
+#     # Write the data array to the CSV file row by row
+#     for row in grid:
+#         csv_writer.writerow(row)
+
+# print(f"flux_{wavelength}.csv saved")
+# del values
+# del grid
+# del x_array
+
+sorted_list=[]
+with open(fr"{folder_loc}diffused_UV_data\flux_{wavelength}.csv", 'r', newline='') as csvfile:
+    csv_reader = csv.reader(csvfile)
+    for row in csv_reader:
+        print(len(sorted_list))
+        for flux_location in row:
+            flux, ra, dec = flux_location.split(', ')
+
+            if ra == 'nan':
+                continue
+
+            flux = float(flux[1:])
+            ra = float(ra)
+            dec = float(dec[:-1])
+            if len(sorted_list) == 0:
+                sorted_list.append([ra, dec, flux])
+            elif len(sorted_list) == 1:
+                if ra <= sorted_list[0][0]:
+                    sorted_list.insert(0,[ra, dec, flux])
+                else:
+                    sorted_list.append([ra,dec,flux])
+            else:
+                for i in range(len(sorted_list)-1):
+                    if ra<= sorted_list[i][0]:
+                        sorted_list.insert(i, [ra,dec,flux])
+                        break
+                    elif (ra> sorted_list[i][0] and ra<= sorted_list[-1][0]): 
+                        continue
+                    else:
+                        sorted_list.append([ra,dec,flux])
+                        break
+
+with open(fr"{folder_loc}diffused_UV_data\RA_sorted_flux_{wavelength}.csv", 'w', newline='') as csvfile:
     csv_writer = csv.writer(csvfile)
     # Write the data array to the CSV file row by row
-    for row in values:
+    for row in sorted_list:
         csv_writer.writerow(row)
-print(f"flux_{wavelength}.csv saved")
 
-# from the Pixels converting to galctic to Equatorial coordinates
-for i in range(1, y_range+1):
-    if i%20== 0:
-        print("line-",i)
-    glon, glat = get_world_coordinates(x_array, [i]*3600, fits_filename)
-    # print(glon, glat)
-    ra_line, dec_line = invert_gal_to_eq(glon,glat)
-    # ra_line.append(ra)
-    # dec_line.append(dec)
-    ra_grid.append(ra_line)
-    dec_grid.append(dec_line)
+print(f"RA_sorted_flux_{wavelength}.csv saved")
 
-print("cordinate_transformation_done")
 
-with open(fr"{folder_loc}diffused_data\ra_{wavelength}.csv", 'w', newline='') as csvfile:
-    csv_writer = csv.writer(csvfile)
-    # Write the data array to the CSV file row by row
-    for row in ra_grid:
-        csv_writer.writerow(row)
-print(f"ra_{wavelength}.csv saved")
-with open(fr"{folder_loc}diffused_data\dec_{wavelength}.csv", 'w', newline='') as csvfile:
-    csv_writer = csv.writer(csvfile)
-    # Write the data array to the CSV file row by row
-    for row in dec_grid:
-        csv_writer.writerow(row)
-print(f"dec_{wavelength}.csv saved")
+# with open(fr"{folder_loc}diffused_UV_data\ra_{wavelength}.csv", 'w', newline='') as csvfile:
+#     csv_writer = csv.writer(csvfile)
+#     # Write the data array to the CSV file row by row
+#     for row in ra_grid:
+#         csv_writer.writerow(row)
+# print(f"ra_{wavelength}.csv saved")
+# with open(fr"{folder_loc}diffused_UV_data\dec_{wavelength}.csv", 'w', newline='') as csvfile:
+#     csv_writer = csv.writer(csvfile)
+#     # Write the data array to the CSV file row by row
+#     for row in dec_grid:
+#         csv_writer.writerow(row)
+# print(f"dec_{wavelength}.csv saved")
 
 # center is at BQF900
+

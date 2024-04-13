@@ -6,22 +6,24 @@ import numpy as np
 import pandas as pd
 from configparser import ConfigParser
 from view_orbit import get_folder_loc
-folder_loc = get_folder_loc()
+
 
 # Hipparcos Catalogue [hip_main.dat]
 # http://cdsarc.u-strasbg.fr/ftp/cats/I/239/ 
 # FILENAME = r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\hip_main.dat'
-params_file = f'{folder_loc}init_parameter.txt'
+
+folder_loc, params_file = get_folder_loc()
 
 def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     config = ConfigParser()
     config.read(filename)
-    global hipp_file , star_mag_threshold
+    global hipp_file , star_mag_min_threshold, star_mag_max_threshold
     hipp_file = config.get(param_set, 'hipparcos_catalogue')
     # Field of View size:
     width = float(config.get(param_set, 'width'))
     height = float(config.get(param_set, 'height'))
-    star_mag_threshold = float(config.get(param_set, 'star_mag_threshold'))
+    star_mag_min_threshold = float(config.get(param_set, 'starmag_min_threshold'))
+    star_mag_max_threshold = float(config.get(param_set, 'starmag_max_threshold'))
     return  width, height 
 
 _, _ = read_parameter_file()
@@ -31,19 +33,24 @@ def read_hipparcos_data(FILENAME = hipp_file):
     # Field H1: Hipparcos Catalogue (HIP) identifier
     # Field H5: V magnitude
     # Fields H8–9:  The right ascension, α , and declination, δ (in degrees)    
-    threshold= star_mag_threshold
-    print (f'Stars apparent magnitude Threshold= {threshold}')
+    
+    print (f'Stars apparent magnitude Threshold= {[star_mag_min_threshold, star_mag_max_threshold]}')
 
     try:
         df = pd.read_csv(FILENAME, header=None,
                          sep = '|', skipinitialspace=True).iloc[:, [1, 5, 8, 9, 11, 37, 76]]
         df.columns = ['hip', 'mag', 'ra_deg', 'de_deg', 'trig_parallax', 'B-V', 'Spectral_type']
 
-        df['mar_size'] = 2*(threshold - df['mag'])
+        df['mar_size'] = 2*(star_mag_max_threshold - df['mag'])
+        
         # filter data above
-
-        q = 'mag <= @threshold'
+        threshold =  star_mag_max_threshold
+        q = 'mag <= @threshold' 
         df = df.query(q) 
+        threshold =  star_mag_min_threshold
+        a = 'mag >= @threshold' 
+        df = df.query(a) 
+
         return df  
     
     except FileNotFoundError:

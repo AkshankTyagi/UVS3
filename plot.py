@@ -2,6 +2,7 @@
 # Author: Ravi Ram
 
 import numpy as np
+import csv
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -12,12 +13,11 @@ from matplotlib.figure import Figure
 
 from configparser import ConfigParser
 
-from star_spectrum import * 
-# from star_spectrum import GET_STAR_TEMP
+from star_spectrum import *
+from diffused_data import *
 from view_orbit import get_folder_loc
 
-folder_loc = get_folder_loc()
-params_file = f'{folder_loc}init_parameter.txt'
+folder_loc, params_file = get_folder_loc()
 
 def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     config = ConfigParser()
@@ -31,7 +31,7 @@ def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     return azm, ele
 
 # main animate function
-def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
+def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffused_data, r ):
     # initiallize 3D earth and satellite view
     def init_orbit(ax):
         azm, ele = read_parameter_file()
@@ -72,7 +72,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
     
     # init 2D sky view as seen in the velocity direction
     def init_sky(ax):
-        global sky
+        global sky, diffused
                
         # set labels
         ax.set_xlabel('Right Ascension $^\circ$')
@@ -83,7 +83,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
         
         # get initial frame celestial_coordinates data 
         P, S, Size = get_cles_data_by_frame(0, celestial_coordinates) 
-        Size = Size[0]
+        print (Size)
         # print(Size)  
         # set axis limits
         ax.set_xlim(Size[0], Size[2])
@@ -92,13 +92,23 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
         # ax.set_ylim(min(P[:,1]), max(P[:,1]))       
         
         # Scatter plot
-        if (S[0] == 0.0001) :
+        if (S[0] == 0.0001) : #no star in the FOV
             sky = ax.scatter(P[0], P[1], s=S[0], facecolors='White')
         else:
-            sky = ax.scatter(P[:,0], P[:,1], s=S, facecolors='Red')
+            sky = ax.scatter(P[:,0], P[:,1], s=S, facecolors='white')
+        print(S)
+
+        alpha, loc = random_scatter_data(diffused_data[0])
+        
+
+        # loc, background_flux = get_diffused_in_FOV(diffused_BG_wavelength, Size )
+
+        diffused = ax.scatter(loc[0], loc[1], s= 1, a = alpha,  facecolors='Blue')
+
+        # background_flux = get_flux_ipixel(diffused_BG_wavelength, Size)
         
         # return
-        return ax, sky    
+        return ax, sky , diffused
     
     # init Intrinsic Spectral plot for all stars in the FOV
     # def init_Spectra(ax):
@@ -241,7 +251,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
         ax3 = subfigs[1,0].add_subplot( facecolor="black", aspect= 0.15)
         # ax3 = fig.add_subplot(gs[1, 0], facecolor="black", aspect= 0.15 )
         # initialize sky
-        ax3, sky = init_sky(ax3)
+        ax3, sky, diffused = init_sky(ax3)
 
         # # row 1, col 0 (Plot removed)
         # ax4 = fig.add_subplot(gs[1, 0])
@@ -282,7 +292,6 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, r ):
         
         # get frame data. pos[ra, dec], size
         P, S, Size = get_cles_data_by_frame(i, celestial_coordinates)
-        Size = Size[0]
         # print(S)
         # Update scatter object
         sky.set_offsets(P)
@@ -453,7 +462,7 @@ def get_cles_data_by_frame(i, data):
         print('Frame',frame[0]+1,'is EMPTY', end="\n")
         no_star = [0,0]
         zero_size =(0.0001,)
-        return no_star, zero_size, frame_boundary
+        return no_star, zero_size, frame_boundary[0]
 
 # get Spectral data of the stars for the given frame index 
 def get_spectral_data_by_frame(i, spectral_FOV):
@@ -573,6 +582,26 @@ def get_photons_brightness(wavelength, photon_data, photon_max):
             rel[i] = 1 - (photon_max - num_photons)/(1.5*photon_max) #1.5
     return rel
 
+# def get_diffused_in_FOV(wavelength, frame_boundary):
+#     loc =[]
+#     fluxes = []
+#     with open(fr"{folder_loc}diffused_UV_data\flux_{wavelength}.csv", 'r', newline='') as csvfile:
+#         csv_reader = csv.reader(csvfile)
+#         for i, row in enumerate(csv_reader):
+#             for j, flux_location in enumerate(row):
+#                 flux, ra, dec = flux_location.split(', ')
+#                 flux = float(flux[1:])
+#                 ra = float(ra)
+#                 dec = float(dec[:-1])
+#                 if ra == 'nan':
+#                     continue
+#                 elif (ra >= frame_boundary[0]and  ra <= frame_boundary[2]):
+#                     if (dec >= frame_boundary[1] and  dec <= frame_boundary[3]):
+#                         loc.append((ra,dec))
+#                         fluxes.append(flux)
+#                         # print(i, j, ra, dec, flux)           
+    
+#     return loc, fluxes
 
 # if n == 1:  # only 1 star in the Fov
 #     spectra = ax.add_subplot( )

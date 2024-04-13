@@ -4,7 +4,6 @@ import numpy as np
 from configparser import ConfigParser
 import math
 from view_orbit import get_folder_loc
-folder_loc = get_folder_loc()
 
 class StellarSpectrum:
     def __init__(self, v1 =0, v2= []):
@@ -32,7 +31,8 @@ N_CASTELLI_MODELS = 76
 # Castelli_data--
 # spec_dir= r"C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\Castelli\ckp00"
 # params_file = r'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\init_parameter.txt'
-params_file = f'{folder_loc}init_parameter.txt'
+
+folder_loc, params_file = get_folder_loc()
 
 def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     config = ConfigParser()
@@ -361,7 +361,7 @@ def GET_SCALE_FACTOR(j, c, waveL_range, stellar_spectra):
 
 # 3.336 x 10^{-19} x lambda^{2} x (4pi)^{-1}
 
-        # photon number calculated with
+        # photon number calculated with 
         for w in  range (len(waveL_range)):
             photon_number = stellar_spectra[w] * scale * 4 * math.pi * ERG_TO_PHOT * waveL_range[w]
             tot_photons.append(photon_number)
