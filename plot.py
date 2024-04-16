@@ -22,12 +22,13 @@ folder_loc, params_file = get_folder_loc()
 def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     config = ConfigParser()
     config.read(filename)
-    global sat_name, Interval, spectra_width
+    global sat_name, Interval, spectra_width, BG_wavelength
     sat_name = config.get(param_set, 'sat_name')
     azm = float(config.get(param_set, 'azm'))
     ele = float(config.get(param_set, 'ele'))
     Interval = float(config.get(param_set, 'interval_bw_Frames'))
     spectra_width = float(config.get(param_set, 'longitudinal_spectral_width'))
+    BG_wavelength = config.get(param_set, 'BG_wavelength')
     return azm, ele
 
 # main animate function
@@ -72,7 +73,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
     
     # init 2D sky view as seen in the velocity direction
     def init_sky(ax):
-        global sky, diffused
+        global sky, diffused, text
                
         # set labels
         ax.set_xlabel('Right Ascension $^\circ$')
@@ -83,27 +84,30 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         
         # get initial frame celestial_coordinates data 
         P, S, Size = get_cles_data_by_frame(0, celestial_coordinates) 
-        print (Size)
+        Size = Size[0]
+        # print (Size)
         # print(Size)  
         # set axis limits
         ax.set_xlim(Size[0], Size[2])
         ax.set_ylim(Size[1], Size[3])  
         # ax.set_xlim(min(P[:,0]), max(P[:,0]))
         # ax.set_ylim(min(P[:,1]), max(P[:,1]))       
-        
-        # Scatter plot
+
+        #Scatter plot for Diffused light
+        a, loc_ra, loc_dec = random_scatter_data(diffused_data[0])
+        diffused = ax.scatter(loc_ra, loc_dec, s= 0.05, alpha= a,  facecolors='Blue')
+
+        tot_phot = calc_total_diffused_flux(diffused_data[0])
+        info_text = f"Diffused UV Background\n    at {BG_wavelength} $\AA$\nNum_photons from diffused \n= {round(tot_phot, 3)} s\u207B\u00B9 cm\u207B\u00B2 $\AA$\u207B\u00B9 sr\u207B\u00B9"
+        # print(info_text)
+        text = ax.text(1.04, 0.6, info_text, transform=ax.transAxes, fontsize=7.5, va='center')
+
+        # Scatter plot for stars
         if (S[0] == 0.0001) : #no star in the FOV
             sky = ax.scatter(P[0], P[1], s=S[0], facecolors='White')
         else:
             sky = ax.scatter(P[:,0], P[:,1], s=S, facecolors='white')
-        print(S)
-
-        alpha, loc = random_scatter_data(diffused_data[0])
-        
-
-        # loc, background_flux = get_diffused_in_FOV(diffused_BG_wavelength, Size )
-
-        diffused = ax.scatter(loc[0], loc[1], s= 1, a = alpha,  facecolors='Blue')
+        # print(S)
 
         # background_flux = get_flux_ipixel(diffused_BG_wavelength, Size)
         
@@ -161,6 +165,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         if (X_wavelength[0]!=0):
             wave_min = min(X_wavelength)
             wave_max = max(X_wavelength)
+            max_p = get_max_photon(Y_photons_per_star)
             # y_offset = [float(float(d) - Size[1]) * (Size[3] - Size[1]) for d in np.array(dec)]
             # flux = ax4.plot(np.log10(X_wavelength), np.log10(Y_Spectra_per_star[0]), label = f'{ra[0]},{dec[0]}')
             for i in range(len(Y_photons_per_star)):
@@ -168,12 +173,13 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
                 # phots = ax.plot(np.log10(X_wavelength), Y_Spectra_per_star[i], label = f'ra: {ra[i]}  ; dec: {dec[i]}') #+ [y_offset]*len(Y_Spectra_per_star[i])
                 phots = ax.plot(X_wavelength, Y_photons_per_star[i], label = f'ra: {ra[i]}  ; dec: {dec[i]}') # + [y_offset]*len(Y_Spectra_per_star[i])
                 ax.set_xlim(wave_min, wave_max)
-                # ax.set_ylim(0, 8)
+                ax.set_ylim(0, max_p)
         else:
             wavelengths = np.linspace(100, 3800, 1000)
             y_zeros = np.zeros_like(wavelengths) 
-            phots= ax.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='y = 0')
+            phots= ax.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='No stars in Fov')
             ax.set_xlim(min(wavelengths), max(wavelengths))
+            ax.set_ylim(-1, 1e+6)
         ax.legend()
         # ax.clear()
 
@@ -218,7 +224,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
     # initialize plot
     def init():
         global fig, ax2, ax3, ax4, ax5
-        global orbit, satellite, sky,  phots, spectra
+        global orbit, satellite, sky, diffused, phots, spectra
         global X, Y, Z
         global RA, DEC
         
@@ -229,27 +235,30 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         plt.rc('font', **font)
             
         # Create 2x2 sub plots
-        gs = gridspec.GridSpec(2, 2, wspace=0.2, hspace=0.3, width_ratios=[1, 1] ) # , , width_ratios=[1, 2]
+        gs = gridspec.GridSpec(2, 2, wspace=0.3, hspace=0.3, width_ratios=[1, 1] ) # , , width_ratios=[1, 2]
         # fig and ax
         # fig = plt.figure(figsize=(12,6))
 
         fig = plt.figure(layout='constrained', figsize=(12.7,6.5)) # figsize=(8,6)
-        subfigs = fig.subfigures(2, 2, wspace=0, hspace= 0.03, width_ratios=[1, 1]) #, gridspec_kw={'width_ratios': [1, 1], 'height_ratios': [1, 1]})
+        subfigs = fig.subfigures(2, 2, wspace=0.01, hspace= 0.02, width_ratios=[1, 1]) #, gridspec_kw={'width_ratios': [1, 1], 'height_ratios': [1, 1]})
         # fig = plt.figure(layout='constrained', figsize=(10, 4))
         # subfigs = fig.subfigures(1, 2, wspace=0.07)
         # print(np.shape(subfigs))
 
         # axsLeft = subfigs[0].subplots(1, 2, sharey=True)
+        # plt.subplots_adjust(left=0.1, right=0.9, bottom=0.1, top=0.9)
 
         # row 0, col 0
-        ax2 = subfigs[0,0].add_subplot( projection='3d')
-        # ax2 = fig.add_subplot(gs[0, 0], projection='3d' )
+        # ax2 = subfigs[0,0].add_subplot( projection='3d')
+        ax2 = fig.add_subplot(gs[0, 0], projection='3d' )
         # set layout
         ax2, satellite, orbit = init_orbit(ax2)  
 
+        # plt.subplots_adjust(left=0.3, right=0.6, bottom=0.1, top=0.9)
+
         # row 1, col 0
-        ax3 = subfigs[1,0].add_subplot( facecolor="black", aspect= 0.15)
-        # ax3 = fig.add_subplot(gs[1, 0], facecolor="black", aspect= 0.15 )
+        # ax3 = subfigs[1,0].add_subplot( facecolor="black", aspect= 0.6)
+        ax3 = fig.add_subplot(gs[1, 0], facecolor="black", aspect= 0.45 )
         # initialize sky
         ax3, sky, diffused = init_sky(ax3)
 
@@ -259,25 +268,26 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         # ax4, flux = init_Spectra(ax4)
 
         # row 0, col 1
-        ax4 = subfigs[0,1].add_subplot()
-        # ax4.set_aspect('equal', adjustable='box') 
-        # ax4 = fig.add_subplot(gs[0, 1])
+        # ax4 = subfigs[0,1].add_subplot()
+        ax4 = fig.add_subplot(gs[0, 1])
+        # ax4.set_aspect('equal', adjustable='box')
         # initialize Photons Plot
         ax4, phots = init_photons(ax4)
 
         # row 1, col 1
-        ax5 = subfigs[1,1].add_subplot()
-        # ax5 = fig.add_subplot(gs[1, 1])
+        # ax5 = subfigs[1,1].add_subplot()
+        ax5 = fig.add_subplot(gs[1, 1])
         # initialize Photons Plot
         ax5, spectra = init_spectra(ax5)
+
 
         # to avoid subplot title overlap with x-tick
         # fig.tight_layout()
         
         # return
-        return fig, satellite, orbit, sky, phots, spectra
+        return fig, satellite, orbit, sky, diffused, phots, spectra
 
-    def update(i, satellite, orbit, sky, phots, spectra):
+    def update(i, satellite, orbit, sky, diffused, phots, spectra):
         # stack as np columns for scatter plot
         xyi, xi, yi, zi = get_pos_data_by_frame(i)
         # print ('frame number',i+1,'- satellite path:', xi, yi, zi)
@@ -289,21 +299,29 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         # .set_data() for plot...
         orbit.set_data(xi, yi)
         orbit.set_3d_properties(zi)
-        
+
+        # ax3.clear()
         # get frame data. pos[ra, dec], size
         P, S, Size = get_cles_data_by_frame(i, celestial_coordinates)
+        Size = Size[0]
+        alpha, loc_ra, loc_dec = random_scatter_data(diffused_data[i])
+        diffused_offsets = np.column_stack((loc_ra, loc_dec))
+        diffused.set_offsets(diffused_offsets)
         # print(S)
         # Update scatter object
         sky.set_offsets(P)
         # print('P is working')
         sky.set_sizes(S)
-        # print('S is working')   
+        # print('S is working')
+
+        tot_phot = calc_total_diffused_flux(diffused_data[i])
+        info_text = f"Diffused UV Background\n    at {BG_wavelength} $\AA$\nNum_photons from diffused \n= {round(tot_phot, 3)} s\u207B\u00B9 cm\u207B\u00B2 $\AA$\u207B\u00B9 sr\u207B\u00B9"
+        text.set_text(info_text)
 
         # change sky limits
         ax3.set_xlim(Size[0], Size[2])
         ax3.set_ylim(Size[1], Size[3])    
-        # ax3.set_xlim(min(P[:,0]), max(P[:,0]))
-        # ax3.set_ylim(min(P[:,1]), max(P[:,1]))
+
         
         # setting up the number of photons vs wavelength plot
         ax4.clear()
@@ -315,6 +333,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         if (X_wavelength[0]!=0):
             wave_min = min(X_wavelength)
             wave_max = max(X_wavelength)
+            max_p = get_max_photon(Y_photons_per_star)
             # y_offset = [float(float(d) - Size[1]) * (Size[3] - Size[1]) for d in np.array(dec)]
             # flux = ax4.plot(np.log10(X_wavelength), np.log10(Y_Spectra_per_star[0]), label = f'{ra[0]},{dec[0]}')
             for k in range(len(Y_photons_per_star)):
@@ -322,13 +341,13 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
                 # phots = ax4.plot(np.log10(X_wavelength), Y_Spectra_per_star[i], label = f'ra: {ra[i]}  ; dec: {dec[i]}') #+ [y_offset]*len(Y_Spectra_per_star[i])
                 phots = ax4.plot(X_wavelength,  Y_photons_per_star[k], label = f'ra: {ra[k]}  ; dec: {dec[k]}') # + [y_offset]*len(Y_Spectra_per_star[i])
                 ax4.set_xlim(wave_min, wave_max)
-                # ax4.set_ylim(0, 8)
+                ax4.set_ylim(-1, max_p)
         else:
             wavelengths = np.linspace(100, 3800, 1000)
             y_zeros = np.zeros_like(wavelengths) 
-            phots= ax4.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='y = 0')
+            phots= ax4.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='No stars in Fov')
             ax4.set_xlim(min(wavelengths), max(wavelengths))
-            
+            ax4.set_ylim(0, 1e+6)
         ax4.legend()
 
 
@@ -351,13 +370,13 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
             spectra = ax5.imshow(color_data, cmap=BtoB_cmap, aspect='auto', extent=(min(wavelength), max(wavelength), Size[3],Size[1]), vmin=0, vmax=1)
             ax5.invert_yaxis()
         # return
-        return satellite, orbit, sky, phots, spectra
+        return satellite, orbit, sky, diffused, phots, spectra
     # Press space bar to pause animation
 
     # run animation
     def run():
         # plot init
-        fig, satellite, orbit, sky, phots, spectra = init()
+        fig, satellite, orbit, sky, diffused, phots, spectra = init()
         # total no of frames
         frame_count = len(X)
         # print (frame_count)
@@ -369,7 +388,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         # create animation using the animate() function
         ani = animation.FuncAnimation(fig, update,
                                       frames=frame_count, interval= Interval, 
-                                      fargs=(satellite, orbit, sky, phots, spectra ),
+                                      fargs=(satellite, orbit, sky, diffused, phots, spectra ),
                                       blit=False, repeat=False)
 
         
@@ -377,8 +396,8 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         plt.show()
         print("animation complete")
         # save
-        # ani.save(f'{folder_loc}satellite.gif', writer="ffmpeg")
-        # print("saved")
+        ani.save(f'{folder_loc}Demo_file\satellite.gif', writer="ffmpeg")
+        print("saved")
         return ani
     
     def toggle_pause(event, *args, **kwargs):
@@ -462,7 +481,7 @@ def get_cles_data_by_frame(i, data):
         print('Frame',frame[0]+1,'is EMPTY', end="\n")
         no_star = [0,0]
         zero_size =(0.0001,)
-        return no_star, zero_size, frame_boundary[0]
+        return no_star, zero_size, frame_boundary
 
 # get Spectral data of the stars for the given frame index 
 def get_spectral_data_by_frame(i, spectral_FOV):
@@ -541,6 +560,15 @@ def calc_obs_color(colors, alpha_val, Range):
         colors2[j][3] = 1 
     return colors2
 
+#calculate Max Photons per wavelength from the stars in the FOV
+def get_max_photon(photons_data):
+    photons_max =0
+    for i in range(len(photons_data)):
+        MaxP = max(photons_data[i])
+        if (MaxP >photons_max):
+            photons_max = MaxP
+    return photons_max
+
 # make star spectra graph data from photons data
 def get_color_data(data, wavelength, photons_data, dec, min_dec):
     spectra_width
@@ -549,12 +577,7 @@ def get_color_data(data, wavelength, photons_data, dec, min_dec):
         star_row.append(int(((decli) - min_dec)*100))
     row_spread = int(spectra_width*100)
 
-    #calculate Max Photons at a particular wavelength from the stars in the FOV
-    photons_max =0
-    for i in range(len(dec)):
-        MaxP = max(photons_data[i])
-        if (MaxP >photons_max):
-            photons_max = MaxP
+    photons_max = get_max_photon(photons_data)
 
     # for each star in the FOV edit color data rows for particular declination of the star
     for i in range(len(dec)): # ith star

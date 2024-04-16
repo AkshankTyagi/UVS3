@@ -44,12 +44,10 @@ def read_hipparcos_data(FILENAME = hipp_file):
         df['mar_size'] = 2*(star_mag_max_threshold - df['mag'])
         
         # filter data above
-        threshold =  star_mag_max_threshold
-        q = 'mag <= @threshold' 
+        max_threshold =  star_mag_max_threshold
+        min_threshold =  star_mag_min_threshold
+        q = 'mag <= @max_threshold & mag >= @min_threshold' 
         df = df.query(q) 
-        threshold =  star_mag_min_threshold
-        a = 'mag >= @threshold' 
-        df = df.query(a) 
 
         return df  
     

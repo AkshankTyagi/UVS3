@@ -1,21 +1,21 @@
 [Params_1]
 hipparcos_catalogue = C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\\hip_main.dat
 castelli_data = C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\\Castelli\ckp00
-sat_name = CSS
+sat_name = ISS
 roll = False
 roll_rate_hrs = False
 number of revolutions = 1
 n_frames = False
-t_slice = 1000
+t_slice = 100
 width = 0.5
-height = 7
-starmag_min_threshold = 2
-starmag_max_threshold = 7
+height = 2
+starmag_min_threshold = 1
+starmag_max_threshold = 8
 limit_min = 100
 limit_max = 3800
 bg_wavelength = 2300
 azm = 40
 ele = 25
-longitudinal_spectral_width = 0.2
-interval_bw_frames = 10000
+longitudinal_spectral_width = 0.1
+interval_bw_frames = 1000
 
