@@ -7,20 +7,20 @@ config = ConfigParser()
 config['Params_1'] = {
     'hipparcos_catalogue' : f'{folder_loc}hip_main.dat', #path to the Hipparcos file
     'Castelli_data' : f'{folder_loc}Castelli\ckp00', #path to the ckp00 file of the Castelli Kurucz Atlas
-    'sat_name' : 'ISS',
+    'sat_name' : 'METSAT_1',
     'roll' : False,
     'roll_rate_hrs' : False,
     # TBA Directional Cosines of Detector from the velocity of Satellite 
-    'number of Revolutions' : 1,
+    'number of Revolutions' : 1.2,
     # Specify either Number of frames or period in sec after which the next Frame is given
     'N_frames' : False,
-    't_slice' : 50, # Seconds,
+    't_slice' : 5000, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
     'width': 0.5, #RA width
-    'height': 2.5, #Dec height
+    'height': 3.5, #Dec height
     'starmag_min_threshold' : 1, #threshold for what bright stars we want to avoid
-    'starmag_max_threshold' : 9, #threshold for what apaarent magnitude stars we want to look at
+    'starmag_max_threshold' :7.5, #threshold for what apaarent magnitude stars we want to look at
 
     # Spectrum Parameters (UV Band Wavelengths in Angstroms)
     'limit_min': 100,

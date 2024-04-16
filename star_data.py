@@ -17,23 +17,23 @@ folder_loc, params_file = get_folder_loc()
 def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     config = ConfigParser()
     config.read(filename)
-    global hipp_file , star_mag_min_threshold, star_mag_max_threshold
+    global hipp_file 
     hipp_file = config.get(param_set, 'hipparcos_catalogue')
     # Field of View size:
     width = float(config.get(param_set, 'width'))
     height = float(config.get(param_set, 'height'))
     star_mag_min_threshold = float(config.get(param_set, 'starmag_min_threshold'))
     star_mag_max_threshold = float(config.get(param_set, 'starmag_max_threshold'))
-    return  width, height 
+    return  width, height ,star_mag_min_threshold, star_mag_max_threshold
 
-_, _ = read_parameter_file()
+read_parameter_file()
 
 # read hipparcos catalogue 'hip_main.dat'
 def read_hipparcos_data(FILENAME = hipp_file):
     # Field H1: Hipparcos Catalogue (HIP) identifier
     # Field H5: V magnitude
     # Fields H8–9:  The right ascension, α , and declination, δ (in degrees)    
-    
+    _, _, star_mag_min_threshold, star_mag_max_threshold = read_parameter_file()
     print (f'Stars apparent magnitude Threshold= {[star_mag_min_threshold, star_mag_max_threshold]}')
 
     try:
@@ -58,7 +58,7 @@ def read_hipparcos_data(FILENAME = hipp_file):
 def filter_by_fov(mdf, ra, de): 
     # frame field of view
     # get valid boundaries  
-    width, height = read_parameter_file()
+    width, height, _, _ = read_parameter_file()
     xmin, ymin, xmax, ymax = get_frame_boundaries( width, height, ra, de)
     frame_boundaries = [xmin, ymin, xmax, ymax]
     # print(frame_boundaries)

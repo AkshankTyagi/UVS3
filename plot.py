@@ -396,8 +396,8 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         plt.show()
         print("animation complete")
         # save
-        ani.save(f'{folder_loc}Demo_file\satellite.gif', writer="ffmpeg")
-        print("saved")
+        # ani.save(f'{folder_loc}Demo_file\satellite.gif', writer="ffmpeg")
+        # print("saved")
         return ani
     
     def toggle_pause(event, *args, **kwargs):

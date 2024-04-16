@@ -1,16 +1,16 @@
 [Params_1]
 hipparcos_catalogue = C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\\hip_main.dat
 castelli_data = C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\\Castelli\ckp00
-sat_name = ISS
+sat_name = METSAT_1
 roll = False
 roll_rate_hrs = False
-number of revolutions = 1
+number of revolutions = 1.2
 n_frames = False
-t_slice = 50
+t_slice = 5000
 width = 0.5
-height = 2.5
+height = 3.5
 starmag_min_threshold = 1
-starmag_max_threshold = 9
+starmag_max_threshold = 7.5
 limit_min = 100
 limit_max = 3800
 bg_wavelength = 2300
