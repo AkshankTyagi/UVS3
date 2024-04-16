@@ -14,13 +14,13 @@ config['Params_1'] = {
     'number of Revolutions' : 1,
     # Specify either Number of frames or period in sec after which the next Frame is given
     'N_frames' : False,
-    't_slice' : 100, # Seconds,
+    't_slice' : 50, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
     'width': 0.5, #RA width
-    'height': 2, #Dec height
+    'height': 2.5, #Dec height
     'starmag_min_threshold' : 1, #threshold for what bright stars we want to avoid
-    'starmag_max_threshold' : 8, #threshold for what apaarent magnitude stars we want to look at
+    'starmag_max_threshold' : 9, #threshold for what apaarent magnitude stars we want to look at
 
     # Spectrum Parameters (UV Band Wavelengths in Angstroms)
     'limit_min': 100,
