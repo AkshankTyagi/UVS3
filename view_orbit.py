@@ -29,7 +29,7 @@ from star_data import *#, filter_by_fov, read_hipparcos_data
 from plot import *#,animate
 from star_spectrum import *#,GET_SPECTRA
 from diffused_data import *
-# from diffused_Background import
+from diffused_Background import *
 
 # include the parameter file and sattelite TLE file
 folder_loc, params_file = get_folder_loc()

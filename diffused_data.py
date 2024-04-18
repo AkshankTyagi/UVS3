@@ -42,7 +42,7 @@ def get_diffused_in_FOV( data ):
         [xmin, ymin, xmax, ymax] = frame_boundary
 
         mdf = df[['ra', 'dec', 'flux']]
-        q = 'ra >= @xmin & ra <= @xmax & dec >= @ymin & dec <= @ymax' 
+        q = 'ra >= @xmin-0.05 & ra <= @xmax+0.05 & dec >= @ymin-0.05 & dec <= @ymax+0.05' 
         mdf = mdf.query(q)
         mdf = mdf.values.tolist()
         diffused_data.append([f, mdf])
