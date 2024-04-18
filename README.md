@@ -63,7 +63,7 @@ We converted the following functions into python and used them in our code
 
 
 ## Setup
-Script is written with python (Version: 3.10.6) on linux. Additional modules required:   
+Script is written with python (Version: 3.10.6) on Windows. Additional modules required:   
 
 * numpy       (tested with Version: 1.21.5 )
 * matplotlib  (tested with Version: 3.5.1 )
