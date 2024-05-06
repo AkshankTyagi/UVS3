@@ -68,7 +68,7 @@ def get_world_coordinates(x, y, fits_file):
         # print(ra,dec)
         return ra, dec
 
-def plot_diffused_bg(filename):
+def plot_diffused_bg(filename, wavelength):
     with fits.open(filename) as hdul:
         data = hdul[0].data
         data= data/10000
@@ -76,16 +76,24 @@ def plot_diffused_bg(filename):
         colors = [(0, 0, 0), (0, 0, 1)]  # Black to blue
         cmap_name = 'black_to_blue'
         BtoB_cmap = mc.LinearSegmentedColormap.from_list(cmap_name, colors)
-        print(1)
+        print(wavelength)
         plt.imshow(data, cmap= BtoB_cmap, vmin=0, vmax= 0.3)
+        plt.savefig(f'{folder_loc}\Demo_file\\diffused_UV_background{wavelength}.png')
         
         plt.show()
+
+
 
 
 ## Example usage
 waveleng = read_parameter_file()
 file_path = fr"{folder_loc}diffused_UV_data\RA_sorted_flux_{waveleng}.csv"
-print ('working')
+# print ('working')
+# for x in [1100,1500,2300]:
+#     fits_filename = f"{folder_loc}diffused_UV_data\scattered_1e10_{x}_a40_g6\scattered.fits"
+#     plot_diffused_bg(fits_filename, x)
+
+
 if os.path.exists(file_path):
     print (f'{file_path} file exists.')
 else:
@@ -95,7 +103,7 @@ else:
         fits_filename = f"{folder_loc}diffused_UV_data\scattered_1e10_{wavelength}_a40_g6\scattered.fits"
         print(fits_filename)
 
-        plot_diffused_bg(fits_filename)
+        plot_diffused_bg(fits_filename, wavelength)
 
         gl= [0] #longitude
         gb= [0] #latitude

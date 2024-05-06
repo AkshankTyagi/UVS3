@@ -230,7 +230,7 @@ def READ_CASTELLI_SPECTRA(spec_dir = Castelli_data):
     stellar_spectra = [{"temp": None, "spectrum": None, "wavelength": None} for i in range(N_CASTELLI_MODELS)]
 
     temper = [50000 - i*1000 for i in range(38)] + [13000 - (i - 37)*250 for i in range(38, 76)]
-    gindex = [12]*5 + [11]*6 + [10]*53 + [11]*12  # g_effective = (g_index[]-2) *5)))
+    gindex = [12]*5 + [11]*6 + [10]*53 + [11]*12  # g_effective = (g_index[]-2) *5
     # print(list(zip(temper, gindex)))
 
     for i in range(len(temper)):

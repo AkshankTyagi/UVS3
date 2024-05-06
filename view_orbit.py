@@ -148,12 +148,40 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, roll=False):
     for frame, (r, d) in enumerate(zip(ra, dec)):
         # print(frame, (r, d))
         tdf_values, frame_boundary = filter_by_fov(df, r, d)
+        # print (frame, tdf_values)
         # print(frame, frame_boundary)
         tdf_values = tdf_values.values.tolist()
-        # print (tdf_values)
+        # 
         frame_row_list.append([frame, tdf_values, frame_boundary ])
     # print (frame_row_list)
     return tr, sc, frame_row_list,
+
+# Save a csv file with all required star information 
+def write_to_csv(data):
+    # print('writing to csv')
+    # print(data[0:2])
+    csv_file = f'{folder_loc}Demo_file\\{sat_name}_data.csv'
+    header =['Frame Number', 'hip', 'ra', 'dec', 'mag', 'parallax', 'B_V', 'Spectral_type', 'size', 'Frame Boundaries']
+
+    # dz.to_csv(csv_file, index=False)
+    with open(csv_file, 'w', newline='') as csvfile:
+        csv_writer = csv.writer(csvfile)
+        csv_writer.writerow(header)
+        for i in range(len(data)):
+            frame, d, frame_boundary = zip(data[i])
+            
+            frame = int(frame[0])
+            d = d[0]
+            # print(d)
+            if d:
+                for j in range(len(d)):
+                    # print(j, len(d))
+                    # print(zip(*d[j]))
+                    ra, dec, size, hip, mag, parallax, B_V, Spectral_type = zip(d[j])
+                    csv_writer.writerow([frame+1, hip[0], ra[0], dec[0], mag[0], parallax[0], B_V[0], Spectral_type[0], size[0], frame_boundary[0]])
+            else:
+                csv_writer.writerow([frame+1, None, None, None, None, None, None, None, None, frame_boundary])
+        print('Star Data saved in:', csv_file)
 
 
 def main():
@@ -196,8 +224,8 @@ def main():
     # with open('star_data.pkl',"wb") as f:
     #     data = celestial_coordinates
     #     pickle.dump(data, f)
-
-    # animate
+    # write_to_csv(celestial_data)
+    # # animate
     animate(time_arr, state_vectors, celestial_data, Spectra, diffused_data, r)
     return
 

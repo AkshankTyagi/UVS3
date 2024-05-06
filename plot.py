@@ -22,11 +22,12 @@ folder_loc, params_file = get_folder_loc()
 def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     config = ConfigParser()
     config.read(filename)
-    global sat_name, Interval, spectra_width, BG_wavelength
+    global sat_name, Interval, spectra_width, BG_wavelength, height
     sat_name = config.get(param_set, 'sat_name')
     azm = float(config.get(param_set, 'azm'))
     ele = float(config.get(param_set, 'ele'))
     Interval = float(config.get(param_set, 'interval_bw_Frames'))
+    height = float(config.get(param_set, 'height'))
     spectra_width = float(config.get(param_set, 'longitudinal_spectral_width'))
     BG_wavelength = config.get(param_set, 'BG_wavelength')
     return azm, ele
@@ -62,12 +63,19 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         ax.set_zlim(size*limit, -size*limit) 
 
         # earth
-        ax.scatter(0, 0, 0, marker='o', c='deepskyblue', s=r)
+        # earth_size = r/(X[0]**2+ Y[0]**2+ Z[0]**2)**(1/2)
+        # print(r,X[0], Y[0], Z[0], (X[0]**2+ Y[0]**2+ Z[0]**2), earth_size)
+        radius = r  # Specify the radius of the sphere
+        sphere_x, sphere_y, sphere_z = create_sphere(radius,(0, 0, 0), 100 )
+
+        # ax.scatter(0, 0, 0, marker='o', c='deepskyblue', s= r)
+        surf = ax.plot_surface(sphere_x, sphere_y, sphere_z, color='blue', alpha=0.75, label='Earth')
+        surf.set_facecolor('deepskyblue')
         # satellite positions as a scatter plot
-        satellite = ax.scatter(X[0], Y[0], Z[0], marker='o', c='k', s=2)
+        satellite = ax.scatter(X[0], Y[0], Z[0], marker='o', c='k', s=2, label = sat_name)
         # orbit path as a dotted line plot
         orbit = ax.plot(X[0], Y[0], Z[0], linewidth=0.9, linestyle='-.', c='k')[0] 
-
+        ax.legend()
         # return
         return ax, satellite, orbit
     
@@ -94,7 +102,8 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         # ax.set_ylim(min(P[:,1]), max(P[:,1]))       
 
         #Scatter plot for Diffused light
-        a, loc_ra, loc_dec = random_scatter_data(diffused_data[0])
+        a =  0.05* 2/height
+        loc_ra, loc_dec = random_scatter_data(diffused_data[0])
         diffused = ax.scatter(loc_ra, loc_dec, s= 0.05, alpha= a,  facecolors='Blue')
 
         tot_phot = calc_total_diffused_flux(diffused_data[0])
@@ -153,8 +162,10 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         
         # set labels
         ax.set_xlabel('Wavelength ($\AA$)')
-        ax.set_ylabel('Number of Photons')
-        
+        ax.set_ylabel('Number of Photons s\u207B\u00B9 cm\u207B\u00B2 $\AA$\u207B\u00B9 sr\u207B\u00B9')
+        # ax.set_xlabel('Log[Wavelength ($\AA$)]')
+        # ax.set_ylabel('log[Number of Photons]')
+
         # set titles
         ax.set_title('# of Photons from the stars in the Sky view')
 
@@ -170,17 +181,22 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
             # flux = ax4.plot(np.log10(X_wavelength), np.log10(Y_Spectra_per_star[0]), label = f'{ra[0]},{dec[0]}')
             for i in range(len(Y_photons_per_star)):
                 # y_offset = (dec[i] - Size[1])*(Size[3] - Size[1]) 
-                # phots = ax.plot(np.log10(X_wavelength), Y_Spectra_per_star[i], label = f'ra: {ra[i]}  ; dec: {dec[i]}') #+ [y_offset]*len(Y_Spectra_per_star[i])
+                # phots = ax.plot(np.log10(X_wavelength), np.log10(Y_photons_per_star[i]), label = f'ra: {ra[i]}  ; dec: {dec[i]}') #+ [y_offset]*len(Y_Spectra_per_star[i])
                 phots = ax.plot(X_wavelength, Y_photons_per_star[i], label = f'ra: {ra[i]}  ; dec: {dec[i]}') # + [y_offset]*len(Y_Spectra_per_star[i])
                 ax.set_xlim(wave_min, wave_max)
-                ax.set_ylim(0, max_p)
+                ax.set_ylim(-1, max_p)
+                # ax.set_ylim(0, np.log10(max_p))
         else:
             wavelengths = np.linspace(100, 3800, 1000)
             y_zeros = np.zeros_like(wavelengths) 
             phots= ax.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='No stars in Fov')
+            # phots= ax.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='No stars in Fov')
             ax.set_xlim(min(wavelengths), max(wavelengths))
-            ax.set_ylim(-1, 1e+6)
-        ax.legend()
+            ax.set_ylim(-100, 1e+6)
+            # ax.set_ylim(0, 6)
+
+        if len(ra)<=10:
+            ax.legend()
         # ax.clear()
 
         return ax, phots
@@ -220,7 +236,6 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
 
         return ax, spectra
 
-
     # initialize plot
     def init():
         global fig, ax2, ax3, ax4, ax5
@@ -258,7 +273,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
 
         # row 1, col 0
         # ax3 = subfigs[1,0].add_subplot( facecolor="black", aspect= 0.6)
-        ax3 = fig.add_subplot(gs[1, 0], facecolor="black", aspect= 0.45 )
+        ax3 = fig.add_subplot(gs[1, 0], facecolor="black", aspect= 0.25 )
         # initialize sky
         ax3, sky, diffused = init_sky(ax3)
 
@@ -304,7 +319,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         # get frame data. pos[ra, dec], size
         P, S, Size = get_cles_data_by_frame(i, celestial_coordinates)
         Size = Size[0]
-        alpha, loc_ra, loc_dec = random_scatter_data(diffused_data[i])
+        loc_ra, loc_dec = random_scatter_data(diffused_data[i])
         diffused_offsets = np.column_stack((loc_ra, loc_dec))
         diffused.set_offsets(diffused_offsets)
         # print(S)
@@ -326,7 +341,9 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         # setting up the number of photons vs wavelength plot
         ax4.clear()
         ax4.set_xlabel('Wavelength ($\AA$)')
-        ax4.set_ylabel('Number of Photons')
+        ax4.set_ylabel('Number of Photons s\u207B\u00B9 cm\u207B\u00B2 $\AA$\u207B\u00B9 sr\u207B\u00B9')
+        # ax4.set_xlabel('Log[Wavelength ($\AA$)]')
+        # ax4.set_ylabel('log[Number of Photons]')
         ax4.set_title('# of Photons from the stars in the Sky view')
         # get updated photons data by frame
         X_wavelength, Y_photons_per_star, ra, dec = get_photons_data_by_frame(i, spectral_fov)
@@ -338,17 +355,21 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
             # flux = ax4.plot(np.log10(X_wavelength), np.log10(Y_Spectra_per_star[0]), label = f'{ra[0]},{dec[0]}')
             for k in range(len(Y_photons_per_star)):
                 # y_offset = (dec[i] - Size[1])*(Size[3] - Size[1]) 
-                # phots = ax4.plot(np.log10(X_wavelength), Y_Spectra_per_star[i], label = f'ra: {ra[i]}  ; dec: {dec[i]}') #+ [y_offset]*len(Y_Spectra_per_star[i])
+                # phots = ax4.plot(np.log10(X_wavelength), np.log10(Y_photons_per_star[k]), label = f'ra: {ra[k]}  ; dec: {dec[k]}') #+ [y_offset]*len(Y_Spectra_per_star[i])
                 phots = ax4.plot(X_wavelength,  Y_photons_per_star[k], label = f'ra: {ra[k]}  ; dec: {dec[k]}') # + [y_offset]*len(Y_Spectra_per_star[i])
                 ax4.set_xlim(wave_min, wave_max)
                 ax4.set_ylim(-1, max_p)
+                # ax4.set_ylim(0, np.log10(max_p))
         else:
             wavelengths = np.linspace(100, 3800, 1000)
             y_zeros = np.zeros_like(wavelengths) 
             phots= ax4.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='No stars in Fov')
+            # phots= ax4.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='No stars in Fov')
             ax4.set_xlim(min(wavelengths), max(wavelengths))
-            ax4.set_ylim(0, 1e+6)
-        ax4.legend()
+            ax4.set_ylim(-1, 1e+6)
+            # ax4.set_ylim(-1, 6)
+        if len(ra)<=10:
+            ax4.legend()
 
 
         # setting up the absorption spectra plots
@@ -396,7 +417,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         plt.show()
         print("animation complete")
         # save
-        # ani.save(f'{folder_loc}Demo_file\satellite.gif', writer="ffmpeg")
+        # ani.save(f'{folder_loc}Demo_file\{sat_name}satellite_try.gif', writer="ffmpeg")
         # print("saved")
         return ani
     
@@ -438,6 +459,14 @@ def _set_axes_radius(ax, origin, radius):
     ax.set_ylim3d([y - radius, y + radius])
     ax.set_zlim3d([z - radius, z + radius])
     return
+
+def create_sphere(radius, center=(0, 0, 0), num_points=1000):
+    u = np.linspace(0, 2 * np.pi, num_points)
+    v = np.linspace(0, np.pi, num_points)
+    x = center[0] + radius * np.outer(np.cos(u), np.sin(v))
+    y = center[1] + radius * np.outer(np.sin(u), np.sin(v))
+    z = center[2] + radius * np.outer(np.ones(np.size(u)), np.cos(v))
+    return x, y, z
 
 # get satellite position data for the given index
 def get_pos_data_by_frame(i):
@@ -571,11 +600,12 @@ def get_max_photon(photons_data):
 
 # make star spectra graph data from photons data
 def get_color_data(data, wavelength, photons_data, dec, min_dec):
-    spectra_width
+    spectra_width 
+    width = spectra_width * height/3
     star_row =[]
     for decli in dec:
         star_row.append(int(((decli) - min_dec)*100))
-    row_spread = int(spectra_width*100)
+    row_spread = int(width*100)
 
     photons_max = get_max_photon(photons_data)
 

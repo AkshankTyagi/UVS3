@@ -77,8 +77,7 @@ def random_scatter_data(diffused_data):
             ra_norm.append(ra_N[j])
             dec_norm.append(dec_N[j])
     
-    a = 0.05
   
     # output = [ra_norm, dec_norm]
     # print(ra_norm, dec_norm)
-    return a, ra_norm, dec_norm
+    return ra_norm, dec_norm
