@@ -15,7 +15,7 @@ from configparser import ConfigParser
 
 from star_spectrum import *
 from diffused_data import *
-from view_orbit import get_folder_loc
+from Params_configparser import get_folder_loc
 
 folder_loc, params_file = get_folder_loc()
 
@@ -273,7 +273,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
 
         # row 1, col 0
         # ax3 = subfigs[1,0].add_subplot( facecolor="black", aspect= 0.6)
-        ax3 = fig.add_subplot(gs[1, 0], facecolor="black", aspect= 0.25 )
+        ax3 = fig.add_subplot(gs[1, 0], facecolor="black", aspect= 0.6 )
         # initialize sky
         ax3, sky, diffused = init_sky(ax3)
 
@@ -417,8 +417,8 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         plt.show()
         print("animation complete")
         # save
-        # ani.save(f'{folder_loc}Demo_file\{sat_name}satellite_try.gif', writer="ffmpeg")
-        # print("saved")
+        # ani.save(f'{folder_loc}Demo_file\{sat_name}_satellite.gif', writer="ffmpeg")
+        print("saved")
         return ani
     
     def toggle_pause(event, *args, **kwargs):

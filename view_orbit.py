@@ -16,10 +16,6 @@ from configparser import ConfigParser
 config = ConfigParser()
 # import pickle
 
-def get_folder_loc():
-    folder_loc = fr'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\\'
-    params_file = fr'{folder_loc}init_parameter.txt'
-    return folder_loc, params_file
 
 # Run the parameter File updators
 from Params_configparser import *

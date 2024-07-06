@@ -5,7 +5,7 @@ import datetime
 import numpy as np
 import pandas as pd
 from configparser import ConfigParser
-from view_orbit import get_folder_loc
+from Params_configparser import get_folder_loc
 
 
 # Hipparcos Catalogue [hip_main.dat]

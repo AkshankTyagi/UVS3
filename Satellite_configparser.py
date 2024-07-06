@@ -1,5 +1,5 @@
 from configparser import ConfigParser
-from view_orbit import get_folder_loc
+from Params_configparser import get_folder_loc
 folder_loc, _ = get_folder_loc()
 
 config = ConfigParser()

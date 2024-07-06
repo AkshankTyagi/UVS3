@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from configparser import ConfigParser
 import math
-from view_orbit import get_folder_loc
+from Params_configparser import get_folder_loc
 
 class StellarSpectrum:
     def __init__(self, v1 =0, v2= []):
