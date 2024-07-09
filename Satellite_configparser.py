@@ -47,10 +47,5 @@ config['METSAT_1'] = {
 }
 
 
-
-
-
-
-
 with open(f'{folder_loc}Satellite_TLE.txt',"w") as f:
     config.write(f)

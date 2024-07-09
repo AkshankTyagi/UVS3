@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from configparser import ConfigParser
 import math
+import os
 from Params_configparser import get_folder_loc
 
 class StellarSpectrum:
@@ -234,7 +235,7 @@ def READ_CASTELLI_SPECTRA(spec_dir = Castelli_data):
     # print(list(zip(temper, gindex)))
 
     for i in range(len(temper)):
-        filename = f"{spec_dir}/ckp00_{temper[i]}.fits"
+        filename = f"{spec_dir}{os.sep}ckp00_{temper[i]}.fits"
         stellar_spectra[i]["temp"] = temper[i]
         with fits.open(filename) as hdul:
             data = hdul[1].data
