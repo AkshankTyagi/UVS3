@@ -1,10 +1,15 @@
 from configparser import ConfigParser
+import os
 # from Params_configparser import get_folder_loc
 
+
 def get_folder_loc():
-    folder_loc = fr'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\\'
+    folder_loc = fr'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation'  
+    if not folder_loc.endswith(os.sep):
+        folder_loc += os.sep
     params_file = fr'{folder_loc}init_parameter.txt'
-    return folder_loc, params_file
+    # print(os.sep,"\n",folder_loc, params_file )
+    return folder_loc, params_file 
 
 folder_loc, _ = get_folder_loc()
 
@@ -12,7 +17,7 @@ config = ConfigParser()
 
 config['Params_1'] = {
     'hipparcos_catalogue' : fr'{folder_loc}hip_main.dat', #path to the Hipparcos file
-    'Castelli_data' : fr'{folder_loc}Castelli\ckp00', #path to the ckp00 file of the Castelli Kurucz Atlas
+    'Castelli_data' : fr'{folder_loc}Castelli{os.sep}ckp00', #path to the ckp00 file of the Castelli Kurucz Atlas
     'sat_name' : 'ISS',
     'roll' : False,
     'roll_rate_hrs' : False,

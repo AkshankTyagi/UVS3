@@ -1,6 +1,7 @@
 import numpy as np
 import csv
 import pandas as pd
+import os
 
 from configparser import ConfigParser
 
@@ -22,7 +23,7 @@ def read_parameter_file(filename= params_file, param_set = 'Params_1'):
 def get_diffused_in_FOV( data ):
     # print('read_csv')
     wavelength = read_parameter_file()
-    filename = fr"{folder_loc}diffused_UV_data\RA_sorted_flux_{wavelength}.csv"
+    filename = fr"{folder_loc}diffused_UV_data{os.sep}RA_sorted_flux_{wavelength}.csv"
     diffused_data = []
     try:
         df = pd.read_csv(filename, header=None,

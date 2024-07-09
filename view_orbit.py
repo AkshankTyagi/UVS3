@@ -72,7 +72,7 @@ def get_satellite(line1, line2):
     #e = satellite.ecco
     apo, peri = satellite.alta * r, satellite.altp * r
     print('Perigee : %5.2f km, Apogee : %5.2f km' % (peri, apo))
-    print('mu =',mu, 'km^3/s^2, Earth Radius =',r, 'km \nDistances from Center of Earth: Perigee =',r+peri,'km, Semi major =', a, 'km, Apogee =',r + apo,'km' )
+    print(f'mu ={mu} km^3/s^2, Earth Radius = {r} km \nDistances from Center of Earth: Perigee ={r+peri}km, Semi major ={a}km, Apogee ={r+apo}km' )
     # perigee and apogee
     # return
     return satellite
@@ -156,7 +156,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, roll=False):
 def write_to_csv(data):
     # print('writing to csv')
     # print(data[0:2])
-    csv_file = f'{folder_loc}Demo_file\\{sat_name}_data.csv'
+    csv_file = f'{folder_loc}Demo_file{os.sep}{sat_name}_data.csv'
     header =['Frame Number', 'hip', 'ra', 'dec', 'mag', 'parallax', 'B_V', 'Spectral_type', 'size', 'Frame Boundaries']
 
     # dz.to_csv(csv_file, index=False)
