@@ -66,7 +66,7 @@ def get_world_coordinates(x, y, fits_file):
         print(wcs)
         # Convert pixel coordinates to world coordinates (RA, Dec)
         ra, dec = wcs.all_pix2world(x, y, 1)  # Assumes pixel indices start from 1
-        # print(hdul[0].header)
+        print(hdul[0].header)
         # print(hdul[1].header)
         # print(hdul[2].header)
         # print(ra,dec)
@@ -81,7 +81,7 @@ def plot_diffused_bg(data, wavelength):
     BtoB_cmap = mc.LinearSegmentedColormap.from_list(cmap_name, colors)
     # print(wavelength)
     plt.imshow(data, cmap= BtoB_cmap, vmin=0, vmax= 1)
-    # plt.colorbar()
+    plt.colorbar()
     plt.title(f'diffused_UV_background{wavelength}')
     # plt.savefig(fr'C:\Users\Akshank Tyagi\Documents\GitHub\UV-Sky-Simulations\diffused_data\scattered_10000000_1105.png')
     # plt.savefig(fr'C:\Users\Akshank Tyagi\Documents\GitHub\UV-Sky-Simulations\diffused_data\diffused_bg_1100.png')
@@ -94,16 +94,16 @@ wavelength = 1100
 # file_path = fr"C:\Users\Akshank Tyagi\Documents\GitHub\UV-Sky-Simulations\diffused_data\RA_sorted_flux_{wavelength}.csv"
 
 print ('working')
-# for x in [1100]:
-#     # fits_filename = f"{folder_loc}diffused_UV_data\scattered_1e10_{x}_a40_g6\scattered.fits"
-#     fits_filename = fr'C:\Users\Akshank Tyagi\Documents\GitHub\UV-Sky-Simulations\diffused_data/scattered_100000[(1100, 1130)]_mag4.fits'
-#     ra, dec = get_world_coordinates( 1800, 900, fits_filename)
-#     print(f"ra,dec:",ra,dec)
-#     with fits.open(fits_filename) as hdul:
-#         data = hdul[0].data
-#         # for row in data:
-#         #     print (row)
-#         plot_diffused_bg(data, 1105)
+for x in [1100]:
+    fits_filename = fr"{folder_loc}diffused_UV_data{os.sep}scattered_1e10_{x}_a40_g6{os.sep}scattered.fits"
+    # fits_filename = fr'C:\Users\Akshank Tyagi\Documents\GitHub\UV-Sky-Simulations\diffused_data/scattered_100000[(1100, 1130)]_mag4.fits'
+    ra, dec = get_world_coordinates( 1800, 900, fits_filename)
+    print(f"ra,dec:",ra,dec)
+    with fits.open(fits_filename) as hdul:
+        data = hdul[0].data
+        # for row in data:
+        #     print (row)
+        plot_diffused_bg(data, 1105)
 
 file_path = fr"{folder_loc}diffused_UV_data{os.sep}RA_sorted_flux_{wavelength}.csv"
 

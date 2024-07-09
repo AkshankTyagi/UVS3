@@ -4,7 +4,8 @@ import os
 
 
 def get_folder_loc():
-    folder_loc = fr'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation'  
+    # folder_loc = fr'C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation'  
+    folder_loc = os.getcwd()
     if not folder_loc.endswith(os.sep):
         folder_loc += os.sep
     params_file = fr'{folder_loc}init_parameter.txt'
