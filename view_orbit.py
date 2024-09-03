@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 from sgp4.io import twoline2rv
 from sgp4.earth_gravity import wgs72
+from skyfield.api import load, Topos
+
+# from skyfield.almanac import find_discrete, risings_and_settings
 
 from configparser import ConfigParser
 config = ConfigParser()
@@ -35,7 +38,7 @@ sat_file = f'{folder_loc}Satellite_TLE.txt'
 def read_parameter_file(filename=params_file, param_set = 'Params_1'):
     config.read(filename)
 
-    global roll_rate_hrs
+    global roll_rate_hrs, sat_name
 
     hipp_file = config.get(param_set, 'hipparcos_catalogue')
     castelli_file = config.get(param_set, 'Castelli_data')
@@ -77,6 +80,35 @@ def get_satellite(line1, line2):
     # return
     return satellite
 
+
+# get celestial coordinates of Sun, Moon
+def get_celestial_positions(time_arr):
+    # Load ephemeris data
+    
+    eph = load('de421.bsp')
+    earth, sun, moon = eph['earth'], eph['sun'], eph['moon']
+
+    solar = []
+    lunar = []
+    for time in time_arr:
+        # Calculate the position of the Sun relative to Earth at the given time
+        astrometric_sun = earth.at(time).observe(sun)
+        apparent_sun = astrometric_sun.apparent()
+        ra_sun, dec_sun, _ = apparent_sun.radec()
+
+        # Calculate the position of the Moon relative to Earth at the given time
+        astrometric_moon = earth.at(time).observe(moon)
+        apparent_moon = astrometric_moon.apparent()
+        ra_moon, dec_moon, _ = apparent_moon.radec()
+
+        solar.append((ra_sun.hours- 1/60, dec_sun.degrees +4/60))
+        lunar.append((ra_moon.hours -8/60, dec_moon.degrees))
+
+    return {
+        "sun": solar,
+        "moon": lunar
+    }
+
 # get ra and dec from state vectors
 def get_ra_dec_from_sv(r, v):
     # norm
@@ -111,7 +143,6 @@ def propagate(sat, time_start, time_end, dt):
         # list packing
         position.append(p); velocity.append(v)
         right_ascension.append(ra); declination.append(dec)
-        
 
     # slice into columnsṇ
     pos, vel   = list(zip(*position)), list(zip(*velocity))
@@ -121,7 +152,7 @@ def propagate(sat, time_start, time_end, dt):
     state_vectors = [X, Y, Z, VX, VY, VZ]
     celestial_coordinates = [np.array(right_ascension), np.array(declination)]
     # print(celestial_coordinates)
-    # return
+
     return time_arr, state_vectors, celestial_coordinates
 
 # get list of star data in view along with satellite state_vectors
@@ -150,10 +181,19 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, roll=False):
         # 
         frame_row_list.append([frame, tdf_values, frame_boundary ])
     # print (frame_row_list)
-    return tr, sc, frame_row_list,
+
+    time_arr2 = []
+    ts = load.timescale()
+    for time in tr:
+        start_time =  time.astype('M8[ms]').astype(datetime.datetime)
+        time_arr2.append(ts.utc(start_time.year, start_time.month, start_time.day, start_time.hour, start_time.minute, start_time.second))
+    sol_positions = get_celestial_positions(time_arr2)
+    # print( sol_positions)
+
+    return tr, sc, frame_row_list, sol_positions
 
 # Save a csv file with all required star information 
-def write_to_csv(data):
+def write_to_csv(data, sol_positions, sat_name):
     # print('writing to csv')
     # print(data[0:2])
     csv_file = f'{folder_loc}Demo_file{os.sep}{sat_name}_data.csv'
@@ -176,7 +216,10 @@ def write_to_csv(data):
                     ra, dec, size, hip, mag, parallax, B_V, Spectral_type = zip(d[j])
                     csv_writer.writerow([frame+1, hip[0], ra[0], dec[0], mag[0], parallax[0], B_V[0], Spectral_type[0], size[0], frame_boundary[0]])
             else:
-                csv_writer.writerow([frame+1, None, None, None, None, None, None, None, None, frame_boundary])
+                csv_writer.writerow([frame+1, "Empty frame", None, None, None, None, None, None, None, frame_boundary[0]])
+            
+            csv_writer.writerow([frame+1, "Celestial_data for frame", 'Sun', sol_positions['sun'][i], 'moon', sol_positions['moon'][i]])
+            
         print('Star Data saved in:', csv_file)
 
 
@@ -207,11 +250,12 @@ def main():
             print('T_slice not found')
 
     # simulation starts from current time to one full orbit
-    start = np.datetime64(datetime.datetime.now())
+    start = np.datetime64(datetime.datetime.now())+ np.timedelta64(10, 'D')
     # times, state_vectors, celestial_coordinates  
-    time_arr, state_vectors, celestial_data = get_simulation_data(satellite, df, start, t_period, t_slice, roll)
+    time_arr, state_vectors, celestial_data, sol_position  = get_simulation_data(satellite, df, start, t_period, t_slice, roll)
     Spectra = GET_SPECTRA(castelli_dir, celestial_data)
     # print(celestial_data)
+    # print(sol_position)
     diffused_data = get_diffused_in_FOV(celestial_data)
 
     # print(Spectra.frame)
@@ -220,9 +264,9 @@ def main():
     # with open('star_data.pkl',"wb") as f:
     #     data = celestial_coordinates
     #     pickle.dump(data, f)
-    # write_to_csv(celestial_data)
-    # # animate
-    animate(time_arr, state_vectors, celestial_data, Spectra, diffused_data, r)
+    write_to_csv(celestial_data, sol_position, sat_name)
+    #  animate
+    animate(time_arr, state_vectors, celestial_data, sol_position, Spectra, diffused_data, r)
     return
 
 # main

@@ -9,12 +9,14 @@ import matplotlib.gridspec as gridspec
 import matplotlib.animation as animation
 import matplotlib.colors as mc
 from matplotlib.figure import Figure
+from mpl_toolkits.mplot3d import Axes3D
 
 
 from configparser import ConfigParser
 
 from star_spectrum import *
 from diffused_data import *
+from Coordinates import *
 from Params_configparser import get_folder_loc
 
 folder_loc, params_file = get_folder_loc()
@@ -32,10 +34,13 @@ def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     BG_wavelength = config.get(param_set, 'BG_wavelength')
     return azm, ele
 
+
+# print("plotting animation")
 # main animate function
-def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffused_data, r ):
+def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectral_fov, diffused_data, r ):
     # initiallize 3D earth and satellite view
     def init_orbit(ax):
+        global sun, moon, satellite, orbit
         azm, ele = read_parameter_file()
 
         # set titles
@@ -74,18 +79,111 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         # satellite positions as a scatter plot
         satellite = ax.scatter(X[0], Y[0], Z[0], marker='o', c='k', s=2, label = sat_name)
         # orbit path as a dotted line plot
-        orbit = ax.plot(X[0], Y[0], Z[0], linewidth=0.9, linestyle='-.', c='k')[0] 
-        ax.legend()
+        orbit = ax.plot(X[0], Y[0], Z[0], linewidth=0.9, linestyle='-.', c='k')[0]
+
+
+        sun_ra, sun_dec = sol_position["sun"][0]
+        moon_ra, moon_dec = sol_position["moon"][0]
+
+        solar_sv = conv_eq_to_cart(sun_ra*15, sun_dec, 1)
+        lunar_sv = conv_eq_to_cart(moon_ra*15, moon_dec, 1)
+
+        distance = 10000
+        # Create new Sun quiver plot
+        sun = ax2.quiver(solar_sv[0] * distance, solar_sv[1] * distance, solar_sv[2] * distance,
+                        -solar_sv[0], -solar_sv[1], -solar_sv[2],
+                        length=0.3*distance, color='orange', arrow_length_ratio=0.6, 
+                        label=f'Sun: {sun_ra * 15:.4f}°RA, {sun_dec:.4f}°Dec')
+        
+        # Create new Moon quiver plot
+        moon = ax2.quiver(lunar_sv[0] * distance, lunar_sv[1] * distance, lunar_sv[2] * distance,
+                        -lunar_sv[0], -lunar_sv[1], -lunar_sv[2],
+                        length=0.3*distance , color='grey', arrow_length_ratio=0.6, 
+                        label=f'Moon: {moon_ra * 15:.4f}°RA, {moon_dec:.4f}°Dec')
+
+        gl = [0, 22, 120]
+        gb = [0, 0, 0]
+        galactic_ra, galactic_dec = conv_gal_to_eq(gl, gb)
+        # print(galactic_ra, galactic_dec)
+        sv = conv_eq_to_cart(galactic_ra, galactic_dec, 1)
+        x, y, z = sv
+        # print(list(zip(x, y, z)))
+
+        dc = find_direction_cosines_plane(list(zip(x, y, z)))
+        a, b, c = dc
+        d =0
+
+        xlim = ylim = zlim = (-distance, distance)
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        ax.set_zlim(zlim)
+
+        num_points = 1000
+        # Calculate and plot intercepts on the XY plane (z=0)
+        if c != 0:
+            x = np.linspace(xlim[0], xlim[1], num_points)
+            y = (d - a*x +  distance*c) / b
+            mask = (y <=  distance) & (y >= - distance)
+            x = x[mask] 
+            y = y[mask]     
+            z = np.ones_like(x)*- distance
+            ax.plot(x, y, z, color='purple' )
+
+            x = np.linspace(xlim[0], xlim[1], num_points)
+            y = (d - a*x -  distance*c) / b
+            mask = (y <=  distance) & (y >= - distance)
+            x = x[mask] 
+            y = y[mask]     
+            z = np.ones_like(x)* distance
+            ax.plot(x,y,z, color='purple' )
+            
+        if b != 0:
+            z = np.linspace(zlim[0], zlim[1], num_points)
+            x = (d - c*z  -  distance*b) / a
+            mask = (x <=  distance) & (x >= - distance)
+            z = z[mask]
+            x = x[mask]
+            y = np.ones_like(x)* distance
+            ax.plot(x, y, z, color='purple' )
+
+            z = np.linspace(zlim[0], zlim[1], num_points)
+            x = (d - c*z  +  distance*b) / a
+            mask = (x <=  distance) & (x >= - distance)
+            z = z[mask]
+            x = x[mask]
+            y = np.ones_like(x)*- distance
+            ax.plot(x, y, z, color='purple' )
+
+        if a != 0:
+            y =  np.linspace(ylim[0], ylim[1], num_points)
+            z = (d - b*y +  distance*a) / c
+            mask = (z <=  distance) & (z >= - distance)
+
+            z = z[mask] 
+            y = y[mask]
+            x = np.ones_like(y)*- distance
+            ax.plot(x, y, z, color='purple', label = 'Galactic plane' )
+
+            y =  np.linspace(ylim[0], ylim[1], num_points)
+            z = (d - b*y -  distance*a) / c
+            mask = (z >= - distance) & (z<= distance)
+            z = z[mask] 
+            y = y[mask]     
+            x = np.ones_like(y)* distance
+            ax.plot(x, y, z, color='purple' )
+        
+
+        ax.legend(loc='center left', bbox_to_anchor=(0.95, 0), fontsize='small')
         # return
-        return ax, satellite, orbit
+        return ax, satellite, orbit, sun, moon
     
     # init 2D sky view as seen in the velocity direction
     def init_sky(ax):
         global sky, diffused, text
                
         # set labels
-        ax.set_xlabel('Right Ascension $^\circ$')
-        ax.set_ylabel('Declination $^\circ$')
+        ax.set_xlabel(r'Right Ascension $^\circ$')
+        ax.set_ylabel(r'Declination $^\circ$')
         
         # set titles
         ax.set_title('Sky view in the direction of velocity vector')
@@ -161,7 +259,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         global phots
         
         # set labels
-        ax.set_xlabel('Wavelength ($\AA$)')
+        ax.set_xlabel(r'Wavelength ($\AA$)')
         ax.set_ylabel('Number of Photons s\u207B\u00B9 cm\u207B\u00B2 $\AA$\u207B\u00B9 sr\u207B\u00B9')
         # ax.set_xlabel('Log[Wavelength ($\AA$)]')
         # ax.set_ylabel('log[Number of Photons]')
@@ -212,8 +310,8 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         # set title
         ax.set_title('Absorption Spectra of each star')
         # set labels
-        ax.set_xlabel('Wavelength $\AA$')
-        ax.set_ylabel('Declination $^\circ$')
+        ax.set_xlabel(r'Wavelength $\AA$')
+        ax.set_ylabel(r'Declination $^\circ$')
 
         # Create a custom colormap (black to blue gradient)
         colors = [(0, 0, 0), (0, 0, 1)]  # Black to blue
@@ -239,7 +337,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
     # initialize plot
     def init():
         global fig, ax2, ax3, ax4, ax5
-        global orbit, satellite, sky, diffused, phots, spectra
+        global orbit, satellite, sky, diffused, phots, spectra, sun, moon
         global X, Y, Z
         global RA, DEC
         
@@ -267,7 +365,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         # ax2 = subfigs[0,0].add_subplot( projection='3d')
         ax2 = fig.add_subplot(gs[0, 0], projection='3d' )
         # set layout
-        ax2, satellite, orbit = init_orbit(ax2)  
+        ax2, satellite, orbit, sun, moon = init_orbit(ax2)  
 
         # plt.subplots_adjust(left=0.3, right=0.6, bottom=0.1, top=0.9)
 
@@ -300,9 +398,9 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         # fig.tight_layout()
         
         # return
-        return fig, satellite, orbit, sky, diffused, phots, spectra
+        return fig, satellite, orbit, sun, moon, sky, diffused, phots, spectra
 
-    def update(i, satellite, orbit, sky, diffused, phots, spectra):
+    def update(i, satellite, orbit, sun, moon, sky, diffused, phots, spectra):
         # stack as np columns for scatter plot
         xyi, xi, yi, zi = get_pos_data_by_frame(i)
         # print ('frame number',i+1,'- satellite path:', xi, yi, zi)
@@ -314,6 +412,33 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         # .set_data() for plot...
         orbit.set_data(xi, yi)
         orbit.set_3d_properties(zi)
+
+        # Remove old Sun and Moon quivers
+        # Delete old Sun and Moon quivers if they exist
+        # if sun is not None:
+        #     sun.remove()
+        #     print("deleting sun")
+        # if moon is not None:
+        #     moon.remove()
+        #     print("deleting moon")
+        # ax2.get_legend().remove()
+        
+        # # Update positions for Sun and Moon
+        # sun_ra, sun_dec = sol_position["sun"][i]
+        # moon_ra, moon_dec = sol_position["moon"][i]
+
+        # solar_sv = conv_eq_to_cart(sun_ra * 15, sun_dec, 1)
+        # lunar_sv = conv_eq_to_cart(moon_ra * 15, moon_dec, 1)
+        
+        # distance = 10000
+        # sun_length = 0.1 * distance  # Adjust length as needed
+        # moon_length = 0.1 * distance  # Adjust length as needed
+
+
+        
+        # # Update the legend
+        # ax2.legend()
+
 
         # ax3.clear()
         # get frame data. pos[ra, dec], size
@@ -330,7 +455,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         # print('S is working')
 
         tot_phot = calc_total_diffused_flux(diffused_data[i])
-        info_text = f"Diffused UV Background\n    at {BG_wavelength} $\AA$\nNum_photons from diffused \n= {round(tot_phot, 3)} s\u207B\u00B9 cm\u207B\u00B2 $\AA$\u207B\u00B9 sr\u207B\u00B9"
+        info_text = f"Diffused UV Background \n    at {BG_wavelength} $\AA$\nNum_photons from diffused \n= {round(tot_phot, 3)} s\u207B\u00B9 cm\u207B\u00B2 $\AA$\u207B\u00B9 sr\u207B\u00B9"
         text.set_text(info_text)
 
         # change sky limits
@@ -340,7 +465,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         
         # setting up the number of photons vs wavelength plot
         ax4.clear()
-        ax4.set_xlabel('Wavelength ($\AA$)')
+        ax4.set_xlabel(r'Wavelength ($\AA$)')
         ax4.set_ylabel('Number of Photons s\u207B\u00B9 cm\u207B\u00B2 $\AA$\u207B\u00B9 sr\u207B\u00B9')
         # ax4.set_xlabel('Log[Wavelength ($\AA$)]')
         # ax4.set_ylabel('log[Number of Photons]')
@@ -375,8 +500,8 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         # setting up the absorption spectra plots
         ax5.clear()
         ax5.set_title('Absorption Spectra of each star')
-        ax5.set_xlabel('Wavelength $\AA$')
-        ax5.set_ylabel('Declination $^\circ$')
+        ax5.set_xlabel(r'Wavelength $\AA$')
+        ax5.set_ylabel(r'Declination $^\circ$')
 
         if (X_wavelength[0]!=0): #checks for stars in the field of view
             twoD_array = np.zeros((int((Size[3]-Size[1])*100), len(X_wavelength)))
@@ -391,13 +516,13 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
             spectra = ax5.imshow(color_data, cmap=BtoB_cmap, aspect='auto', extent=(min(wavelength), max(wavelength), Size[3],Size[1]), vmin=0, vmax=1)
             ax5.invert_yaxis()
         # return
-        return satellite, orbit, sky, diffused, phots, spectra
+        return satellite, orbit, sun, moon, sky, diffused, phots, spectra
     # Press space bar to pause animation
 
     # run animation
     def run():
         # plot init
-        fig, satellite, orbit, sky, diffused, phots, spectra = init()
+        fig, satellite, orbit, sun, moon, sky, diffused, phots, spectra = init()
         # total no of frames
         frame_count = len(X)
         # print (frame_count)
@@ -409,7 +534,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, spectral_fov, diffus
         # create animation using the animate() function
         ani = animation.FuncAnimation(fig, update,
                                       frames=frame_count, interval= Interval, 
-                                      fargs=(satellite, orbit, sky, diffused, phots, spectra ),
+                                      fargs=(satellite, orbit, sun, moon, sky, diffused, phots, spectra ),
                                       blit=False, repeat=False)
 
         

@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mc
 
 from Params_configparser import get_folder_loc
+from Coordinates import *
 
 # def DEGRAD(deg):
 #     return math.radians(deg)
@@ -18,7 +19,6 @@ from Params_configparser import get_folder_loc
 
 folder_loc, params_file = get_folder_loc()
 
-
 def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     config = ConfigParser()
     config.read(filename)
@@ -26,51 +26,6 @@ def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     sat_name = config.get(param_set, 'sat_name')
     diffused_wavelength = config.get(param_set, 'BG_wavelength')
     return diffused_wavelength
-
-def invert_gal_to_eq(gl, gb):
-
-    # Convert Galactic coordinates from degrees to radians
-    l = np.radians(gl)
-    b = np.radians(gb)
-
-    # Transformation matrix from Galactic to Equatorial coordinates, // J.C.Liu et al(A&A 536, A102 (2011))//wrong
-    A = np.array([
-        [-0.0548755604, -0.8734370902, -0.4838350155],
-        [0.4941094279, -0.4448296300, 0.7469822445],
-        [-0.8676661490, -0.1980763734, 0.4559837762]
-    ])
-
-    # Calculate Cartesian coordinates in Galactic system
-    xyz_galactic = np.array([np.cos(l) * np.cos(b), np.sin(l) * np.cos(b), np.sin(b)])
-
-    # Apply the inverse of the transformation matrix to get Equatorial coordinates
-    A_inv = np.linalg.inv(A)
-    xyz_equatorial = np.dot(A_inv, xyz_galactic)
-
-    # Convert Equatorial coordinates from Cartesian to spherical (RA, Dec)
-    ra_rad = np.arctan2(xyz_equatorial[1], xyz_equatorial[0])
-    dec_rad = np.arcsin(xyz_equatorial[2])
-
-    # Convert Equatorial coordinates from radians to degrees
-    ra = np.degrees(ra_rad)
-    dec = np.degrees(dec_rad)
-    for i, ra_i in enumerate(ra):
-        if ra_i<0:
-            ra[i] =360 + ra_i
-    
-    return ra, dec
-
-def get_world_coordinates(x, y, fits_file):
-    with fits.open(fits_file) as hdul:
-        wcs = WCS(hdul[0].header)  # Create WCS object from FITS header
-        print(wcs)
-        # Convert pixel coordinates to world coordinates (RA, Dec)
-        ra, dec = wcs.all_pix2world(x, y, 1)  # Assumes pixel indices start from 1
-        print(hdul[0].header)
-        # print(hdul[1].header)
-        # print(hdul[2].header)
-        # print(ra,dec)
-        return ra, dec
 
 def plot_diffused_bg(data, wavelength):
 
@@ -88,23 +43,27 @@ def plot_diffused_bg(data, wavelength):
     
     plt.show()
 
+# gl= [0] #longitude
+# gb= [0] #latitude
+# ra, dec = conv_gal_to_eq(gl,gb)
+# print (gl,gb,'--->',ra,dec)
 
 # Example usage
-wavelength = 1100
+
 # file_path = fr"C:\Users\Akshank Tyagi\Documents\GitHub\UV-Sky-Simulations\diffused_data\RA_sorted_flux_{wavelength}.csv"
 
-print ('working')
-for x in [1100]:
-    fits_filename = fr"{folder_loc}diffused_UV_data{os.sep}scattered_1e10_{x}_a40_g6{os.sep}scattered.fits"
-    # fits_filename = fr'C:\Users\Akshank Tyagi\Documents\GitHub\UV-Sky-Simulations\diffused_data/scattered_100000[(1100, 1130)]_mag4.fits'
-    ra, dec = get_world_coordinates( 1800, 900, fits_filename)
-    print(f"ra,dec:",ra,dec)
-    with fits.open(fits_filename) as hdul:
-        data = hdul[0].data
-        # for row in data:
-        #     print (row)
-        plot_diffused_bg(data, 1105)
-
+# print ('working')
+# for x in [1100]:
+#     fits_filename = fr"{folder_loc}diffused_UV_data{os.sep}scattered_1e10_{x}_a40_g6{os.sep}scattered.fits"
+#     # fits_filename = fr'C:\Users\Akshank Tyagi\Documents\GitHub\UV-Sky-Simulations\diffused_data/scattered_100000[(1100, 1130)]_mag4.fits'
+#     ra, dec = get_world_coordinates( 1800, 900, fits_filename)
+#     print(f"ra,dec:",ra,dec)
+#     with fits.open(fits_filename) as hdul:
+#         data = hdul[0].data
+#         # for row in data:
+#         #     print (row)
+#         plot_diffused_bg(data, 1105)
+wavelength = read_parameter_file()
 file_path = fr"{folder_loc}diffused_UV_data{os.sep}RA_sorted_flux_{wavelength}.csv"
 
 if os.path.exists(file_path):
@@ -120,14 +79,14 @@ else:
 
         gl= [0] #longitude
         gb= [0] #latitude
-        ra, dec = invert_gal_to_eq(gl,gb)
+        ra, dec = conv_gal_to_eq(gl,gb)
         print (gl,gb,'--->',ra,dec)
 
         x_pixel = [1800]
         y_pixel = [900]
 
         glon, glat = get_world_coordinates(x_pixel, y_pixel, fits_filename)
-        ra, dec = invert_gal_to_eq(glon,glat)
+        ra, dec = conv_gal_to_eq(glon,glat)
         print("RA:", ra)
         print("Dec:", dec)
 
@@ -151,7 +110,7 @@ else:
                 print("line-",i)
             glon, glat = get_world_coordinates(x_array, [i]*3600, fits_filename)
             # print(glon, glat)
-            ra_line, dec_line = invert_gal_to_eq(glon,glat)
+            ra_line, dec_line = conv_gal_to_eq(glon,glat)
             
             line = zip(values[i-1], ra_line, dec_line)
             grid.append(line)

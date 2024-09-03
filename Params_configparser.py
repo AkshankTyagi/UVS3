@@ -49,4 +49,5 @@ config['Params_1'] = {
 
 
 with open(f'{folder_loc}init_parameter.txt',"w") as f:
+    # print("Writing to parameter file")
     config.write(f)

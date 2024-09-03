@@ -1,0 +1,15 @@
+UV Sky Simulation:
+
+1. UV ISRF: https://www.astron-soc.in/bulletin/04September/0432151.PDF , N V Sujatha et al(2004) 
+2. Jayanth Murthy, Diffused UV: https://arxiv.org/pdf/1009.4530 , Murthy (2014)
+
+3. The 1997 reference of diffuse night sky brightness: https://aas.aanda.org/articles/aas/pdf/1998/01/ds1449.pdf 
+4. Representations of celestial coordinates in FITS: https://www.aanda.org/articles/aa/pdf/2002/45/aah3860.pdf , Calabretta and Greisen (2002)
+
+Resources:
+1. Original satellite code:  https://github.com/ravi4ram/Starfield-View
+2. Hipparcos-Tycho catalogue: https://cdsarc.u-strasbg.fr/viz-bin/ReadMe/I/239?format=html&tex=true
+3. Castelli-Kurucz Atlas: https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/AA_README
+4. Jayant Sir Diffused code: https://docs.google.com/document/d/1_CWFC0ed0yhSNsE61q3cI6tGd625R7vdrAfOsg3JdFs/edit#heading=h.jpmbbyymjf0u
+5. diffused Data: https://zenodo.org/records/4496308
+6. IIA CADS: https://cads.iiap.res.in/software
