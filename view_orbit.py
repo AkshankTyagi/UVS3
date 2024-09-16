@@ -29,6 +29,8 @@ from plot import *#,animate
 from star_spectrum import *#,GET_SPECTRA
 from diffused_data import *
 from diffused_Background import *
+from Coordinates import *
+
 
 # include the parameter file and sattelite TLE file
 folder_loc, params_file = get_folder_loc()
@@ -51,9 +53,15 @@ def read_parameter_file(filename=params_file, param_set = 'Params_1'):
     N_revolutions = config.get(param_set, 'number of Revolutions')
     N_frames = config.get(param_set, 'N_frames')
     T_slice = config.get(param_set, 't_slice')
+
+    allignment = config.get(param_set, 'allignment_with_orbit')
+    if allignment != 'False':
+        allignment = float(allignment)
+    theta = float(config.get(param_set, 'inclination_from_V'))
     
     print('sat_name:', sat_name, ', roll:',roll,',  roll_rate_hrs:',roll_rate_hrs, ',  N_revolutions:',N_revolutions, ',  N_frames:', N_frames, ',  T_slice:', T_slice)
-    return hipp_file, castelli_file, sat_name, float(T_slice), N_frames, float(N_revolutions), roll #, Threshold
+    print('Allignment_with_orbit=', allignment, ', Inclination_from_V =', theta )
+    return hipp_file, castelli_file, sat_name, float(T_slice), N_frames, float(N_revolutions), roll, theta, allignment #, Threshold
 
 def read_satellite_TLE(filename= sat_file, sat_name = 'ISS'):
     config.read(filename)
@@ -109,40 +117,76 @@ def get_celestial_positions(time_arr):
         "moon": lunar
     }
 
+
+
 # get ra and dec from state vectors
-def get_ra_dec_from_sv(r, v):
-    # norm
+def get_ra_dec_from_sv(r, v, theta):
+    # normalize
     v_n = np.linalg.norm(v)
-    # print(v_n)
+    r_n = np.linalg.norm(r)
+    V_unit =  v / v_n
+    R_unit = r / r_n
+    # print('V --',v, v_n, V_unit)
+    # print('R --',r, r_n, R_unit)
+
+    if theta == 0 :
+        U = V_unit
+    elif (theta <= 180 and theta > 0):
+        U = V_unit*np.cos( np.deg2rad(theta) ) + R_unit* np.sin( np.deg2rad(theta) )
+    
     # direction cosines
-    l = v[0]/v_n; m = v[1]/v_n; n = v[2]/v_n; 
+    l = U[0]; m = U[1]; n = U[2]; 
     # print(l,m,n)
+
     # declination
     delta = np.arcsin(n)*180/np.pi                    
     # right ascension
     np.cosd = lambda x : np.cos( np.deg2rad(x) )
-    if m >0:  alfa = np.arccos(l/np.cosd(delta))*180/np.pi
-    else: alfa = 360 - np.arccos(l/np.cosd(delta))*180/np.pi
+    if m >0:  alfa = np.rad2deg(np.arccos(l/np.cosd(delta)))
+    else: alfa = 360 - np.rad2deg(np.arccos(l/np.cosd(delta)))
     # return
-    return alfa, delta,
+
+    #calculate Normal vector to the orbital plane
+    N = np.cross(R_unit, V_unit)
+    # N = N / np.linalg.norm(N)  # Normalize the normal vector
+
+    # Tangential RA and Dec vectors at the point where V intersects the sphere
+    # RA: A vector in the xy-plane (tangential along constant declination)
+    RA = np.array([-U[1], U[0], 0])  # Tangent in xy-plane
+    # RA = RA / np.linalg.norm(RA)
+    # Dec: A vector in the vertical plane perpendicular to RA (tangential along constant RA)
+    # Dec = np.cross(U, RA)  # Perpendicular to both V_intersect and RA
+    # Dec = Dec / np.linalg.norm(Dec)  # Normalize Dec to unit length
+    angle_rad = angle_between_vectors(N, RA)
+    angle_deg = np.degrees(angle_rad)
+
+    # print("angle between Normal and RA",angle_deg)
+
+    return alfa, delta, angle_deg
 
 # returns a list of state vectors, ra, dec for a
 # given sgp4 satellite object
-def propagate(sat, time_start, time_end, dt):
+def propagate(sat, time_start, time_end, dt, theta):
     # time
-    end = np.arange(0.0, time_end, dt)
+    # end = np.arange(0.0,  time_end, dt)
+    # time_arr = time_start + end.astype('timedelta64[s]') 
+    # print(time_arr)
+    end = np.arange(0.0,  time_end*1000, dt*1000)
     # print(end)
     # list of datetime
-    time_arr = time_start + end.astype('timedelta64[s]')    
+    time_arr = time_start + end.astype('timedelta64[ms]') 
+    # print(time_arr)   
     # state vectors, ra, dec for each time step
     position = []; velocity = []
     right_ascension = []; declination = []
+    angle_from_normal = []
     for j in time_arr.tolist():
-        p, v = sat.propagate(j.year, j.month, j.day, j.hour, j.minute, j.second)
-        ra, dec = get_ra_dec_from_sv(p, v)
+        second = float(str(j.second) + "." + str(j.microsecond))
+        p, v = sat.propagate(j.year, j.month, j.day, j.hour, j.minute, second)
+        ra, dec, angle = get_ra_dec_from_sv(p, v, theta)
         # list packing
         position.append(p); velocity.append(v)
-        right_ascension.append(ra); declination.append(dec)
+        right_ascension.append(ra); declination.append(dec), angle_from_normal.append(angle)
 
     # slice into columnsṇ
     pos, vel   = list(zip(*position)), list(zip(*velocity))
@@ -150,17 +194,17 @@ def propagate(sat, time_start, time_end, dt):
     X, Y, Z    = np.array(pos[0]), np.array(pos[1]), np.array(pos[2])
     VX, VY, VZ = np.array(vel[0]), np.array(vel[1]), np.array(vel[2])
     state_vectors = [X, Y, Z, VX, VY, VZ]
-    celestial_coordinates = [np.array(right_ascension), np.array(declination)]
+    celestial_coordinates = [np.array(right_ascension), np.array(declination), np.array(angle_from_normal)]
     # print(celestial_coordinates)
 
     return time_arr, state_vectors, celestial_coordinates
 
 # get list of star data in view along with satellite state_vectors
-def get_simulation_data(sat, df, start_time, sim_secs, time_step, roll=False):
+def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignment, roll=False):
     # state_vectors, celestial_coordinates
-    tr, sc, cc = propagate(sat, start_time, sim_secs, time_step)
+    tr, sc, cc = propagate(sat, start_time, sim_secs, time_step, theta)
     # parse celestial_coordinates
-    ra, dec = cc
+    ra, dec, angle_to_normal = cc
 
     # [TESTING] Roll about velocity direction 
     if roll:
@@ -169,12 +213,20 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, roll=False):
         # modify ra with roll rate
             ra = [ri + roll_rate_sec * i for i, ri in enumerate (ra)]
 
+    # find the required angle that the FOV heightis inclined to the Dec axis
+    chi = angle_to_normal + allignment - 180
+
+    # for (alpha, chi_angle) in zip(angle_to_normal, chi):
+        # print("angle between Normal and RA",alpha)
+        # print("angle of rotation of FOV",chi_angle)
+    print(chi)
     # Create an empty all frames data
     frame_row_list = []
 
-    for frame, (r, d) in enumerate(zip(ra, dec)):
+    for frame, (r, d, chi_angle) in enumerate(zip(ra, dec, chi)):
         # print(frame, (r, d))
-        tdf_values, frame_boundary = filter_by_fov(df, r, d)
+
+        tdf_values, frame_boundary = filter_by_fov(df, r, d, chi_angle)
         # print (frame, tdf_values)
         # print(frame, frame_boundary)
         tdf_values = tdf_values.values.tolist()
@@ -225,7 +277,7 @@ def write_to_csv(data, sol_positions, sat_name):
 
 def main():
     global data
-    hipp_file, castelli_dir, sat_name, t_slice, n_frames, N_revolutions, roll  = read_parameter_file(params_file,'Params_1')
+    hipp_file, castelli_dir, sat_name, t_slice, n_frames, N_revolutions, roll, theta, allignment  = read_parameter_file(params_file,'Params_1')
     line1, line2 = read_satellite_TLE(sat_file, sat_name)
     
     # create satellite object
@@ -234,25 +286,27 @@ def main():
     df = read_hipparcos_data(hipp_file)
     
     # time period for one revolution
-    t_period = N_revolutions* 2 * np.pi * (a**3/mu)**0.5
-    print("Time period of Satellite =",t_period,'sec')
+    t_rev = 2 * np.pi * (a**3/mu)**0.5
+    t_period = N_revolutions* t_rev
+    print(f"Orbital Time period of Satellite = {t_rev} sec; Run Time of Simulation: {t_period} " )
 
     # each time slice
     if t_slice:
         t_step = int(t_period / t_slice) + 1
-        print("N_Frames:", t_step,"t_slice =",t_slice)
+        print(f"N_Frames: {t_step}; t_slice = {t_slice} sec")
     else:
         # set Number of frames
         if n_frames:
             t_slice = t_period/int(n_frames)
-            print("N_Frames:", n_frames ,"t_slice =",t_slice)
+            print(f"N_Frames: {t_step}; t_slice = {t_slice} sec")
         else:
             print('T_slice not found')
 
     # simulation starts from current time to one full orbit
-    start = np.datetime64(datetime.datetime.now())+ np.timedelta64(10, 'D')
+    start = np.datetime64(datetime.datetime.now()) #+ np.timedelta64(10, 'D')
+    print(f"Start time of Simulation: {start}")
     # times, state_vectors, celestial_coordinates  
-    time_arr, state_vectors, celestial_data, sol_position  = get_simulation_data(satellite, df, start, t_period, t_slice, roll)
+    time_arr, state_vectors, celestial_data, sol_position  = get_simulation_data(satellite, df, start, t_period, t_slice, theta, allignment,  roll)
     Spectra = GET_SPECTRA(castelli_dir, celestial_data)
     # print(celestial_data)
     # print(sol_position)
@@ -264,7 +318,7 @@ def main():
     # with open('star_data.pkl',"wb") as f:
     #     data = celestial_coordinates
     #     pickle.dump(data, f)
-    write_to_csv(celestial_data, sol_position, sat_name)
+    # write_to_csv(celestial_data, sol_position, sat_name)
     #  animate
     animate(time_arr, state_vectors, celestial_data, sol_position, Spectra, diffused_data, r)
     return

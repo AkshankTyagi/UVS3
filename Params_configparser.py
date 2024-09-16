@@ -22,17 +22,22 @@ config['Params_1'] = {
     'sat_name' : 'ISS',
     'roll' : False,
     'roll_rate_hrs' : False,
-    # TBA Directional Cosines of Detector from the velocity of Satellite 
-    'number of Revolutions' : 1,
+
     # Specify either Number of frames or period in sec after which the next Frame is given
+    'number of Revolutions' : 1,
     'N_frames' : False,
     't_slice' : 100, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
-    'width': 0.5, #RA width
-    'height': 2, #Dec height
+    'width': 0.5, # (shorter) width
+    'height': 2, # (longer) height
     'starmag_min_threshold' : 0, #threshold for what bright stars we want to avoid
-    'starmag_max_threshold' : 9, #threshold for what apaarent magnitude stars we want to look at
+    'starmag_max_threshold' : 10, #threshold for what apaarent magnitude stars we want to look at
+
+    # Direction of Detector from the velocity of Satellite 
+    'allignment_with_orbit' : 90, #gives angle of longer side of slit (height) with the ORBITAL PLANE from 0 to 90 degrees or False, 
+    'inclination_from_V': 0, #gives the angle of inclination 0 to 180 deg, of the the camera from V vector in ORBITAL PLANE
+
 
     # Spectrum Parameters (UV Band Wavelengths in Angstroms)
     'limit_min': 100,
@@ -44,7 +49,15 @@ config['Params_1'] = {
     'azm': -59,
     'ele': 41,
     'longitudinal_spectral_width' : 0.1, #Declination width of spectral spread to fall on detector in degrees
-    'interval_bw_Frames' : 1000 # milliSec
+    'interval_bw_Frames' : 100 # milliSec
+}
+
+config['Params_2'] = {
+    'sun': True,
+    'moon': True,
+    'galactic_plane': True,
+    'diffused_bg': True,
+    'Spectra': True,
 }
 
 

@@ -10,12 +10,21 @@ t_slice = 100
 width = 0.5
 height = 2
 starmag_min_threshold = 0
-starmag_max_threshold = 9
+starmag_max_threshold = 10
+allignment_with_orbit = 90
+inclination_from_v = 0
 limit_min = 100
 limit_max = 3800
 bg_wavelength = 2300
 azm = -59
 ele = 41
 longitudinal_spectral_width = 0.1
-interval_bw_frames = 1000
+interval_bw_frames = 100
+
+[Params_2]
+sun = True
+moon = True
+galactic_plane = True
+diffused_bg = True
+spectra = True
 

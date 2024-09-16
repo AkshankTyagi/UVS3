@@ -19,6 +19,17 @@ def convert_to_hms(value):
     seconds = (value - hours - minutes/60) * 3600
     return hours, abs(minutes), abs(seconds)
 
+# Function to compute the angle between two vectors in radians
+def angle_between_vectors(vec1, vec2):
+    # Dot product of the vectors
+    dot_product = np.dot(vec1, vec2)
+    magnitude_vec1 = np.linalg.norm(vec1)
+    magnitude_vec2 = np.linalg.norm(vec2)
+    # Compute the cosine of the angle using dot product formula
+    cos_theta = dot_product / (magnitude_vec1 * magnitude_vec2)
+    # Return the angle in radians using arccos (make sure the value is in range [-1, 1])
+    return np.arccos(np.clip(cos_theta, -1.0, 1.0))
+
 def conv_cart_to_eq(xp, yp, zp, dust_par):
     x = (xp - dust_par.sun_x) * dust_par.dust_binsize
     y = (yp - dust_par.sun_y) * dust_par.dust_binsize

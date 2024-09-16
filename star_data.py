@@ -55,7 +55,7 @@ def read_hipparcos_data(FILENAME = hipp_file):
         print("df is empty. File not found.")
 
 # camera fov : 9.31◦ × 7◦
-def filter_by_fov(mdf, ra, de): 
+def filter_by_fov(mdf, ra, de, chi): 
     # frame field of view
     # get valid boundaries  
     width, height, _, _ = read_parameter_file()

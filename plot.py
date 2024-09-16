@@ -173,7 +173,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             ax.plot(x, y, z, color='purple' )
         
 
-        ax.legend(loc='center left', bbox_to_anchor=(0.95, 0), fontsize='small')
+        ax.legend(loc='center left', bbox_to_anchor=(0.95, 0), fontsize='small') #
         # return
         return ax, satellite, orbit, sun, moon
     
@@ -205,7 +205,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         diffused = ax.scatter(loc_ra, loc_dec, s= 0.05, alpha= a,  facecolors='Blue')
 
         tot_phot = calc_total_diffused_flux(diffused_data[0])
-        info_text = f"Diffused UV Background\n    at {BG_wavelength} $\AA$\nNum_photons from diffused \n= {round(tot_phot, 3)} s\u207B\u00B9 cm\u207B\u00B2 $\AA$\u207B\u00B9 sr\u207B\u00B9"
+        info_text = f"Diffused UV Background\n    at {BG_wavelength} $\\AA$\nNum_photons from diffused \n= {round(tot_phot, 3)} s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9"
         # print(info_text)
         text = ax.text(1.04, 0.6, info_text, transform=ax.transAxes, fontsize=7.5, va='center')
 
@@ -260,7 +260,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         
         # set labels
         ax.set_xlabel(r'Wavelength ($\AA$)')
-        ax.set_ylabel('Number of Photons s\u207B\u00B9 cm\u207B\u00B2 $\AA$\u207B\u00B9 sr\u207B\u00B9')
+        ax.set_ylabel('Number of Photons s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9')
         # ax.set_xlabel('Log[Wavelength ($\AA$)]')
         # ax.set_ylabel('log[Number of Photons]')
 
@@ -455,7 +455,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # print('S is working')
 
         tot_phot = calc_total_diffused_flux(diffused_data[i])
-        info_text = f"Diffused UV Background \n    at {BG_wavelength} $\AA$\nNum_photons from diffused \n= {round(tot_phot, 3)} s\u207B\u00B9 cm\u207B\u00B2 $\AA$\u207B\u00B9 sr\u207B\u00B9"
+        info_text = f"Diffused UV Background \n    at {BG_wavelength} $\\AA$\nNum_photons from diffused \n= {round(tot_phot, 3)} s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9"
         text.set_text(info_text)
 
         # change sky limits
@@ -466,7 +466,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # setting up the number of photons vs wavelength plot
         ax4.clear()
         ax4.set_xlabel(r'Wavelength ($\AA$)')
-        ax4.set_ylabel('Number of Photons s\u207B\u00B9 cm\u207B\u00B2 $\AA$\u207B\u00B9 sr\u207B\u00B9')
+        ax4.set_ylabel('Number of Photons s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9')
         # ax4.set_xlabel('Log[Wavelength ($\AA$)]')
         # ax4.set_ylabel('log[Number of Photons]')
         ax4.set_title('# of Photons from the stars in the Sky view')
