@@ -8,6 +8,7 @@ from configparser import ConfigParser
 from star_spectrum import * 
 # from star_spectrum import GET_STAR_TEMP
 from Params_configparser import get_folder_loc
+from star_data import is_point_in_polygon
 
 folder_loc, params_file = get_folder_loc()
 # print(" diffused data")
@@ -39,15 +40,33 @@ def get_diffused_in_FOV( data ):
 
     for f in range(len(data)): # f represents frame number
         # print('frame :',f)
-        _, _, frame_boundary = zip(data[f])
-        frame_boundary = frame_boundary[0]
-        [xmin, ymin, xmax, ymax] = frame_boundary
+        _, _, frame_corner = zip(data[f])
+        frame_corner= frame_corner[0]
+        xmin, ymin = frame_corner.min(axis=0)
+        xmax, ymax = frame_corner.max(axis=0)
+        # print(f"diffused)Frame {f+1} has {len(data[f])} stars, and frame corners = {frame_corner}")
+
+        # [xmin, ymin, xmax, ymax] = [min_ra, min_dec, max_ra, max_dec]
+
+        # frame_boundary = frame_boundary[0]
+        #  = frame_boundary
 
         mdf = df[['ra', 'dec', 'flux']]
-        q = 'ra >= @xmin-0.05 & ra <= @xmax+0.05 & dec >= @ymin-0.05 & dec <= @ymax+0.05' 
+        # Apply a buffer to include points close to the polygon boundary
+        buffer = 0.01
+        q = f'ra >= @xmin - {buffer} & ra <= @xmax + {buffer} & dec >= @ymin - {buffer} & dec <= @ymax + {buffer}' 
         mdf = mdf.query(q)
         mdf = mdf.values.tolist()
-        diffused_data.append([f, mdf])
+
+        # Now, use is_point_in_polygon to keep only the points inside the rotated FOV
+        polygon = frame_corner  # The polygon is defined by the rotated FOV corners
+        filtered_points = []
+        for point in mdf:
+            ra, dec, flux = point
+            if is_point_in_polygon(ra, dec, polygon):
+                filtered_points.append([ra, dec, flux])
+
+        diffused_data.append([f, filtered_points])
 
     # print (diffused_data[0])
 

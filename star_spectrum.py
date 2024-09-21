@@ -259,8 +259,14 @@ def GET_SPECTRA(spec_dir, data):
         scale_per_star = []
         photons_per_star = []
 
-        _, d, frame_size = zip(data[i])
-        spectral_FOV.frame_size = frame_size
+        _, d, frame_corner = zip(data[i])
+
+        frame_corner= frame_corner[0]
+        # print(f"stars)Frame {i+1} has {len(d[0])} stars, and frame corners = {frame_corner}")
+        min_ra, min_dec = frame_corner.min(axis=0)
+        max_ra, max_dec = frame_corner.max(axis=0)
+
+        spectral_FOV.frame_size.append([min_ra, min_dec, max_ra, max_dec])
         
         if d[0]:
             c = list(zip(*d[0]))

@@ -32,7 +32,7 @@ config['Params_1'] = {
     'width': 0.5, # (shorter) width
     'height': 2, # (longer) height
     'starmag_min_threshold' : 0, #threshold for what bright stars we want to avoid
-    'starmag_max_threshold' : 10, #threshold for what apaarent magnitude stars we want to look at
+    'starmag_max_threshold' : 8, #threshold for what apaarent magnitude stars we want to look at
 
     # Direction of Detector from the velocity of Satellite 
     'allignment_with_orbit' : 90, #gives angle of longer side of slit (height) with the ORBITAL PLANE from 0 to 90 degrees or False, 
@@ -49,7 +49,7 @@ config['Params_1'] = {
     'azm': -59,
     'ele': 41,
     'longitudinal_spectral_width' : 0.1, #Declination width of spectral spread to fall on detector in degrees
-    'interval_bw_Frames' : 100 # milliSec
+    'interval_bw_Frames' : 1000 # milliSec
 }
 
 config['Params_2'] = {

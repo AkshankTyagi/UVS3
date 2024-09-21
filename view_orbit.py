@@ -219,7 +219,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
     # for (alpha, chi_angle) in zip(angle_to_normal, chi):
         # print("angle between Normal and RA",alpha)
         # print("angle of rotation of FOV",chi_angle)
-    print(chi)
+    # print(chi)
     # Create an empty all frames data
     frame_row_list = []
 
@@ -229,6 +229,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
         tdf_values, frame_boundary = filter_by_fov(df, r, d, chi_angle)
         # print (frame, tdf_values)
         # print(frame, frame_boundary)
+        # print(f"Frame {frame+1} has {len(tdf_values)} stars, and frame corners = {frame_boundary}")
         tdf_values = tdf_values.values.tolist()
         # 
         frame_row_list.append([frame, tdf_values, frame_boundary ])

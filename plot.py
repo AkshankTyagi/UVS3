@@ -111,7 +111,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
 
         dc = find_direction_cosines_plane(list(zip(x, y, z)))
         a, b, c = dc
-        d =0
+        d = 0
 
         xlim = ylim = zlim = (-distance, distance)
         ax.set_xlim(xlim)
@@ -189,15 +189,20 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         ax.set_title('Sky view in the direction of velocity vector')
         
         # get initial frame celestial_coordinates data 
-        P, S, Size = get_cles_data_by_frame(0, celestial_coordinates) 
-        Size = Size[0]
+        P, S, corners, Size = get_cles_data_by_frame(0, celestial_coordinates) 
+        # Size = Size[0]
         # print (Size)
-        # print(Size)  
         # set axis limits
         ax.set_xlim(Size[0], Size[2])
         ax.set_ylim(Size[1], Size[3])  
-        # ax.set_xlim(min(P[:,0]), max(P[:,0]))
-        # ax.set_ylim(min(P[:,1]), max(P[:,1]))       
+    
+
+        # Scatter plot for stars
+        if (S[0] == 0.0001) : #no star in the FOV
+            sky = ax.scatter(P[0], P[1], s=S[0], facecolors='White')
+        else:
+            sky = ax.scatter(P[:,0], P[:,1], s=S, facecolors='white')
+        # print(S)
 
         #Scatter plot for Diffused light
         a =  0.05* 2/height
@@ -209,13 +214,9 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # print(info_text)
         text = ax.text(1.04, 0.6, info_text, transform=ax.transAxes, fontsize=7.5, va='center')
 
-        # Scatter plot for stars
-        if (S[0] == 0.0001) : #no star in the FOV
-            sky = ax.scatter(P[0], P[1], s=S[0], facecolors='White')
-        else:
-            sky = ax.scatter(P[:,0], P[:,1], s=S, facecolors='white')
-        # print(S)
-
+        ax.plot(corners[:, 0], corners[:, 1], 'grey', linestyle='--')
+        ax.plot([corners[0, 0], corners[3, 0]], [corners[0, 1], corners[3, 1]], 'grey', linestyle='--')
+        ax.set_aspect(2*(Size[2] - Size[0]) / (Size[3] - Size[1]))
         # background_flux = get_flux_ipixel(diffused_BG_wavelength, Size)
         
         # return
@@ -233,7 +234,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
     #     ax.set_title('Spectrum of the stars in the Sky view')
 
     #     X_wavelength, Y_Spectra_per_star, ra, dec = get_spectral_data_by_frame(0, spectra)
-    #     _, _, Size = get_cles_data_by_frame(0, celestial_coordinates) 
+    #     _, _, _, Size = get_cles_data_by_frame(0, celestial_coordinates) 
     #     Size = Size[0]
 
     #     if (X_wavelength[0]!=0):
@@ -305,6 +306,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         global colors,BtoB_cmap
 
         X_wavelength, Y_photons_per_star, ra, dec = get_photons_data_by_frame(0, spectral_fov)
+        # print(f"init_spec: {spectral_fov.frame_size}")
         FOV_size = spectral_fov.frame_size[0]
         
         # set title
@@ -426,24 +428,20 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # # Update positions for Sun and Moon
         # sun_ra, sun_dec = sol_position["sun"][i]
         # moon_ra, moon_dec = sol_position["moon"][i]
-
         # solar_sv = conv_eq_to_cart(sun_ra * 15, sun_dec, 1)
         # lunar_sv = conv_eq_to_cart(moon_ra * 15, moon_dec, 1)
         
         # distance = 10000
         # sun_length = 0.1 * distance  # Adjust length as needed
         # moon_length = 0.1 * distance  # Adjust length as needed
-
-
-        
         # # Update the legend
         # ax2.legend()
 
 
         # ax3.clear()
         # get frame data. pos[ra, dec], size
-        P, S, Size = get_cles_data_by_frame(i, celestial_coordinates)
-        Size = Size[0]
+        P, S, corners, Size = get_cles_data_by_frame(i, celestial_coordinates)
+        # Size = Size[0]
         loc_ra, loc_dec = random_scatter_data(diffused_data[i])
         diffused_offsets = np.column_stack((loc_ra, loc_dec))
         diffused.set_offsets(diffused_offsets)
@@ -457,11 +455,13 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         tot_phot = calc_total_diffused_flux(diffused_data[i])
         info_text = f"Diffused UV Background \n    at {BG_wavelength} $\\AA$\nNum_photons from diffused \n= {round(tot_phot, 3)} s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9"
         text.set_text(info_text)
+        ax3.plot(corners[:, 0], corners[:, 1], 'grey', linestyle='--')
+        ax3.plot([corners[0, 0], corners[3, 0]], [corners[0, 1], corners[3, 1]], 'grey', linestyle='--')
 
         # change sky limits
         ax3.set_xlim(Size[0], Size[2])
         ax3.set_ylim(Size[1], Size[3])    
-
+        ax3.set_aspect(2*(Size[2] - Size[0]) / (Size[3] - Size[1]))
         
         # setting up the number of photons vs wavelength plot
         ax4.clear()
@@ -542,7 +542,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         plt.show()
         print("animation complete")
         # save
-        # ani.save(f'{folder_loc}Demo_file\{sat_name}_satellite.gif', writer="ffmpeg")
+        # ani.save(f'{folder_loc}Demo_file\{sat_name}satellite_9_2024.gif', writer="ffmpeg")
         print("saved")
         return ani
     
@@ -605,7 +605,17 @@ def get_pos_data_by_frame(i):
 def get_cles_data_by_frame(i, data):
     # select a frame
     # print(data[i])
-    frame, d, frame_boundary = zip(data[i])
+    frame, d, frame_corner = zip(data[i])
+    frame_corner = frame_corner[0]
+    # print(f"plots)Frame {i+1} has {len(d[0])} stars, and frame corners = {frame_corner}")
+
+    min_ra, min_dec = frame_corner.min(axis=0)
+    max_ra, max_dec = frame_corner.max(axis=0)
+
+    frame_boundary = [min_ra, min_dec, max_ra, max_dec]
+
+    #  = frame_corner[0]
+
     # print (frame_boundary)
     # slice into columns
     if d[0]:
@@ -630,12 +640,12 @@ def get_cles_data_by_frame(i, data):
             print( f"  Hipp_number= {str(hip[0])}; Ra & Dec: {str(ra[0])} {str(dec[0])}; Johnson Mag= {str(mag[0])}; trig Parallax= {str(parallax[0])}; Color(B-V)= {str(B_V[0])}; Spectral_Type: {str(Spectral_type[0])}; T_index: {Temp}", end="\n")
 
         # return
-        return cles_pos, size, frame_boundary 
+        return cles_pos, size,frame_corner, frame_boundary 
     else:
         print('Frame',frame[0]+1,'is EMPTY', end="\n")
         no_star = [0,0]
         zero_size =(0.0001,)
-        return no_star, zero_size, frame_boundary
+        return no_star, zero_size, frame_corner, frame_boundary
 
 # get Spectral data of the stars for the given frame index 
 def get_spectral_data_by_frame(i, spectral_FOV):
