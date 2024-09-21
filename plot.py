@@ -24,14 +24,16 @@ folder_loc, params_file = get_folder_loc()
 def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     config = ConfigParser()
     config.read(filename)
-    global sat_name, Interval, spectra_width, BG_wavelength, height
+    global sat_name, Interval, spectra_width, BG_wavelength, height, allignment
     sat_name = config.get(param_set, 'sat_name')
+    allignment = config.get(param_set, 'allignment_with_orbit')
     azm = float(config.get(param_set, 'azm'))
     ele = float(config.get(param_set, 'ele'))
     Interval = float(config.get(param_set, 'interval_bw_Frames'))
     height = float(config.get(param_set, 'height'))
     spectra_width = float(config.get(param_set, 'longitudinal_spectral_width'))
     BG_wavelength = config.get(param_set, 'BG_wavelength')
+
     return azm, ele
 
 
@@ -180,7 +182,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
     # init 2D sky view as seen in the velocity direction
     def init_sky(ax):
         global sky, diffused, text
-               
+
         # set labels
         ax.set_xlabel(r'Right Ascension $^\circ$')
         ax.set_ylabel(r'Declination $^\circ$')
@@ -213,10 +215,10 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         info_text = f"Diffused UV Background\n    at {BG_wavelength} $\\AA$\nNum_photons from diffused \n= {round(tot_phot, 3)} s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9"
         # print(info_text)
         text = ax.text(1.04, 0.6, info_text, transform=ax.transAxes, fontsize=7.5, va='center')
-
-        ax.plot(corners[:, 0], corners[:, 1], 'grey', linestyle='--')
-        ax.plot([corners[0, 0], corners[3, 0]], [corners[0, 1], corners[3, 1]], 'grey', linestyle='--')
-        ax.set_aspect((Size[2] - Size[0]) / (Size[3] - Size[1]))
+        if allignment!= 'False':
+            ax.plot(corners[:, 0], corners[:, 1], 'grey', linestyle='--', linewidth = 0.5)
+            ax.plot([corners[0, 0], corners[3, 0]], [corners[0, 1], corners[3, 1]], 'grey', linestyle='--', linewidth = 0.5)
+            ax.set_aspect(2*(Size[2] - Size[0]) / (Size[3] - Size[1]))
         # background_flux = get_flux_ipixel(diffused_BG_wavelength, Size)
         
         # return
@@ -373,7 +375,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
 
         # row 1, col 0
         # ax3 = subfigs[1,0].add_subplot( facecolor="black", aspect= 0.6)
-        ax3 = fig.add_subplot(gs[1, 0], facecolor="black", aspect= 0.6 )
+        ax3 = fig.add_subplot(gs[1, 0], facecolor="black", aspect= 1 )
         # initialize sky
         ax3, sky, diffused = init_sky(ax3)
 
@@ -438,30 +440,44 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # ax2.legend()
 
 
-        # ax3.clear()
+        ax3.clear()
         # get frame data. pos[ra, dec], size
         P, S, corners, Size = get_cles_data_by_frame(i, celestial_coordinates)
         # Size = Size[0]
         loc_ra, loc_dec = random_scatter_data(diffused_data[i])
-        diffused_offsets = np.column_stack((loc_ra, loc_dec))
-        diffused.set_offsets(diffused_offsets)
-        # print(S)
-        # Update scatter object
-        sky.set_offsets(P)
-        # print('P is working')
-        sky.set_sizes(S)
+        # diffused_offsets = np.column_stack((loc_ra, loc_dec))
+        # diffused.set_offsets(diffused_offsets)
+        # # print(S)
+        # # Update scatter object
+        # sky.set_offsets(P)
+        # # print('P is working')
+        # sky.set_sizes(S)
         # print('S is working')
+        
+        # Scatter plot for stars
+        if (S[0] == 0.0001) : #no star in the FOV
+            sky = ax3.scatter(P[0], P[1], s=S[0], facecolors='White')
+        else:
+            sky = ax3.scatter(P[:,0], P[:,1], s=S, facecolors='white')
 
-        tot_phot = calc_total_diffused_flux(diffused_data[i])
-        info_text = f"Diffused UV Background \n    at {BG_wavelength} $\\AA$\nNum_photons from diffused \n= {round(tot_phot, 3)} s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9"
-        text.set_text(info_text)
-        ax3.plot(corners[:, 0], corners[:, 1], 'grey', linestyle='--')
-        ax3.plot([corners[0, 0], corners[3, 0]], [corners[0, 1], corners[3, 1]], 'grey', linestyle='--')
+        #Scatter plot for Diffused light
+        a =  0.05* 2/height
+        diffused = ax3.scatter(loc_ra, loc_dec, s= 0.05, alpha= a,  facecolors='Blue')
+
+        tot_phot = calc_total_diffused_flux(diffused_data[0])
+        info_text = f"Diffused UV Background\n    at {BG_wavelength} $\\AA$\nNum_photons from diffused \n= {round(tot_phot, 3)} s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9"
+        text = ax3.text(1.04, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
+        # print(info_text)
+
+        if allignment!= 'False':
+            ax3.plot(corners[:, 0], corners[:, 1], 'grey', linestyle='--', linewidth = 0.5)
+            ax3.plot([corners[0, 0], corners[3, 0]], [corners[0, 1], corners[3, 1]], 'grey', linestyle='--', linewidth = 0.5)
+            ax3.set_aspect(2*(Size[2] - Size[0]) / (Size[3] - Size[1]))
 
         # change sky limits
         ax3.set_xlim(Size[0], Size[2])
         ax3.set_ylim(Size[1], Size[3])    
-        ax3.set_aspect((Size[2] - Size[0]) / (Size[3] - Size[1]))
+
         
         # setting up the number of photons vs wavelength plot
         ax4.clear()
