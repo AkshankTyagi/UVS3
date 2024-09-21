@@ -24,7 +24,7 @@ config['Params_1'] = {
     'roll_rate_hrs' : False,
 
     # Specify either Number of frames or period in sec after which the next Frame is given
-    'number of Revolutions' : 1,
+    'number of Revolutions' : 0.2,
     'N_frames' : False,
     't_slice' : 100, # Seconds,
 
@@ -35,8 +35,8 @@ config['Params_1'] = {
     'starmag_max_threshold' : 8, #threshold for what apaarent magnitude stars we want to look at
 
     # Direction of Detector from the velocity of Satellite 
-    'allignment_with_orbit' : 90, #gives angle of longer side of slit (height) with the ORBITAL PLANE from 0 to 90 degrees or False, 
-    'inclination_from_V': 0, #gives the angle of inclination 0 to 180 deg, of the the camera from V vector in ORBITAL PLANE
+    'allignment_with_orbit' : False, #gives angle of longer side of slit (height) with the ORBITAL PLANE from 0 to 90 degrees or False, (default 90)
+    'inclination_from_V': 0, #gives the angle of inclination 0 to 180 deg, of the the camera from V vector in ORBITAL PLANE (default 0)
 
 
     # Spectrum Parameters (UV Band Wavelengths in Angstroms)

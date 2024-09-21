@@ -216,7 +216,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
 
         ax.plot(corners[:, 0], corners[:, 1], 'grey', linestyle='--')
         ax.plot([corners[0, 0], corners[3, 0]], [corners[0, 1], corners[3, 1]], 'grey', linestyle='--')
-        ax.set_aspect(2*(Size[2] - Size[0]) / (Size[3] - Size[1]))
+        ax.set_aspect((Size[2] - Size[0]) / (Size[3] - Size[1]))
         # background_flux = get_flux_ipixel(diffused_BG_wavelength, Size)
         
         # return
@@ -461,7 +461,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # change sky limits
         ax3.set_xlim(Size[0], Size[2])
         ax3.set_ylim(Size[1], Size[3])    
-        ax3.set_aspect(2*(Size[2] - Size[0]) / (Size[3] - Size[1]))
+        ax3.set_aspect((Size[2] - Size[0]) / (Size[3] - Size[1]))
         
         # setting up the number of photons vs wavelength plot
         ax4.clear()

@@ -57,6 +57,8 @@ def read_parameter_file(filename=params_file, param_set = 'Params_1'):
     allignment = config.get(param_set, 'allignment_with_orbit')
     if allignment != 'False':
         allignment = float(allignment)
+    elif allignment == 'False':
+        print('Allignment_with_orbit = False, The FOV will be alligned to the RA and DEC axis')
     theta = float(config.get(param_set, 'inclination_from_V'))
     
     print('sat_name:', sat_name, ', roll:',roll,',  roll_rate_hrs:',roll_rate_hrs, ',  N_revolutions:',N_revolutions, ',  N_frames:', N_frames, ',  T_slice:', T_slice)
@@ -116,8 +118,6 @@ def get_celestial_positions(time_arr):
         "sun": solar,
         "moon": lunar
     }
-
-
 
 # get ra and dec from state vectors
 def get_ra_dec_from_sv(r, v, theta):
@@ -214,12 +214,15 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
             ra = [ri + roll_rate_sec * i for i, ri in enumerate (ra)]
 
     # find the required angle that the FOV heightis inclined to the Dec axis
-    chi = angle_to_normal + allignment - 180
+    if allignment == 'False':
+        chi = [0]*len(angle_to_normal)
+    else:
+        chi = angle_to_normal + allignment - 180
 
     # for (alpha, chi_angle) in zip(angle_to_normal, chi):
         # print("angle between Normal and RA",alpha)
         # print("angle of rotation of FOV",chi_angle)
-    # print(chi)
+    print(chi)
     # Create an empty all frames data
     frame_row_list = []
 
