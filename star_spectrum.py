@@ -19,14 +19,14 @@ class Spectral_FOV:
     def __init__(self):
         self.frame = []
         self.wavelength = []
-        self.spectra_per_star= []
+        self.spectra_per_star = []
         self.ra = []
         self.dec = []
         self.scale = []
         self.photons = []
         self.frame_size = []
 
-ERG_TO_PHOT = 50306871.92
+ERG_TO_PHOT = 50306871.92  # number of photons per erg for 1 Angstrom wavelength
 N_CASTELLI_MODELS = 76
 
 # Castelli_data--
@@ -363,14 +363,14 @@ def GET_SCALE_FACTOR(j, c, waveL_range, stellar_spectra):
         else:
             distance = 1e6  
 
-        scale = 3.64e-9 * pow(10, -0.4 * (V_mag - 3.1 * ebv)) / vflux
-        scale = scale * distance**2
+        scale = 3.64e-9 * pow(10, -0.4 * (V_mag - 3.1 * ebv)) * 4 * math.pi / vflux 
+        # scale = scale /distance**2
 
 # 3.336 x 10^{-19} x lambda^{2} x (4pi)^{-1}
 
         # photon number calculated with 
         for w in  range (len(waveL_range)):
-            photon_number = stellar_spectra[w] * scale * 4 * math.pi * ERG_TO_PHOT * waveL_range[w]
+            photon_number = stellar_spectra[w] * scale *  ERG_TO_PHOT * waveL_range[w]
             tot_photons.append(photon_number)
 
         # if hipstar['HD_NO'] in [158926, 160578]:
@@ -380,61 +380,95 @@ def GET_SCALE_FACTOR(j, c, waveL_range, stellar_spectra):
 
 
 # # Example usage
-# hipline = {"sp_type": "sdG2V", "temperature": 0}
-# temperature = GET_STAR_TEMP(hipline['sp_type'])
-# print(f"Temperature: {temperature}")
+# for x in ['M5']:#['B0', 'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9']:
+#     hipline = {"sp_type": x, "temperature": 0}
+#     temperature = GET_STAR_TEMP(hipline['sp_type'])
+#     print(f"sptype: {x}, Temperature: {temperature}")
 
-# all_spectra = READ_CASTELLI_SPECTRA(Castelli_data)
-# stellar_spectra = StellarSpectrum()
-# data1 = all_spectra[temperature]
-# # print(data1)
-# stellar_spectra.temperature = float(data1['temp'])
-# stellar_spectra.wavelength = np.array(data1['wavelength'])
-# stellar_spectra.spectrum = np.array(data1['spectrum'])
-# print(stellar_spectra.temperature , list(zip(stellar_spectra.wavelength, stellar_spectra.spectrum)))
-# # for i in range(len(stellar_spectra.wavelength)):
-# #     stellar_spectra.spectrum[i] = 3.336e-19 * (4*np.pi)**(-1) * (stellar_spectra.wavelength[i])**2
-# # print(list(zip(stellar_spectra.wavelength, stellar_spectra.spectrum)))
-# # print (stellar_spectra.temperature,'\n',
-# #         stellar_spectra.wavelength,'\n',
-# #         stellar_spectra.spectrum)
+#     all_spectra = READ_CASTELLI_SPECTRA(Castelli_data)
+#     stellar_spectra = StellarSpectrum()
+#     data1 = all_spectra[temperature]
+#     # print(data1)
+#     stellar_spectra.temperature = float(data1['temp'])
+#     stellar_spectra.wavelength = np.array(data1['wavelength'])
+#     stellar_spectra.spectrum = np.array(data1['spectrum']) #*stellar_spectra.wavelength[w]**2 /2.99792458e18
 
-# low_UV = index_greater_than(stellar_spectra.wavelength, 100)
-# high_UV = index_greater_than(stellar_spectra.wavelength, 3800)
-# low_vis = index_greater_than(stellar_spectra.wavelength, 3800)
-# high_vis = index_greater_than(stellar_spectra.wavelength, 7500)
+#     tot_photons = []
+#     for w in  range (len(stellar_spectra.wavelength)):  # change to ergs cm^{-2} s^{-1} A^{-1} by multiplying c / lambda^2 , also conversion #photon : erg* lanbda / hc = 
+#         c = 2.99792458e18 # speed of light in A/s
+#         V_mag = 2.5
+#         ebv= 1
+#         vindex = index_greater_than(stellar_spectra.wavelength , 5450)
+#         vflux = stellar_spectra.spectrum[vindex]
+#         scale = 3.64e-9 * pow(10, -0.4 * (V_mag - 3.1 * ebv)) * 4 * math.pi / vflux
+#         photon_number = stellar_spectra.spectrum[w] * scale * ERG_TO_PHOT  * 2.99792458e18 /stellar_spectra.wavelength[w] 
+#         tot_photons.append(photon_number)
 
-# fig, ax = plt.subplots()
-# # ax.plot(wavelength[low_UV:high_UV], Surface_Flux[low_UV:high_UV], color='blue', label = r'ckp00_3500')
-# ax.plot(stellar_spectra.wavelength[low_vis:high_vis], stellar_spectra.spectrum[low_vis:high_vis], color='blue', label = stellar_spectra.temperature)
-# # ax.plot(stellar_spectra.wavelength, stellar_spectra.spectrum, color='blue', label = stellar_spectra.temperature)
+#     # print(stellar_spectra.temperature , list(zip(stellar_spectra.wavelength, stellar_spectra.spectrum)))
 
-# ax.set_xlabel(r'Wavelength- A')
-# ax.set_ylabel(r'Surface Flux')
-# # ax.set_xscale('log')
-# # ax.set_yscale('log')
-# plt.savefig( 'C:\\Users\\Akshank Tyagi\\Desktop\\without_conversion.png' )
-# plt.show()
+    # # for i in range(len(stellar_spectra.wavelength)):
+    # #     stellar_spectra.spectrum[i] = 3.336e-19 * (4*np.pi)**(-1) * (stellar_spectra.wavelength[i])**2
+    # # print(list(zip(stellar_spectra.wavelength, stellar_spectra.spectrum)))
+    # # print (stellar_spectra.temperature,'\n',
+    # #         stellar_spectra.wavelength,'\n',
+    # #         stellar_spectra.spectrum)
 
-# contents = []
-# import pickle
+    # low_UV = index_greater_than(stellar_spectra.wavelength, 100)
+    # high_UV = index_greater_than(stellar_spectra.wavelength, 3800)
+    # low_vis = index_greater_than(stellar_spectra.wavelength, 3800)
+    # high_vis = index_greater_than(stellar_spectra.wavelength, 7500)
 
-# # Load data from a pickle file
-# with open('star_data.pkl', 'rb') as file:
-#     contents = pickle.load(file)
-# print(len(contents))
-# spectral_fov = GET_SPECTRA(Castelli_data, contents)
-# # print(spectral_fov.photons)
 
-# for i in range(len(spectral_fov.frame)):
-#     fig, ax = plt.subplots()
-#     for j in range(len(spectral_fov.photons[i])):
-#         ax.plot(spectral_fov.wavelength[i], spectral_fov.photons[i][j], label = f'frame:{spectral_fov.frame[i]} -- star{j+1}')
-#     ax.set_ylim(1e-3, 1e10)
-#     ax.set_xlabel(r'Wavelength- A')
-#     ax.set_ylabel(r'# of Photons')
-#     # ax.set_xscale('log')
-#     ax.set_yscale('log')
-#     ax.legend()
-#     plt.show()
+    # # Create the initial figure and axes
+    # fig, ax1 = plt.subplots()
 
+    # # # Plot the stellar spectrum on the primary y-axis (left)
+    # # color1 = 'tab:blue'
+    # # ax1.set_xlabel(r'Wavelength (Å)')
+    # # ax1.set_ylabel(r'Star Surface Flux (#photons/s/cm²/A/str)', color=color1)
+    # # ax1.plot(stellar_spectra.wavelength[low_UV:high_vis], tot_photons[low_UV:high_vis], color=color1, label='Photon flux')
+    # # ax1.tick_params(axis='y', labelcolor=color1)
+    # # ax1.legend(loc='upper left')
+
+    # # Create a second y-axis (right) and plot the stellar spectra
+    # ax2 = ax1.twinx()  # Create a twin axis sharing the same x-axis
+    # color2 = 'grey'
+    # ax2.set_ylabel(r'Star Surface Flux (ergs/s/cm²/A)', color=color2)  # Secondary y-axis label
+    # ax2.plot(stellar_spectra.wavelength[low_UV:high_vis], stellar_spectra.spectrum[low_UV:high_vis],"--" , linewidth = 1 , color=color2, label='Energy distr.')
+    # ax2.tick_params(axis='y', labelcolor=color2)
+    # ax2.legend(loc='upper right')
+
+    # # Add a title to the plot
+    # plt.title(f'SED for {hipline["sp_type"]}')
+    # plt.legend()
+
+    # Save the plot to a file
+    # plt.savefig(fr'B_spectra\{hipline["sp_type"]}.png')
+
+    # Show the plot
+    # plt.show()
+
+
+#     import pandas as pd
+#     df = pd.DataFrame(list(zip(stellar_spectra.wavelength[low_UV:high_UV],  tot_photons[low_UV:high_UV])), columns=['Wavelength', 'Spectrum'])
+#     # Write the DataFrame to a CSV file
+#     df.to_csv(f'B_spectra\\unscaled_{hipline["sp_type"]}.csv', index=False)
+
+#-----------------------------------------------------------------------------------------------------------
+
+import pandas as pd
+
+# TEST STARS...
+
+# HD 57061 - HIP 35415 ( o type)
+# HD 122451 (HADAR) - HIP 68702 (B)
+# HD 172167 (VEGA) - HIP 91262 (A)
+# HD 61421 (PROCYON) - HIP 37279 (F)
+
+df = pd.read_csv("hip_std.dat", header=None,
+                    sep = '|', skipinitialspace=True).iloc[:, [1, 5, 8, 9, 11, 37, 76]]
+df.columns = ['hip', 'mag', 'ra_deg', 'de_deg', 'trig_parallax', 'B-V', 'Spectral_type']
+
+df['mar_size'] = 2*(10 - df['mag'])
+
+print(df)

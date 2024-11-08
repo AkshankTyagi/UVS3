@@ -4,27 +4,28 @@ castelli_data = C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulati
 sat_name = ISS
 roll = False
 roll_rate_hrs = False
-number of revolutions = 0.02
+number of revolutions = 1
 n_frames = False
-t_slice = 1
-width = 0.12666666666666665
-height = 1.13
+t_slice = 1500
+width = 0.5
+height = 1
 starmag_min_threshold = 0
-starmag_max_threshold = 13
+starmag_max_threshold = 9
 allignment_with_orbit = 90
 inclination_from_v = 0
 limit_min = 100
 limit_max = 3800
-bg_wavelength = 2300
-azm = -59
-ele = 41
+bg_wavelength = [1100, 1500, 2300]
+azm = 59
+ele = 45
 longitudinal_spectral_width = 0.1
 interval_bw_frames = 1000
 
 [Params_2]
 sun = True
 moon = True
-galactic_plane = True
+galactic_plane = False
 diffused_bg = True
 spectra = True
+save_animation = False
 

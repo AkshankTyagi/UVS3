@@ -36,6 +36,19 @@ def read_parameter_file(filename= params_file, param_set = 'Params_1'):
 
     return azm, ele
 
+def read_components(filename= params_file, param_set = 'Params_2'):
+    config = ConfigParser()
+    config.read(filename)
+    global diffused_bg, Spectra
+    solar_marker = config.get(param_set, 'sun')
+    lunar_marker = config.get(param_set, 'moon')
+    G_plane = config.get(param_set, 'galactic_plane')
+    diffused_bg = config.get(param_set, 'diffused_bg')
+    Spectra = config.get(param_set, 'Spectra')  
+    save_ani = config.get(param_set, 'save_animation')
+
+    return solar_marker, lunar_marker, G_plane,  save_ani 
+
 
 # print("plotting animation")
 # main animate function
@@ -44,6 +57,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
     def init_orbit(ax):
         global sun, moon, satellite, orbit
         azm, ele = read_parameter_file()
+        solar_marker, lunar_marker, G_plane,  _ = read_components()
 
         # set titles
         title = sat_name + ' Satellite position @ ' + time_arr[0].item().strftime('%Y-%m-%d - %H:%M:%S.')        
@@ -83,97 +97,107 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # orbit path as a dotted line plot
         orbit = ax.plot(X[0], Y[0], Z[0], linewidth=0.9, linestyle='-.', c='k')[0]
 
+        if solar_marker == "True":
+            sun_ra, sun_dec = sol_position["sun"][0]
+            solar_sv = conv_eq_to_cart(sun_ra*15, sun_dec, 1)
+            distance = 10000
+            # Create new Sun quiver plot
+            sun = ax2.quiver(solar_sv[0] * distance, solar_sv[1] * distance, solar_sv[2] * distance,
+                            -solar_sv[0], -solar_sv[1], -solar_sv[2],
+                            length=0.3*distance, color='orange', arrow_length_ratio=0.6, 
+                            label=f'Sun: {sun_ra * 15:.4f}°RA, {sun_dec:.4f}°Dec')
+        else:
+            sun = ax2.quiver(0,0,0,0,0,0)
+            print("Solar Position marker Not being Displayed")
 
-        sun_ra, sun_dec = sol_position["sun"][0]
-        moon_ra, moon_dec = sol_position["moon"][0]
-
-        solar_sv = conv_eq_to_cart(sun_ra*15, sun_dec, 1)
-        lunar_sv = conv_eq_to_cart(moon_ra*15, moon_dec, 1)
-
-        distance = 10000
-        # Create new Sun quiver plot
-        sun = ax2.quiver(solar_sv[0] * distance, solar_sv[1] * distance, solar_sv[2] * distance,
-                        -solar_sv[0], -solar_sv[1], -solar_sv[2],
-                        length=0.3*distance, color='orange', arrow_length_ratio=0.6, 
-                        label=f'Sun: {sun_ra * 15:.4f}°RA, {sun_dec:.4f}°Dec')
-        
-        # Create new Moon quiver plot
-        moon = ax2.quiver(lunar_sv[0] * distance, lunar_sv[1] * distance, lunar_sv[2] * distance,
+        if lunar_marker == "True":
+            moon_ra, moon_dec = sol_position["moon"][0]
+            lunar_sv = conv_eq_to_cart(moon_ra*15, moon_dec, 1)
+            # Create new Moon quiver plot
+            moon = ax2.quiver(lunar_sv[0] * distance, lunar_sv[1] * distance, lunar_sv[2] * distance,
                         -lunar_sv[0], -lunar_sv[1], -lunar_sv[2],
                         length=0.3*distance , color='grey', arrow_length_ratio=0.6, 
                         label=f'Moon: {moon_ra * 15:.4f}°RA, {moon_dec:.4f}°Dec')
+        else:
+            moon = ax2.quiver(0,0,0,0,0,0)
+            print("Lunar Position marker Not being Displayed")
 
-        gl = [0, 22, 120]
-        gb = [0, 0, 0]
-        galactic_ra, galactic_dec = conv_gal_to_eq(gl, gb)
-        # print(galactic_ra, galactic_dec)
-        sv = conv_eq_to_cart(galactic_ra, galactic_dec, 1)
-        x, y, z = sv
-        # print(list(zip(x, y, z)))
 
-        dc = find_direction_cosines_plane(list(zip(x, y, z)))
-        a, b, c = dc
-        d = 0
-
-        xlim = ylim = zlim = (-distance, distance)
-        ax.set_xlim(xlim)
-        ax.set_ylim(ylim)
-        ax.set_zlim(zlim)
-
-        num_points = 1000
-        # Calculate and plot intercepts on the XY plane (z=0)
-        if c != 0:
-            x = np.linspace(xlim[0], xlim[1], num_points)
-            y = (d - a*x +  distance*c) / b
-            mask = (y <=  distance) & (y >= - distance)
-            x = x[mask] 
-            y = y[mask]     
-            z = np.ones_like(x)*- distance
-            ax.plot(x, y, z, color='purple' )
-
-            x = np.linspace(xlim[0], xlim[1], num_points)
-            y = (d - a*x -  distance*c) / b
-            mask = (y <=  distance) & (y >= - distance)
-            x = x[mask] 
-            y = y[mask]     
-            z = np.ones_like(x)* distance
-            ax.plot(x,y,z, color='purple' )
-            
-        if b != 0:
-            z = np.linspace(zlim[0], zlim[1], num_points)
-            x = (d - c*z  -  distance*b) / a
-            mask = (x <=  distance) & (x >= - distance)
-            z = z[mask]
-            x = x[mask]
-            y = np.ones_like(x)* distance
-            ax.plot(x, y, z, color='purple' )
-
-            z = np.linspace(zlim[0], zlim[1], num_points)
-            x = (d - c*z  +  distance*b) / a
-            mask = (x <=  distance) & (x >= - distance)
-            z = z[mask]
-            x = x[mask]
-            y = np.ones_like(x)*- distance
-            ax.plot(x, y, z, color='purple' )
-
-        if a != 0:
-            y =  np.linspace(ylim[0], ylim[1], num_points)
-            z = (d - b*y +  distance*a) / c
-            mask = (z <=  distance) & (z >= - distance)
-
-            z = z[mask] 
-            y = y[mask]
-            x = np.ones_like(y)*- distance
-            ax.plot(x, y, z, color='purple', label = 'Galactic plane' )
-
-            y =  np.linspace(ylim[0], ylim[1], num_points)
-            z = (d - b*y -  distance*a) / c
-            mask = (z >= - distance) & (z<= distance)
-            z = z[mask] 
-            y = y[mask]     
-            x = np.ones_like(y)* distance
-            ax.plot(x, y, z, color='purple' )
         
+        if G_plane == "True":
+            gl = [0, 22, 120]
+            gb = [0, 0, 0]
+            galactic_ra, galactic_dec = conv_gal_to_eq(gl, gb)
+            # print(galactic_ra, galactic_dec)
+            sv = conv_eq_to_cart(galactic_ra, galactic_dec, 1)
+            x, y, z = sv
+            # print(list(zip(x, y, z)))
+
+            dc = find_direction_cosines_plane(list(zip(x, y, z)))
+            a, b, c = dc
+            d = 0
+
+            xlim = ylim = zlim = (-distance, distance)
+            ax.set_xlim(xlim)
+            ax.set_ylim(ylim)
+            ax.set_zlim(zlim)
+
+            num_points = 1000
+            # Calculate and plot intercepts on the XY plane (z=0)
+            if c != 0:
+                x = np.linspace(xlim[0], xlim[1], num_points)
+                y = (d - a*x +  distance*c) / b
+                mask = (y <=  distance) & (y >= - distance)
+                x = x[mask] 
+                y = y[mask]     
+                z = np.ones_like(x)*- distance
+                ax.plot(x, y, z, color='purple' )
+
+                x = np.linspace(xlim[0], xlim[1], num_points)
+                y = (d - a*x -  distance*c) / b
+                mask = (y <=  distance) & (y >= - distance)
+                x = x[mask] 
+                y = y[mask]     
+                z = np.ones_like(x)* distance
+                ax.plot(x,y,z, color='purple' )
+                
+            if b != 0:
+                z = np.linspace(zlim[0], zlim[1], num_points)
+                x = (d - c*z  -  distance*b) / a
+                mask = (x <=  distance) & (x >= - distance)
+                z = z[mask]
+                x = x[mask]
+                y = np.ones_like(x)* distance
+                ax.plot(x, y, z, color='purple' )
+
+                z = np.linspace(zlim[0], zlim[1], num_points)
+                x = (d - c*z  +  distance*b) / a
+                mask = (x <=  distance) & (x >= - distance)
+                z = z[mask]
+                x = x[mask]
+                y = np.ones_like(x)*- distance
+                ax.plot(x, y, z, color='purple' )
+
+            if a != 0:
+                y =  np.linspace(ylim[0], ylim[1], num_points)
+                z = (d - b*y +  distance*a) / c
+                mask = (z <=  distance) & (z >= - distance)
+
+                z = z[mask] 
+                y = y[mask]
+                x = np.ones_like(y)*- distance
+                ax.plot(x, y, z, color='purple', label = 'Galactic plane' )
+
+                y =  np.linspace(ylim[0], ylim[1], num_points)
+                z = (d - b*y -  distance*a) / c
+                mask = (z >= - distance) & (z<= distance)
+                z = z[mask] 
+                y = y[mask]     
+                x = np.ones_like(y)* distance
+                ax.plot(x, y, z, color='purple' )
+        else:
+            print("Galactic plane markers Not being Displayed")
+
 
         ax.legend(loc='center left', bbox_to_anchor=(0.95, 0), fontsize='small') #
         # return
@@ -464,7 +488,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         a =  0.05* 2/height
         diffused = ax3.scatter(loc_ra, loc_dec, s= 0.05, alpha= a,  facecolors='Blue')
 
-        tot_phot = calc_total_diffused_flux(diffused_data[0])
+        tot_phot = calc_total_diffused_flux(diffused_data[i])
         info_text = f"Diffused UV Background\n    at {BG_wavelength} $\\AA$\nNum_photons from diffused \n= {round(tot_phot, 3)} s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9"
         text = ax3.text(1.04, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
         # print(info_text)
@@ -557,9 +581,17 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # show
         plt.show()
         print("animation complete")
+        
         # save
-        # ani.save(f'{folder_loc}Demo_file\{sat_name}satellite_9_2024.gif', writer="ffmpeg")
-        print("saved")
+        _, _, _, save_ani =read_components()
+
+        if save_ani == "True":
+            ani.save(fr'{folder_loc}Demo_file\{sat_name}satellite_11_2024.gif', writer="ffmpeg")
+            print("Animation Saved")
+        else:
+            print("Animation not Saved")
+
+
         return ani
     
     def toggle_pause(event, *args, **kwargs):
@@ -683,7 +715,6 @@ def get_photons_data_by_frame(i, spectral_FOV):
     dec = spectral_FOV.dec[i]
 
     return Wavelength, photon_per_star,ra, dec
-
 
         # # get updated spectral data by frame
         # X_wavelength, Y_Spectra_per_star, ra, dec = get_spectral_data_by_frame(i, spectra)

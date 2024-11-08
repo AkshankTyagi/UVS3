@@ -24,15 +24,15 @@ config['Params_1'] = {
     'roll_rate_hrs' : False,
 
     # Specify either Number of frames or period in sec after which the next Frame is given
-    'number of Revolutions' : 0.02,
+    'number of Revolutions' : 1,
     'N_frames' : False,
-    't_slice' : 1, # Seconds,
+    't_slice' : 1500, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
-    'width': 7.6/60, # (shorter) width
-    'height': 1.13, # (longer) height
+    'width': 0.5, # (shorter) width
+    'height': 1, # (longer) height
     'starmag_min_threshold' : 0, #threshold for what bright stars we want to avoid
-    'starmag_max_threshold' : 13, #threshold for what apaarent magnitude stars we want to look at
+    'starmag_max_threshold' : 9, #threshold for what apaarent magnitude stars we want to look at
 
     # Direction of Detector from the velocity of Satellite 
     'allignment_with_orbit' : 90, #gives angle of longer side of slit (height) with the ORBITAL PLANE from 0 to 90 degrees or False, (default 90)
@@ -42,12 +42,12 @@ config['Params_1'] = {
     # Spectrum Parameters (UV Band Wavelengths in Angstroms)
     'limit_min': 100,
     'limit_max': 3800,
-    'BG_wavelength': 2300, #only [1100, 1500, 2300]
+    'BG_wavelength':  [1100, 1500, 2300], #2300 only
 
     #Animation parameters
     # set view
-    'azm': -59,
-    'ele': 41,
+    'azm': 59,
+    'ele': 45,
     'longitudinal_spectral_width' : 0.1, #Declination width of spectral spread to fall on detector in degrees
     'interval_bw_Frames' : 1000 # milliSec
 }
@@ -55,9 +55,10 @@ config['Params_1'] = {
 config['Params_2'] = {
     'sun': True,
     'moon': True,
-    'galactic_plane': True,
+    'galactic_plane': False,
     'diffused_bg': True,
     'Spectra': True,
+    'save_animation': False
 }
 
 

@@ -25,6 +25,7 @@ def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     global sat_name, Interval, spectra_width
     sat_name = config.get(param_set, 'sat_name')
     diffused_wavelength = config.get(param_set, 'BG_wavelength')
+    diffused_wavelength = [int(val) for val in diffused_wavelength[1:-1].split(',')]
     return diffused_wavelength
 
 def plot_diffused_bg(data, wavelength):
@@ -63,100 +64,102 @@ def plot_diffused_bg(data, wavelength):
 #         # for row in data:
 #         #     print (row)
 #         plot_diffused_bg(data, 1105)
-wavelength = read_parameter_file()
-file_path = fr"{folder_loc}diffused_UV_data{os.sep}RA_sorted_flux_{wavelength}.csv"
+wavelength_array = read_parameter_file()
+print(wavelength_array, wavelength_array[0])
+for wavelength in wavelength_array:
+    file_path = fr"{folder_loc}diffused_UV_data{os.sep}RA_sorted_flux_{wavelength}.csv"
 
-if os.path.exists(file_path):
-    print (f'{file_path} file exists.')
-else:
-    print('Running diffused_Background.py to create sorted files of diffused UV BG from Jayant Murthy (2016) data')
-    # wavelength = read_parameter_file()
-    for wavelength in [1100, 1500, 2300]:
-        fits_filename = f"{folder_loc}diffused_UV_data{os.sep}scattered_1e10_{wavelength}_a40_g6{os.sep}scattered.fits"
-        print(fits_filename)
+    if os.path.exists(file_path):
+        print (f'{file_path} file exists.')
+    else:
+        print('Running diffused_Background.py to create sorted files of diffused UV BG from Jayant Murthy (2016) data')
+        # wavelength = read_parameter_file()
+        for wavelength in [1100, 1500, 2300]:
+            fits_filename = f"{folder_loc}diffused_UV_data{os.sep}scattered_1e10_{wavelength}_a40_g6{os.sep}scattered.fits"
+            print(fits_filename)
 
-        plot_diffused_bg(fits_filename, wavelength)
+            plot_diffused_bg(fits_filename, wavelength)
 
-        gl= [0] #longitude
-        gb= [0] #latitude
-        ra, dec = conv_gal_to_eq(gl,gb)
-        print (gl,gb,'--->',ra,dec)
+            gl= [0] #longitude
+            gb= [0] #latitude
+            ra, dec = conv_gal_to_eq(gl,gb)
+            print (gl,gb,'--->',ra,dec)
 
-        x_pixel = [1800]
-        y_pixel = [900]
+            x_pixel = [1800]
+            y_pixel = [900]
 
-        glon, glat = get_world_coordinates(x_pixel, y_pixel, fits_filename)
-        ra, dec = conv_gal_to_eq(glon,glat)
-        print("RA:", ra)
-        print("Dec:", dec)
+            glon, glat = get_world_coordinates(x_pixel, y_pixel, fits_filename)
+            ra, dec = conv_gal_to_eq(glon,glat)
+            print("RA:", ra)
+            print("Dec:", dec)
 
-        x_range= 3600
-        x_array = np.arange(1, 3601)
-        y_range = 1800
+            x_range= 3600
+            x_array = np.arange(1, 3601)
+            y_range = 1800
 
-        # Obtain the Flux values
-        with fits.open(fits_filename) as hdul:
-            global values
-            # Print the header of the PrimaryHDU (HDU 0)
-            fits.info(fits_filename)
-            values = hdul[0].data
+            # Obtain the Flux values
+            with fits.open(fits_filename) as hdul:
+                global values
+                # Print the header of the PrimaryHDU (HDU 0)
+                fits.info(fits_filename)
+                values = hdul[0].data
 
-        print("values_obtained")
+            print("values_obtained")
 
-        # from the Pixels converting to galctic to Equatorial coordinates + flux grid
-        grid = []
-        for i in range( y_range+1):
-            if i%20== 0:
-                print("line-",i)
-            glon, glat = get_world_coordinates(x_array, [i]*3600, fits_filename)
-            # print(glon, glat)
-            ra_line, dec_line = conv_gal_to_eq(glon,glat)
-            
-            line = zip(values[i-1], ra_line, dec_line)
-            grid.append(line)
+            # from the Pixels converting to galctic to Equatorial coordinates + flux grid
+            grid = []
+            for i in range( y_range+1):
+                if i%20== 0:
+                    print("line-",i)
+                glon, glat = get_world_coordinates(x_array, [i]*3600, fits_filename)
+                # print(glon, glat)
+                ra_line, dec_line = conv_gal_to_eq(glon,glat)
+                
+                line = zip(values[i-1], ra_line, dec_line)
+                grid.append(line)
 
-        print("cordinate_transformation_done")
+            print("cordinate_transformation_done")
 
-        # write the csv file with flux and respective coordinate
-        with open(fr"{folder_loc}diffused_UV_data{os.sep}flux_{wavelength}.csv", 'w', newline='') as csvfile:
-            csv_writer = csv.writer(csvfile)
-            # Write the data array to the CSV file row by row
-            for row in grid:
-                csv_writer.writerow(row)
+            # write the csv file with flux and respective coordinate
+            with open(fr"{folder_loc}diffused_UV_data{os.sep}flux_{wavelength}.csv", 'w', newline='') as csvfile:
+                csv_writer = csv.writer(csvfile)
+                # Write the data array to the CSV file row by row
+                for row in grid:
+                    csv_writer.writerow(row)
 
-        print(f"flux_{wavelength}.csv saved")
-        del values
-        del grid
-        del x_array
+            print(f"flux_{wavelength}.csv saved")
+            del values
+            del grid
+            del x_array
 
-        list = []
-        with open(fr"{folder_loc}diffused_UV_data{os.sep}flux_{wavelength}.csv", 'r', newline='') as csvfile:
-            csv_reader = csv.reader(csvfile)
-            for r,row in enumerate(csv_reader):
-                print(r)
-                for flux_location in row:
-                    if flux_location == '(o.o, nan, nan)':
-                        continue
+            list = []
+            with open(fr"{folder_loc}diffused_UV_data{os.sep}flux_{wavelength}.csv", 'r', newline='') as csvfile:
+                csv_reader = csv.reader(csvfile)
+                for r,row in enumerate(csv_reader):
+                    print(r)
+                    for flux_location in row:
+                        if flux_location == '(o.o, nan, nan)':
+                            continue
 
-                    flux, ra, dec = flux_location.split(', ')
+                        flux, ra, dec = flux_location.split(', ')
 
-                    if ra == 'nan':
-                        continue
+                        if ra == 'nan':
+                            continue
 
-                    flux = float(flux[1:])
-                    ra = float(ra)
-                    dec = float(dec[:-1])
-                    list.append([ra, dec, flux])
+                        flux = float(flux[1:])
+                        ra = float(ra)
+                        dec = float(dec[:-1])
+                        list.append([ra, dec, flux])
 
-        sorted_entries = sorted(list, key= lambda x: x[0])
+            sorted_entries = sorted(list, key= lambda x: x[0])
 
-        with open(fr"{folder_loc}diffused_UV_data{os.sep}RA_sorted_flux_{wavelength}.csv", 'w', newline='') as csvfile:
-            csv_writer = csv.writer(csvfile)
-            # Write the data array to the CSV file row by row
-            for row in sorted_entries:
-                csv_writer.writerow(row)
+            with open(fr"{folder_loc}diffused_UV_data{os.sep}RA_sorted_flux_{wavelength}.csv", 'w', newline='') as csvfile:
+                csv_writer = csv.writer(csvfile)
+                # Write the data array to the CSV file row by row
+                for row in sorted_entries:
+                    csv_writer.writerow(row)
 
-        print(f"RA_sorted_flux_{wavelength}.csv saved")
+            print(f"RA_sorted_flux_{wavelength}.csv saved")
 
 
 # sorted_list=[]

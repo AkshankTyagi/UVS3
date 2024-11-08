@@ -1,4 +1,4 @@
-# Spectroscopic data animation of the starfield view from a satellite in Earth orbit
+# Spectroscopic data Simulation of the starfield view from a satellite in Earth orbit
 > Animated plot of the starfield as viewed in the velocity direction of a satelitte using TLE propagated data.  
 > Obtains the details for stars in Field of View  and their intrinsic stellar spectra then plots Number of photons recieved vs wavelegth, and the Absorption Spectra of the FOV light
 
@@ -81,8 +81,7 @@ Script is written with python (Version: 3.10.6) on Windows. Additional modules r
 * astropy.io
 
 ## How to run   
-* Verify and install required modules
-* Specify the location of the local folder on your system where the script is stored, in "get_folder_loc" function of [view_orbit.py](./view_orbit.py)  
+* Verify and install all required modules
 * run `python view_orbit.py`. 
 
 ## Parameter File
@@ -121,10 +120,22 @@ Script is written with python (Version: 3.10.6) on Windows. Additional modules r
 1. [view_orbit.py](./view_orbit.py)
    
 2. [star_data.py](./star_data.py)
+
 3. [star_spectrum.py](./star_spectrum.py)
+
 4. [plot.py](./plot.py)
-5. [star_data.py](./star_data.py)
-6. [Satellite_configparser.py](./Satellite_configparser.py)
+
+5. [coordinates.py](./Coordinates.py)
+
+6. [diffused_data.py](./diffused_data.py)
+
+7. [diffused_Background.py](./diffused_Background.py)
+
+8. [Params_configparser.py](./Params_configparser.py)
+
+9. [Satellite_configparser.py](./Satellite_configparser.py)
+
+
 
 
 
@@ -134,3 +145,4 @@ Script is written with python (Version: 3.10.6) on Windows. Additional modules r
 
 ## To-do list
 * 
+

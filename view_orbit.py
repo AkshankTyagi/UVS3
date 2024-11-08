@@ -28,7 +28,7 @@ from star_data import *#, filter_by_fov, read_hipparcos_data
 from plot import *#,animate
 from star_spectrum import *#,GET_SPECTRA
 from diffused_data import *
-from diffused_Background import *
+# from diffused_Background import *
 from Coordinates import *
 
 
@@ -45,8 +45,9 @@ def read_parameter_file(filename=params_file, param_set = 'Params_1'):
     hipp_file = config.get(param_set, 'hipparcos_catalogue')
     castelli_file = config.get(param_set, 'Castelli_data')
     sat_name = config.get(param_set, 'sat_name')
-    roll = config.get(param_set, 'roll')
-    if (roll == True):
+    roll =config.get(param_set, 'roll')
+    if roll == "True":
+        print(roll)
         roll_rate_hrs = float(config.get(param_set, 'roll_rate_hrs'))
     else:
         roll_rate_hrs = False
@@ -222,7 +223,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
     # for (alpha, chi_angle) in zip(angle_to_normal, chi):
         # print("angle between Normal and RA",alpha)
         # print("angle of rotation of FOV",chi_angle)
-    print(chi)
+    # print(chi)
     # Create an empty all frames data
     frame_row_list = []
 
@@ -249,7 +250,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
     return tr, sc, frame_row_list, sol_positions
 
 # Save a csv file with all required star information 
-def write_to_csv(data, sol_positions, sat_name):
+def write_to_csv(data, diffused_data, sol_positions, sat_name):
     # print('writing to csv')
     # print(data[0:2])
     csv_file = f'{folder_loc}Demo_file{os.sep}{sat_name}_data.csv'
@@ -274,8 +275,11 @@ def write_to_csv(data, sol_positions, sat_name):
             else:
                 csv_writer.writerow([frame+1, "Empty frame", None, None, None, None, None, None, None, frame_boundary[0]])
             
-            csv_writer.writerow([frame+1, "Celestial_data for frame", 'Sun', sol_positions['sun'][i], 'moon', sol_positions['moon'][i]])
-            
+            csv_writer.writerow([frame+1, "Celestial_data for frame:", "      ", 'Sun', sol_positions['sun'][i], 'moon', sol_positions['moon'][i]])
+            tot_phot_1 = calc_total_diffused_flux(diffused_data['1100'][i])
+            tot_phot_2 = calc_total_diffused_flux(diffused_data['1500'][i])
+            tot_phot_3 = calc_total_diffused_flux(diffused_data['2300'][i])
+            csv_writer.writerow([frame+1, "Diffused UV data in frame (Total_photons):", "      ", '1100A', tot_phot_1, '1500A', tot_phot_2, '2300A', tot_phot_3])
         print('Star Data saved in:', csv_file)
 
 
@@ -309,22 +313,30 @@ def main():
     # simulation starts from current time to one full orbit
     start = np.datetime64(datetime.datetime.now()) #+ np.timedelta64(10, 'D')
     print(f"Start time of Simulation: {start}")
+    
     # times, state_vectors, celestial_coordinates  
     time_arr, state_vectors, celestial_data, sol_position  = get_simulation_data(satellite, df, start, t_period, t_slice, theta, allignment,  roll)
     Spectra = GET_SPECTRA(castelli_dir, celestial_data)
-    # print(celestial_data)
-    # print(sol_position)
     diffused_data = get_diffused_in_FOV(celestial_data)
 
+    # print(celestial_data)
+    # print(sol_position)
     # print(Spectra.frame)
     # print(Spectra.wavelength)
     # print(Spectra.spectra_per_star)
     # with open('star_data.pkl',"wb") as f:
     #     data = celestial_coordinates
     #     pickle.dump(data, f)
-    # write_to_csv(celestial_data, sol_position, sat_name)
+
+    # write_to_csv(celestial_data, diffused_data, sol_position, sat_name)
+    # for i in range(len(time_arr)):
+    #     tot_phot_1 = calc_total_diffused_flux(diffused_data['1100'][i])
+    #     tot_phot_2 = calc_total_diffused_flux(diffused_data['1500'][i])
+    #     tot_phot_3 = calc_total_diffused_flux(diffused_data['2300'][i])
+    #     print(f"Total Photons in 1100A: {tot_phot_1}, 1500A: {tot_phot_2}, 2300A: {tot_phot_3}")
+
     #  animate
-    animate(time_arr, state_vectors, celestial_data, sol_position, Spectra, diffused_data, r)
+    animate(time_arr, state_vectors, celestial_data, sol_position, Spectra, diffused_data['2300'], r)
     return
 
 # main
