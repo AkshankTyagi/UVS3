@@ -231,9 +231,9 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # print(S)
 
         #Scatter plot for Diffused light
-        a =  0.05* 2/height
+        a =  0.04* 1/height
         loc_ra, loc_dec = random_scatter_data(diffused_data[0])
-        diffused = ax.scatter(loc_ra, loc_dec, s= 0.05, alpha= a,  facecolors='Blue')
+        diffused = ax.scatter(loc_ra, loc_dec, s= 0.04, alpha= a,  facecolors='Blue')
 
         tot_phot = calc_total_diffused_flux(diffused_data[0])
         info_text = f"Diffused UV Background\n    at {BG_wavelength} $\\AA$\nNum_photons from diffused \n= {round(tot_phot, 3)} s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9"
@@ -485,8 +485,8 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             sky = ax3.scatter(P[:,0], P[:,1], s=S, facecolors='white')
 
         #Scatter plot for Diffused light
-        a =  0.05* 2/height
-        diffused = ax3.scatter(loc_ra, loc_dec, s= 0.05, alpha= a,  facecolors='Blue')
+        a =  0.04* 1/height
+        diffused = ax3.scatter(loc_ra, loc_dec, s= 0.04, alpha= a,  facecolors='Blue')
 
         tot_phot = calc_total_diffused_flux(diffused_data[i])
         info_text = f"Diffused UV Background\n    at {BG_wavelength} $\\AA$\nNum_photons from diffused \n= {round(tot_phot, 3)} s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9"
