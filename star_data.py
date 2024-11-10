@@ -38,8 +38,8 @@ def read_hipparcos_data(FILENAME = hipp_file):
 
     try:
         df = pd.read_csv(FILENAME, header=None,
-                         sep = '|', skipinitialspace=True).iloc[:, [1, 5, 8, 9, 11, 37, 76]]
-        df.columns = ['hip', 'mag', 'ra_deg', 'de_deg', 'trig_parallax', 'B-V', 'Spectral_type']
+                         sep = '|', skipinitialspace=True).iloc[:, [1, 5, 8, 9, 11, 38, 76]]
+        df.columns = ['hip', 'mag', 'ra_deg', 'de_deg', 'trig_parallax', 'E(B-V)', 'Spectral_type']
 
         df['mar_size'] = 2*(star_mag_max_threshold - df['mag'])
         
@@ -145,7 +145,7 @@ def filter_by_fov(mdf, ra, de, chi):
     max_ra, max_dec = rotated_corners.max(axis=0)
 
     # Extract useful columns
-    mdf = mdf[['ra_deg', 'de_deg', 'mar_size', 'hip', 'mag', 'trig_parallax', 'B-V', 'Spectral_type']]
+    mdf = mdf[['ra_deg', 'de_deg', 'mar_size', 'hip', 'mag', 'trig_parallax', 'E(B-V)', 'Spectral_type']]
     
     # Filter data within the boundaries
     q = 'ra_deg >= @min_ra & ra_deg <= @max_ra & de_deg >= @min_dec & de_deg <= @max_dec' 

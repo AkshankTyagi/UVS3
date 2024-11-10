@@ -1,12 +1,13 @@
 [Params_1]
 hipparcos_catalogue = C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\hip_main.dat
 castelli_data = C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\Castelli\ckp00
+dust_c_section = C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\Castelli\crossec1.dat
 sat_name = ISS
 roll = False
 roll_rate_hrs = False
 number of revolutions = 1
 n_frames = False
-t_slice = 1500
+t_slice = 100
 width = 0.5
 height = 1
 starmag_min_threshold = 0
@@ -16,16 +17,16 @@ inclination_from_v = 0
 limit_min = 100
 limit_max = 3800
 bg_wavelength = [1100, 1500, 2300]
-azm = 59
-ele = 45
+azm = 104
+ele = 60
 longitudinal_spectral_width = 0.1
 interval_bw_frames = 1000
 
 [Params_2]
 sun = True
 moon = True
-galactic_plane = False
+galactic_plane = True
 diffused_bg = True
 spectra = True
-save_animation = False
+save_animation = True
 

@@ -19,6 +19,7 @@ config = ConfigParser()
 config['Params_1'] = {
     'hipparcos_catalogue' : fr'{folder_loc}hip_main.dat', #path to the Hipparcos file
     'Castelli_data' : fr'{folder_loc}Castelli{os.sep}ckp00', #path to the ckp00 file of the Castelli Kurucz Atlas
+    'dust_C_section' : fr'{folder_loc}Castelli{os.sep}crossec1.dat', #path to the dust_C file of the Castelli Kurucz Atlas
     'sat_name' : 'ISS',
     'roll' : False,
     'roll_rate_hrs' : False,
@@ -26,7 +27,7 @@ config['Params_1'] = {
     # Specify either Number of frames or period in sec after which the next Frame is given
     'number of Revolutions' : 1,
     'N_frames' : False,
-    't_slice' : 1500, # Seconds,
+    't_slice' : 100, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
     'width': 0.5, # (shorter) width
@@ -46,8 +47,8 @@ config['Params_1'] = {
 
     #Animation parameters
     # set view
-    'azm': 59,
-    'ele': 45,
+    'azm': 104,
+    'ele': 60,
     'longitudinal_spectral_width' : 0.1, #Declination width of spectral spread to fall on detector in degrees
     'interval_bw_Frames' : 1000 # milliSec
 }
@@ -55,10 +56,10 @@ config['Params_1'] = {
 config['Params_2'] = {
     'sun': True,
     'moon': True,
-    'galactic_plane': False,
+    'galactic_plane': True,
     'diffused_bg': True,
     'Spectra': True,
-    'save_animation': False
+    'save_animation': True
 }
 
 

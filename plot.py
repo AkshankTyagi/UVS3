@@ -287,7 +287,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         
         # set labels
         ax.set_xlabel(r'Wavelength ($\AA$)')
-        ax.set_ylabel('Number of Photons s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9')
+        ax.set_ylabel('Number of Photons s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9')
         # ax.set_xlabel('Log[Wavelength ($\AA$)]')
         # ax.set_ylabel('log[Number of Photons]')
 
@@ -309,7 +309,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
                 # phots = ax.plot(np.log10(X_wavelength), np.log10(Y_photons_per_star[i]), label = f'ra: {ra[i]}  ; dec: {dec[i]}') #+ [y_offset]*len(Y_Spectra_per_star[i])
                 phots = ax.plot(X_wavelength, Y_photons_per_star[i], label = f'ra: {ra[i]}  ; dec: {dec[i]}') # + [y_offset]*len(Y_Spectra_per_star[i])
                 ax.set_xlim(wave_min, wave_max)
-                ax.set_ylim(-1, max_p)
+                # ax.set_ylim(-1, max_p)
                 # ax.set_ylim(0, np.log10(max_p))
         else:
             wavelengths = np.linspace(100, 3800, 1000)
@@ -317,7 +317,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             phots= ax.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='No stars in Fov')
             # phots= ax.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='No stars in Fov')
             ax.set_xlim(min(wavelengths), max(wavelengths))
-            ax.set_ylim(-100, 1e+6)
+            # ax.set_ylim(-100, 1e+6)
             # ax.set_ylim(0, 6)
 
         if len(ra)<=10:
@@ -506,7 +506,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # setting up the number of photons vs wavelength plot
         ax4.clear()
         ax4.set_xlabel(r'Wavelength ($\AA$)')
-        ax4.set_ylabel('Number of Photons s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9')
+        ax4.set_ylabel('Number of Photons s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9')
         # ax4.set_xlabel('Log[Wavelength ($\AA$)]')
         # ax4.set_ylabel('log[Number of Photons]')
         ax4.set_title('# of Photons from the stars in the Sky view')
@@ -523,7 +523,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
                 # phots = ax4.plot(np.log10(X_wavelength), np.log10(Y_photons_per_star[k]), label = f'ra: {ra[k]}  ; dec: {dec[k]}') #+ [y_offset]*len(Y_Spectra_per_star[i])
                 phots = ax4.plot(X_wavelength,  Y_photons_per_star[k], label = f'ra: {ra[k]}  ; dec: {dec[k]}') # + [y_offset]*len(Y_Spectra_per_star[i])
                 ax4.set_xlim(wave_min, wave_max)
-                ax4.set_ylim(-1, max_p)
+                # ax4.set_ylim(-1, max_p)
                 # ax4.set_ylim(0, np.log10(max_p))
         else:
             wavelengths = np.linspace(100, 3800, 1000)
@@ -531,7 +531,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             phots= ax4.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='No stars in Fov')
             # phots= ax4.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='No stars in Fov')
             ax4.set_xlim(min(wavelengths), max(wavelengths))
-            ax4.set_ylim(-1, 1e+6)
+            # ax4.set_ylim(-1, 1e+6)
             # ax4.set_ylim(-1, 6)
         if len(ra)<=10:
             ax4.legend()

@@ -328,7 +328,7 @@ def main():
     #     data = celestial_coordinates
     #     pickle.dump(data, f)
 
-    # write_to_csv(celestial_data, diffused_data, sol_position, sat_name)
+    write_to_csv(celestial_data, diffused_data, sol_position, sat_name)
     # for i in range(len(time_arr)):
     #     tot_phot_1 = calc_total_diffused_flux(diffused_data['1100'][i])
     #     tot_phot_2 = calc_total_diffused_flux(diffused_data['1500'][i])
