@@ -36,7 +36,7 @@ from Coordinates import *
 folder_loc, params_file = get_folder_loc()
 sat_file = f'{folder_loc}Satellite_TLE.txt'
 
-
+# get Simulation parameters from the init_params file
 def read_parameter_file(filename=params_file, param_set = 'Params_1'):
     config.read(filename)
 
@@ -66,6 +66,16 @@ def read_parameter_file(filename=params_file, param_set = 'Params_1'):
     print('Allignment_with_orbit=', allignment, ', Inclination_from_V =', theta )
     return hipp_file, castelli_file, sat_name, float(T_slice), N_frames, float(N_revolutions), roll, theta, allignment #, Threshold
 
+# get trigger fo the Simulation accesories from the init_params file
+def read_components(filename= params_file, param_set = 'Params_2'):
+    config = ConfigParser()
+    config.read(filename)
+    global diffused_bg
+    save_data = config.get(param_set, 'sun')
+    diffused_bg = config.get(param_set, 'diffused_bg')  
+    return diffused_bg, save_data
+
+# get satellite TLE data from the TLE file
 def read_satellite_TLE(filename= sat_file, sat_name = 'ISS'):
     config.read(filename)
     line1 = config.get(sat_name, 'line1')
@@ -250,10 +260,10 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
     return tr, sc, frame_row_list, sol_positions
 
 # Save a csv file with all required star information 
-def write_to_csv(data, diffused_data, sol_positions, sat_name):
+def write_to_csv(data, diffused_data, sol_positions, sat_name, start_time):
     # print('writing to csv')
     # print(data[0:2])
-    csv_file = f'{folder_loc}Demo_file{os.sep}{sat_name}_data.csv'
+    csv_file = f'{folder_loc}Demo_file{os.sep}{sat_name}-{start_time.item().strftime('%d_%m_%Y')}_data.csv'
     header =['Frame Number', 'hip', 'ra', 'dec', 'mag', 'parallax', 'B_V', 'Spectral_type', 'size', 'Frame Boundaries']
 
     # dz.to_csv(csv_file, index=False)
@@ -276,11 +286,14 @@ def write_to_csv(data, diffused_data, sol_positions, sat_name):
                 csv_writer.writerow([frame+1, "Empty frame", None, None, None, None, None, None, None, frame_boundary[0]])
             
             csv_writer.writerow([frame+1, "Celestial_data for frame:", "      ", 'Sun', sol_positions['sun'][i], 'moon', sol_positions['moon'][i]])
-            tot_phot_1 = calc_total_diffused_flux(diffused_data['1100'][i])
-            tot_phot_2 = calc_total_diffused_flux(diffused_data['1500'][i])
-            tot_phot_3 = calc_total_diffused_flux(diffused_data['2300'][i])
-            csv_writer.writerow([frame+1, "Diffused UV data in frame (Total_photons):", "      ", '1100A', tot_phot_1, '1500A', tot_phot_2, '2300A', tot_phot_3])
-        print('Star Data saved in:', csv_file)
+            if diffused_data != [0]:
+                tot_phot_1 = calc_total_diffused_flux(diffused_data['1100'][i])
+                tot_phot_2 = calc_total_diffused_flux(diffused_data['1500'][i])
+                tot_phot_3 = calc_total_diffused_flux(diffused_data['2300'][i])
+                csv_writer.writerow([frame+1, "Diffused UV data in frame (Total_photons):", "      ", '1100A', tot_phot_1, '1500A', tot_phot_2, '2300A', tot_phot_3])
+
+    print(f'Star Data saved in: Demo_file{os.sep}{sat_name}-{start_time.item().strftime('%d_%m_%Y')}_data.csv')
+    return 1
 
 
 def main():
@@ -313,30 +326,25 @@ def main():
     # simulation starts from current time to one full orbit
     start = np.datetime64(datetime.datetime.now()) #+ np.timedelta64(10, 'D')
     print(f"Start time of Simulation: {start}")
-    
+    diffused_bg, save_data = read_components()
+
     # times, state_vectors, celestial_coordinates  
     time_arr, state_vectors, celestial_data, sol_position  = get_simulation_data(satellite, df, start, t_period, t_slice, theta, allignment,  roll)
     Spectra = GET_SPECTRA(castelli_dir, celestial_data)
-    diffused_data = get_diffused_in_FOV(celestial_data)
 
-    # print(celestial_data)
-    # print(sol_position)
-    # print(Spectra.frame)
-    # print(Spectra.wavelength)
-    # print(Spectra.spectra_per_star)
-    # with open('star_data.pkl',"wb") as f:
-    #     data = celestial_coordinates
-    #     pickle.dump(data, f)
+    if diffused_bg == 'True':
+        diffused_data = get_diffused_in_FOV(celestial_data)
+    else: 
+        diffused_data = [0]
+        print('Diffused UV Background not included in the simulation')
 
-    write_to_csv(celestial_data, diffused_data, sol_position, sat_name)
-    # for i in range(len(time_arr)):
-    #     tot_phot_1 = calc_total_diffused_flux(diffused_data['1100'][i])
-    #     tot_phot_2 = calc_total_diffused_flux(diffused_data['1500'][i])
-    #     tot_phot_3 = calc_total_diffused_flux(diffused_data['2300'][i])
-    #     print(f"Total Photons in 1100A: {tot_phot_1}, 1500A: {tot_phot_2}, 2300A: {tot_phot_3}")
+    if save_data == 'True':
+        write_to_csv(celestial_data, diffused_data, sol_position, sat_name, start)
+    else:
+        print('Star Data not Saved.')
 
     #  animate
-    animate(time_arr, state_vectors, celestial_data, sol_position, Spectra, diffused_data['2300'], r)
+    animate(time_arr, state_vectors, celestial_data, sol_position, Spectra, diffused_data, r)
     return
 
 # main

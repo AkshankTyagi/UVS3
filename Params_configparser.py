@@ -59,7 +59,8 @@ config['Params_2'] = {
     'galactic_plane': True,
     'diffused_bg': True,
     'Spectra': True,
-    'save_animation': True
+    'save_animation': False, #True,
+    'Save_data': False #True 
 }
 
 

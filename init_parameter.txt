@@ -25,8 +25,9 @@ interval_bw_frames = 1000
 [Params_2]
 sun = True
 moon = True
-galactic_plane = True
-diffused_bg = True
+galactic_plane = False
+diffused_bg = False
 spectra = True
-save_animation = True
+save_animation = False
+save_data = False
 

@@ -31,8 +31,10 @@ def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     ele = float(config.get(param_set, 'ele'))
     Interval = float(config.get(param_set, 'interval_bw_Frames'))
     height = float(config.get(param_set, 'height'))
+    width = float(config.get(param_set, 'width'))
     spectra_width = float(config.get(param_set, 'longitudinal_spectral_width'))
     BG_wavelength = config.get(param_set, 'BG_wavelength')
+    BG_wavelength  = [int(val) for val in BG_wavelength[1:-1].split(',')]
 
     return azm, ele
 
@@ -205,7 +207,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
     
     # init 2D sky view as seen in the velocity direction
     def init_sky(ax):
-        global sky, diffused, text
+        global sky,  text
 
         # set labels
         ax.set_xlabel(r'Right Ascension $^\circ$')
@@ -223,22 +225,33 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         ax.set_ylim(Size[1], Size[3])  
     
 
+        #Scatter plot for Diffused light
+        diffused = []
+        if diffused_data != [0]:
+            a =  0.04* 1/height
+            colours = ['purple', 'indigo', 'blue']
+            info_diffused = ''
+            for j in range(len(BG_wavelength)):
+                loc_ra, loc_dec = random_scatter_data(diffused_data[f'{BG_wavelength[j]}'][0])
+                diffused_wave = ax3.scatter(loc_ra, loc_dec, s= 0.04, alpha= a,  facecolors=colours[j%3])
+                diffused.append(diffused_wave)
+                # print(BG_wavelength[j], f'{BG_wavelength[j]}', diffused_data['2300'][0], diffused_data[f'{BG_wavelength[j]}'][0])
+                info_line =f" {BG_wavelength[j]} $\\AA$ : {round(calc_total_diffused_flux(diffused_data[f'{BG_wavelength[j]}'][0]), 3)} \n"
+                info_diffused += info_line
+
+            info_text = f"  Diffused UV Background \n Wavelength : Num_photons(s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9) \n{info_diffused}"
+            text = ax.text(1.04, 0.6, info_text, transform=ax.transAxes, fontsize=7.5, va='center')
+        else:
+            info_text = ' Diffused UV Background Not included'
+            text = ax3.text(1.04, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
+
         # Scatter plot for stars
         if (S[0] == 0.0001) : #no star in the FOV
             sky = ax.scatter(P[0], P[1], s=S[0], facecolors='White')
         else:
             sky = ax.scatter(P[:,0], P[:,1], s=S, facecolors='white')
-        # print(S)
-
-        #Scatter plot for Diffused light
-        a =  0.04* 1/height
-        loc_ra, loc_dec = random_scatter_data(diffused_data[0])
-        diffused = ax.scatter(loc_ra, loc_dec, s= 0.04, alpha= a,  facecolors='Blue')
-
-        tot_phot = calc_total_diffused_flux(diffused_data[0])
-        info_text = f"Diffused UV Background\n    at {BG_wavelength} $\\AA$\nNum_photons from diffused \n= {round(tot_phot, 3)} s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9"
-        # print(info_text)
-        text = ax.text(1.04, 0.6, info_text, transform=ax.transAxes, fontsize=7.5, va='center')
+        
+        # plot for FOV boundary
         if allignment!= 'False':
             ax.plot(corners[:, 0], corners[:, 1], 'grey', linestyle='--', linewidth = 0.5)
             ax.plot([corners[0, 0], corners[3, 0]], [corners[0, 1], corners[3, 1]], 'grey', linestyle='--', linewidth = 0.5)
@@ -467,32 +480,34 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         ax3.clear()
         # get frame data. pos[ra, dec], size
         P, S, corners, Size = get_cles_data_by_frame(i, celestial_coordinates)
-        # Size = Size[0]
-        loc_ra, loc_dec = random_scatter_data(diffused_data[i])
-        # diffused_offsets = np.column_stack((loc_ra, loc_dec))
-        # diffused.set_offsets(diffused_offsets)
-        # # print(S)
-        # # Update scatter object
-        # sky.set_offsets(P)
-        # # print('P is working')
-        # sky.set_sizes(S)
-        # print('S is working')
-        
+
+        #Scatter plot for Diffused light
+        diffused = []
+        if diffused_data != [0]:
+            a =  0.04* 1/height
+            colours = ['purple', 'indigo', 'blue']
+            info_diffused = ''
+            for j in range(len(BG_wavelength)):
+                loc_ra, loc_dec = random_scatter_data(diffused_data[f'{BG_wavelength[j]}'][i])
+                diffused_wave = ax3.scatter(loc_ra, loc_dec, s= 0.04, alpha= a,  facecolors=colours[j%3])
+                diffused.append(diffused_wave)
+                info_line =f" {BG_wavelength[j]} $\\AA$ : {round(calc_total_diffused_flux(diffused_data[f'{BG_wavelength[j]}'][i]), 3)} \n"
+                info_diffused += info_line
+
+            info_text = f" Diffused UV Background \n Wavelength : Num_photons(s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9) \n{info_diffused}"
+            text = ax3.text(1.04, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
+            # print(info_text)
+        else:
+            info_text = ' Diffused Background Not included'
+            text = ax3.text(1.04, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
+
         # Scatter plot for stars
         if (S[0] == 0.0001) : #no star in the FOV
             sky = ax3.scatter(P[0], P[1], s=S[0], facecolors='White')
         else:
             sky = ax3.scatter(P[:,0], P[:,1], s=S, facecolors='white')
-
-        #Scatter plot for Diffused light
-        a =  0.04* 1/height
-        diffused = ax3.scatter(loc_ra, loc_dec, s= 0.04, alpha= a,  facecolors='Blue')
-
-        tot_phot = calc_total_diffused_flux(diffused_data[i])
-        info_text = f"Diffused UV Background\n    at {BG_wavelength} $\\AA$\nNum_photons from diffused \n= {round(tot_phot, 3)} s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9"
-        text = ax3.text(1.04, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
-        # print(info_text)
-
+        
+        # plot for FOV boundary
         if allignment!= 'False':
             ax3.plot(corners[:, 0], corners[:, 1], 'grey', linestyle='--', linewidth = 0.5)
             ax3.plot([corners[0, 0], corners[3, 0]], [corners[0, 1], corners[3, 1]], 'grey', linestyle='--', linewidth = 0.5)
@@ -501,7 +516,6 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # change sky limits
         ax3.set_xlim(Size[0], Size[2])
         ax3.set_ylim(Size[1], Size[3])    
-
         
         # setting up the number of photons vs wavelength plot
         ax4.clear()
@@ -580,13 +594,14 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         
         # show
         plt.show()
-        print("animation complete")
+        print("Animation complete")
         
         # save
         _, _, _, save_ani =read_components()
 
         if save_ani == "True":
-            ani.save(fr'{folder_loc}Demo_file\{sat_name}satellite_11_2024.gif', writer="ffmpeg")
+            current_date = time_arr[0].item().strftime('%d_%m_%Y')
+            ani.save(fr'{folder_loc}Demo_file\{sat_name}satellite-{current_date}.gif', writer="ffmpeg")
             print("Animation Saved")
         else:
             print("Animation not Saved")

@@ -36,7 +36,7 @@ def get_diffused_in_FOV( data ):
             #                 sep = ',', skipinitialspace=False).iloc[:, [0,1,2]]
             df = pd.read_feather(filename).iloc[:, [0, 1, 2]]
             df.columns = ['ra', 'dec', 'flux']
-            print(f'read {filename}, finished for diffused data.')
+            print(f'Read diffused_UV_data{os.sep}RA_sorted_flux_{wavelength}.feather for diffused data @ {wavelength}.')
             # print (df[:10])
             # print (type(df[0]['ra']))
         except FileNotFoundError:
