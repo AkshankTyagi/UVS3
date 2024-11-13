@@ -71,7 +71,7 @@ def read_components(filename= params_file, param_set = 'Params_2'):
     config = ConfigParser()
     config.read(filename)
     global diffused_bg
-    save_data = config.get(param_set, 'sun')
+    save_data = config.get(param_set, 'Save_data')
     diffused_bg = config.get(param_set, 'diffused_bg')  
     return diffused_bg, save_data
 
@@ -326,11 +326,12 @@ def main():
     # simulation starts from current time to one full orbit
     start = np.datetime64(datetime.datetime.now()) #+ np.timedelta64(10, 'D')
     print(f"Start time of Simulation: {start}")
-    diffused_bg, save_data = read_components()
 
     # times, state_vectors, celestial_coordinates  
     time_arr, state_vectors, celestial_data, sol_position  = get_simulation_data(satellite, df, start, t_period, t_slice, theta, allignment,  roll)
     Spectra = GET_SPECTRA(castelli_dir, celestial_data)
+
+    diffused_bg, save_data = read_components()
 
     if diffused_bg == 'True':
         diffused_data = get_diffused_in_FOV(celestial_data)

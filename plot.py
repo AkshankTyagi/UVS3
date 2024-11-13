@@ -601,7 +601,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
 
         if save_ani == "True":
             current_date = time_arr[0].item().strftime('%d_%m_%Y')
-            ani.save(fr'{folder_loc}Demo_file\{sat_name}satellite-{current_date}.gif', writer="ffmpeg")
+            ani.save(fr'{folder_loc}Demo_file\{sat_name}satellite-{current_date}.gif', writer="ffmpeg") #_Large-Field_
             print("Animation Saved")
         else:
             print("Animation not Saved")
@@ -695,12 +695,12 @@ def get_cles_data_by_frame(i, data):
             print('  The stars in the FOV are:')
             for i in range(len(c[0])):     
                 Temp = GET_STAR_TEMP(str(Spectral_type[i]))
-                print( f"{str(i+1)}) Hipp_number= {str(hip[i])}; Ra & Dec: {str(ra[i])} {str(dec[i])}; Johnson Mag= {str(mag[i])}; trig Parallax= {str(parallax[i])}; Color(B-V)= {str(B_V[i])}; Spectral_Type: {str(Spectral_type[i])}; T_index: {Temp}" , end="\n")
+                print( f"{str(i+1)}) Hipp_number= {str(hip[i])}; Ra & Dec: {str(ra[i])} {str(dec[i])}; Johnson Mag= {str(mag[i])}; trig Parallax= {str(parallax[i])}; E(B-V)= {str(B_V[i])}; Spectral_Type: {str(Spectral_type[i]).strip()};" , end="\n")
 
         else:
             print('  The star in the FOV is:')
             Temp = GET_STAR_TEMP(str(Spectral_type[0]))
-            print( f"  Hipp_number= {str(hip[0])}; Ra & Dec: {str(ra[0])} {str(dec[0])}; Johnson Mag= {str(mag[0])}; trig Parallax= {str(parallax[0])}; Color(B-V)= {str(B_V[0])}; Spectral_Type: {str(Spectral_type[0])}; T_index: {Temp}", end="\n")
+            print( f"  Hipp_number= {str(hip[0])}; Ra & Dec: {str(ra[0])} {str(dec[0])}; Johnson Mag= {str(mag[0])}; trig Parallax= {str(parallax[0])}; E(B-V)= {str(B_V[0])}; Spectral_Type: {str(Spectral_type[0]).strip()};", end="\n")
 
         # return
         return cles_pos, size,frame_corner, frame_boundary 
