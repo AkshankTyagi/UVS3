@@ -101,7 +101,6 @@ def get_satellite(line1, line2):
     # return
     return satellite
 
-
 # get celestial coordinates of Sun, Moon
 def get_celestial_positions(time_arr):
     # Load ephemeris data

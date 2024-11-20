@@ -41,7 +41,7 @@ config['Params_1'] = {
 
 
     # Spectrum Parameters (UV Band Wavelengths in Angstroms)
-    'limit_min': 100,
+    'limit_min': 1000,
     'limit_max': 3800,
     'BG_wavelength':  [1100, 1500, 2300], #2300 only
 
