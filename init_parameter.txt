@@ -2,32 +2,33 @@
 hipparcos_catalogue = C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\hip_main.dat
 castelli_data = C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\Castelli\ckp00
 dust_c_section = C:\Users\Akshank Tyagi\Documents\GitHub\spg-iiap-UV-Sky-Simulation\Castelli\crossec1.dat
-sat_name = ISS
+sat_name = Astrosat
 roll = False
 roll_rate_hrs = False
 number of revolutions = 1
 n_frames = False
-t_slice = 100
-width = 5
-height = 10
+t_slice = 10
+width = 0.5
+height = 1
 starmag_min_threshold = 0
-starmag_max_threshold = 5
-allignment_with_orbit = 90
+starmag_max_threshold = 7
+allignment_with_orbit = 0
 inclination_from_v = 0
-limit_min = 100
+limit_min = 1000
 limit_max = 3800
 bg_wavelength = [1100, 1500, 2300]
 azm = 104
 ele = 60
 longitudinal_spectral_width = 0.1
-interval_bw_frames = 2000
+interval_bw_frames = 1000
 
 [Params_2]
 sun = True
 moon = True
-galactic_plane = True
+galactic_plane = False
 diffused_bg = True
 spectra = True
+fix_start = True
 save_animation = True
-save_data = False
+save_data = True
 

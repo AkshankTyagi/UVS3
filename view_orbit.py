@@ -181,10 +181,10 @@ def propagate(sat, time_start, time_end, dt, theta):
     # end = np.arange(0.0,  time_end, dt)
     # time_arr = time_start + end.astype('timedelta64[s]') 
     # print(time_arr)
-    end = np.arange(0.0,  time_end*1000, dt*1000)
+    end = np.arange(0.0,  time_end*1e6, dt*1e6)
     # print(end)
     # list of datetime
-    time_arr = time_start + end.astype('timedelta64[ms]') 
+    time_arr = time_start + end.astype('timedelta64[us]')
     # print(time_arr)   
     # state vectors, ra, dec for each time step
     position = []; velocity = []
@@ -244,7 +244,8 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
         # print(frame, frame_boundary)
         # print(f"Frame {frame+1} has {len(tdf_values)} stars, and frame corners = {frame_boundary}")
         tdf_values = tdf_values.values.tolist()
-        # 
+        # if (tdf_values):
+        #     print("\n \n--",frame, tr[frame], tdf_values)
         frame_row_list.append([frame, tdf_values, frame_boundary ])
     # print (frame_row_list)
 
@@ -270,17 +271,15 @@ def write_to_csv(data, diffused_data, sol_positions, sat_name, start_time):
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow(header)
         for i in range(len(data)):
-            frame, d, frame_boundary = zip(data[i])
-            
-            frame = int(frame[0])
-            d = d[0]
-            # print(d)
+            frame, d, frame_boundary = data[i]
+            frame = int(frame)
+            # d = d[0]
             if d:
                 for j in range(len(d)):
                     # print(j, len(d))
                     # print(zip(*d[j]))
                     ra, dec, size, hip, mag, parallax, B_V, Spectral_type = zip(d[j])
-                    csv_writer.writerow([frame+1, hip[0], ra[0], dec[0], mag[0], parallax[0], B_V[0], Spectral_type[0], size[0], frame_boundary[0]])
+                    csv_writer.writerow([frame+1, hip[0], ra[0], dec[0], mag[0], parallax[0], B_V[0], Spectral_type[0], size[0], frame_boundary])
             else:
                 csv_writer.writerow([frame+1, "Empty frame", None, None, None, None, None, None, None, frame_boundary[0]])
             
@@ -324,6 +323,7 @@ def main():
 
     # simulation starts from current time to one full orbit
     start = np.datetime64(datetime.datetime.now()) #+ np.timedelta64(10, 'D')
+    # start = np.datetime64("2024-12-01T04:12:16.033000")
     print(f"Start time of Simulation: {start}")
 
     # times, state_vectors, celestial_coordinates  

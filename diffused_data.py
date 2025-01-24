@@ -86,6 +86,7 @@ def random_scatter_data(diffused_data):
     # print(c)
     # print(c[1])
     ra, dec, fluxes = c[0], c[1], c[2]
+    pixel_size = np.radians(0.1)*np.radians(0.1)
 
     # print(fluxes, loc)
     ra_norm = []
@@ -93,8 +94,8 @@ def random_scatter_data(diffused_data):
     for i, flux in enumerate(fluxes):
         # print(flux, loc[0][i]
         # print(ra,dec)
-        ra_N = np.random.normal(ra[i], 0.07, size= int(flux))
-        dec_N = np.random.normal(dec[i], 0.07, size= int(flux))
+        ra_N = np.random.normal(ra[i], 0.07, size= int(1e4*flux*pixel_size))
+        dec_N = np.random.normal(dec[i], 0.07, size= int(1e4*flux*pixel_size))
         for j in range(len(ra_N)):
             # if 
             ra_norm.append(ra_N[j])

@@ -24,7 +24,7 @@ folder_loc, params_file = get_folder_loc()
 def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     config = ConfigParser()
     config.read(filename)
-    global sat_name, Interval, spectra_width, BG_wavelength, height, allignment
+    global sat_name, Interval, spectra_width, BG_wavelength, height, width, allignment
     sat_name = config.get(param_set, 'sat_name')
     allignment = config.get(param_set, 'allignment_with_orbit')
     azm = float(config.get(param_set, 'azm'))
@@ -99,10 +99,11 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # orbit path as a dotted line plot
         orbit = ax.plot(X[0], Y[0], Z[0], linewidth=0.9, linestyle='-.', c='k')[0]
 
+
+        distance = 10000
         if solar_marker == "True":
             sun_ra, sun_dec = sol_position["sun"][0]
             solar_sv = conv_eq_to_cart(sun_ra*15, sun_dec, 1)
-            distance = 10000
             # Create new Sun quiver plot
             sun = ax2.quiver(solar_sv[0] * distance, solar_sv[1] * distance, solar_sv[2] * distance,
                             -solar_sv[0], -solar_sv[1], -solar_sv[2],
@@ -223,12 +224,13 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # set axis limits
         ax.set_xlim(Size[0], Size[2])
         ax.set_ylim(Size[1], Size[3])  
-    
+        fOV_area = np.radians(height) * np.radians(width)
+        a =  0.1* 1/height * 1/width  #alpha value for scatter plot
 
         #Scatter plot for Diffused light
         diffused = []
         if diffused_data != [0]:
-            a =  0.04* 1/height
+            
             colours = ['purple', 'indigo', 'blue']
             info_diffused = ''
             for j in range(len(BG_wavelength)):
@@ -236,11 +238,12 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
                 diffused_wave = ax3.scatter(loc_ra, loc_dec, s= 0.04, alpha= a,  facecolors=colours[j%3])
                 diffused.append(diffused_wave)
                 # print(BG_wavelength[j], f'{BG_wavelength[j]}', diffused_data['2300'][0], diffused_data[f'{BG_wavelength[j]}'][0])
-                info_line =f" {BG_wavelength[j]} $\\AA$ : {round(calc_total_diffused_flux(diffused_data[f'{BG_wavelength[j]}'][0]), 3)} \n"
+                info_line =f" {BG_wavelength[j]} $\\AA$ : {round(calc_total_diffused_flux(diffused_data[f'{BG_wavelength[j]}'][0])* fOV_area, 3)} \n"
                 info_diffused += info_line
 
-            info_text = f"  Diffused UV Background \n Wavelength : Num_photons(s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9) \n{info_diffused}"
+            info_text = f" Total Diffused UV Background in FOV \n Wavelength : Num_photons(s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9) \n{info_diffused}"
             text = ax.text(1.04, 0.6, info_text, transform=ax.transAxes, fontsize=7.5, va='center')
+            print(info_text)
         else:
             info_text = ' Diffused UV Background Not included'
             text = ax3.text(1.04, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
@@ -325,7 +328,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
                 # ax.set_ylim(-1, max_p)
                 # ax.set_ylim(0, np.log10(max_p))
         else:
-            wavelengths = np.linspace(100, 3800, 1000)
+            wavelengths = np.linspace(1000, 3800, 1000)
             y_zeros = np.zeros_like(wavelengths) 
             phots= ax.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='No stars in Fov')
             # phots= ax.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='No stars in Fov')
@@ -483,20 +486,23 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
 
         #Scatter plot for Diffused light
         diffused = []
+        fOV_area = np.radians(height) * np.radians(width)
+        a =  0.1* 1/height * 1/width  #alpha value for scatter plot
+
         if diffused_data != [0]:
-            a =  0.04* 1/height
             colours = ['purple', 'indigo', 'blue']
             info_diffused = ''
+            height
             for j in range(len(BG_wavelength)):
                 loc_ra, loc_dec = random_scatter_data(diffused_data[f'{BG_wavelength[j]}'][i])
                 diffused_wave = ax3.scatter(loc_ra, loc_dec, s= 0.04, alpha= a,  facecolors=colours[j%3])
                 diffused.append(diffused_wave)
-                info_line =f" {BG_wavelength[j]} $\\AA$ : {round(calc_total_diffused_flux(diffused_data[f'{BG_wavelength[j]}'][i]), 3)} \n"
+                info_line =f" {BG_wavelength[j]} $\\AA$ : {round(calc_total_diffused_flux(diffused_data[f'{BG_wavelength[j]}'][i])*fOV_area, 3)} \n"
                 info_diffused += info_line
 
-            info_text = f" Diffused UV Background \n Wavelength : Num_photons(s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9 sr\u207B\u00B9) \n{info_diffused}"
+            info_text = f" Total Diffused UV Background in FOV \n Wavelength : Num_photons(s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9) \n{info_diffused}"
             text = ax3.text(1.04, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
-            # print(info_text)
+            print(info_text)
         else:
             info_text = ' Diffused Background Not included'
             text = ax3.text(1.04, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
@@ -540,7 +546,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
                 # ax4.set_ylim(-1, max_p)
                 # ax4.set_ylim(0, np.log10(max_p))
         else:
-            wavelengths = np.linspace(100, 3800, 1000)
+            wavelengths = np.linspace(1000, 3800, 1000)
             y_zeros = np.zeros_like(wavelengths) 
             phots= ax4.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='No stars in Fov')
             # phots= ax4.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='No stars in Fov')
@@ -667,9 +673,10 @@ def get_pos_data_by_frame(i):
 # get celestial coordinates of the stars for the given index
 def get_cles_data_by_frame(i, data):
     # select a frame
-    # print(data[i])
-    frame, d, frame_corner = zip(data[i])
-    frame_corner = frame_corner[0]
+
+    frame, d, frame_corner = data[i]
+    # frame_corner = frame_corner[0]
+
     # print(f"plots)Frame {i+1} has {len(d[0])} stars, and frame corners = {frame_corner}")
 
     min_ra, min_dec = frame_corner.min(axis=0)
@@ -681,9 +688,11 @@ def get_cles_data_by_frame(i, data):
 
     # print (frame_boundary)
     # slice into columns
-    if d[0]:
-        c = list(zip(*d[0]))
-        print('Frame',frame[0]+1,'has', len(c[0]),'stars.' )
+    if d:
+        # print(d)
+        c = list(zip(*d))
+        # print(d[0], c)
+        print('Frame',frame+1,'has', len(c[0]),'stars.' )
         # pack it
         #ra, dec, size = np.array(c[0]), np.array(c[1]), np.array(c[2])
         ra, dec, size = c[0], c[1], c[2]
@@ -705,7 +714,7 @@ def get_cles_data_by_frame(i, data):
         # return
         return cles_pos, size,frame_corner, frame_boundary 
     else:
-        print('Frame',frame[0]+1,'is EMPTY', end="\n")
+        print('Frame',frame+1,'is EMPTY', end="\n")
         no_star = [0,0]
         zero_size =(0.0001,)
         return no_star, zero_size, frame_corner, frame_boundary
