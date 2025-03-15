@@ -10,7 +10,7 @@ import matplotlib.animation as animation
 import matplotlib.colors as mc
 from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d import Axes3D
-
+ 
 
 from configparser import ConfigParser
 
@@ -255,11 +255,12 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             sky = ax.scatter(P[:,0], P[:,1], s=S, facecolors='white')
         
         # plot for FOV boundary
-        if allignment!= 'False':
-            ax.plot(corners[:, 0], corners[:, 1], 'grey', linestyle='--', linewidth = 0.5)
+        if allignment != 'False':
+            ax.plot(corners[:, 0], corners[:, 1], 'grey', linestyle='--', linewidth = 0.5, label = 'FOV boundary')
             ax.plot([corners[0, 0], corners[3, 0]], [corners[0, 1], corners[3, 1]], 'grey', linestyle='--', linewidth = 0.5)
             ax.set_aspect(2*(Size[2] - Size[0]) / (Size[3] - Size[1]))
         # background_flux = get_flux_ipixel(diffused_BG_wavelength, Size)
+        ax.legend(loc='center left', bbox_to_anchor=(1, -0.04), fontsize='small') 
         
         # return
         return ax, sky , diffused
@@ -483,7 +484,9 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         ax3.clear()
         # get frame data. pos[ra, dec], size
         P, S, corners, Size = get_cles_data_by_frame(i, celestial_coordinates)
-
+        # set labels
+        ax3.set_xlabel(r'Right Ascension $^\circ$')
+        ax3.set_ylabel(r'Declination $^\circ$')
         #Scatter plot for Diffused light
         diffused = []
         fOV_area = np.radians(height) * np.radians(width)
@@ -515,9 +518,11 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         
         # plot for FOV boundary
         if allignment!= 'False':
-            ax3.plot(corners[:, 0], corners[:, 1], 'grey', linestyle='--', linewidth = 0.5)
+            ax3.plot(corners[:, 0], corners[:, 1], 'grey', linestyle='--', linewidth = 0.5, label = 'FOV boundary')
             ax3.plot([corners[0, 0], corners[3, 0]], [corners[0, 1], corners[3, 1]], 'grey', linestyle='--', linewidth = 0.5)
             ax3.set_aspect(2*(Size[2] - Size[0]) / (Size[3] - Size[1]))
+
+        ax3.legend(loc='center left', bbox_to_anchor=(1.0, -0.04), fontsize='small')
 
         # change sky limits
         ax3.set_xlim(Size[0], Size[2])

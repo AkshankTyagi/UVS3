@@ -27,13 +27,13 @@ config['Params_1'] = {
     # Specify either Number of frames or period in sec after which the next Frame is given
     'number of Revolutions' : 1,
     'N_frames' : False,
-    't_slice' : 10, # Seconds,
+    't_slice' : 1000, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
     'width': 0.5, # 0.5 (shorter) width
     'height': 1, # 1 (longer) height
     'starmag_min_threshold' : 0, #threshold for what bright stars we want to avoid
-    'starmag_max_threshold' : 7, #threshold for what apaarent magnitude stars we want to look at
+    'starmag_max_threshold' : 10, #threshold for what apaarent magnitude stars we want to look at
 
     # Direction of Detector from the velocity of Satellite 
     'allignment_with_orbit' : 0, #gives angle of longer side of slit (height) with the ORBITAL PLANE from 0 to 90 degrees or False, (default 90)
@@ -56,12 +56,12 @@ config['Params_1'] = {
 config['Params_2'] = {
     'sun': True,
     'moon':  True,
-    'galactic_plane': False,
+    'galactic_plane': True,
     'diffused_bg': True,
     'Spectra': True,
     'fix_start': True,
-    'save_animation': True,
-    'Save_data': True 
+    'save_animation': False, #True,
+    'Save_data': False #True 
 }
 
 

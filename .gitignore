@@ -5,3 +5,4 @@ diffused_UV_data/flux_2300.csv
 diffused_UV_data/RA_sorted_flux_1100.csv
 diffused_UV_data/RA_sorted_flux_1500.csv
 diffused_UV_data/RA_sorted_flux_2300.csv
+*.csv

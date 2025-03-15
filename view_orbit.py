@@ -263,7 +263,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
 def write_to_csv(data, diffused_data, sol_positions, sat_name, start_time):
     # print('writing to csv')
     # print(data[0:2])
-    csv_file = f'{folder_loc}Demo_file{os.sep}{sat_name}-{start_time.item().strftime('%d_%m_%Y')}_data.csv'
+    csv_file = f'{folder_loc}Demo_file{os.sep}{sat_name}-{start_time.item().strftime("%d_%m_%Y")}_data.csv'
     header =['Frame Number', 'hip', 'ra', 'dec', 'mag', 'parallax', 'B_V', 'Spectral_type', 'size', 'Frame Boundaries']
 
     # dz.to_csv(csv_file, index=False)
@@ -290,7 +290,7 @@ def write_to_csv(data, diffused_data, sol_positions, sat_name, start_time):
                 tot_phot_3 = calc_total_diffused_flux(diffused_data['2300'][i])
                 csv_writer.writerow([frame+1, "Diffused UV data in frame (Total_photons):", "      ", '1100A', tot_phot_1, '1500A', tot_phot_2, '2300A', tot_phot_3])
 
-    print(f'Star Data saved in: Demo_file{os.sep}{sat_name}-{start_time.item().strftime('%d_%m_%Y')}_data.csv')
+    print(f'Star Data saved in: Demo_file{os.sep}{sat_name}-{start_time.item().strftime("%d_%m_%Y")}_data.csv')
     return 1
 
 

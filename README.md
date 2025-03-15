@@ -69,13 +69,15 @@ We converted the following functions into python and used them in our code
 
 
 ## Setup
-Script is written with python (Version: 3.10.6) on Windows. Additional modules required:   
+Script is written with python (Version: 3.10.6) on Windows/Linux. Additional modules required:   
 
 * numpy       (tested with Version: 1.21.5 )
 * matplotlib  (tested with Version: 3.5.1 )
 * pandas      (tested with Version: 1.3.5 )
 * math
 * sgp4        (tested with Version: 2.21 )
+* skyfield    (tested with version: 1.49) 
+* pyarrow     (tested with Version: 19.0.0)
 * datetime
 * configparser
 * astropy.io

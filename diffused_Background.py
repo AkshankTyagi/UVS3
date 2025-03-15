@@ -39,7 +39,7 @@ def plot_diffused_bg(data, wavelength):
     plt.imshow(data, cmap= BtoB_cmap, vmin=0, vmax= 1)
     plt.colorbar()
     plt.title(f'diffused_UV_background{wavelength}')
-    # plt.savefig(fr'C:\Users\Akshank Tyagi\Documents\GitHub\UV-Sky-Simulations\diffused_data\scattered_10000000_1105.png')
+    plt.savefig(fr'{folder_loc}diffused_UV_data{os.sep}scattered_{wavelength}.png')
     # plt.savefig(fr'C:\Users\Akshank Tyagi\Documents\GitHub\UV-Sky-Simulations\diffused_data\diffused_bg_1100.png')
     
     plt.show()
@@ -50,23 +50,24 @@ def plot_diffused_bg(data, wavelength):
 # print (gl,gb,'--->',ra,dec)
 
 # Example usage
+wavelength = 1300
+file_path = fr"C:\Users\Akshank Tyagi\Documents\GitHub\UV-Sky-Simulations\diffused_data\RA_sorted_flux_{wavelength}.csv"
 
-# file_path = fr"C:\Users\Akshank Tyagi\Documents\GitHub\UV-Sky-Simulations\diffused_data\RA_sorted_flux_{wavelength}.csv"
-
-# print ('working')
-# for x in [1100]:
+print ('working')
+# for x in [wavelength]:
 #     fits_filename = fr"{folder_loc}diffused_UV_data{os.sep}scattered_1e10_{x}_a40_g6{os.sep}scattered.fits"
 #     # fits_filename = fr'C:\Users\Akshank Tyagi\Documents\GitHub\UV-Sky-Simulations\diffused_data/scattered_100000[(1100, 1130)]_mag4.fits'
 #     ra, dec = get_world_coordinates( 1800, 900, fits_filename)
 #     print(f"ra,dec:",ra,dec)
 #     with fits.open(fits_filename) as hdul:
 #         data = hdul[0].data
-#         # for row in data:
-#         #     print (row)
-#         plot_diffused_bg(data, 1105)
+        # for row in data:
+        #     print (row)
+        # plot_diffused_bg(data, wavelength)
+
 wavelength_array = read_parameter_file()
-print(wavelength_array, wavelength_array[0])
-for wavelength in wavelength_array:
+print(wavelength_array, wavelength_array[0]) 
+for wavelength in [wavelength]:
     file_path = fr"{folder_loc}diffused_UV_data{os.sep}RA_sorted_flux_{wavelength}.csv"
 
     if os.path.exists(file_path):
@@ -74,11 +75,11 @@ for wavelength in wavelength_array:
     else:
         print('Running diffused_Background.py to create sorted files of diffused UV BG from Jayant Murthy (2016) data')
         # wavelength = read_parameter_file()
-        for wavelength in [1100, 1500, 2300]:
+        for wavelength in [1300]:
             fits_filename = f"{folder_loc}diffused_UV_data{os.sep}scattered_1e10_{wavelength}_a40_g6{os.sep}scattered.fits"
             print(fits_filename)
 
-            plot_diffused_bg(fits_filename, wavelength)
+            # plot_diffused_bg(fits_filename, wavelength)
 
             gl= [0] #longitude
             gb= [0] #latitude
@@ -109,8 +110,8 @@ for wavelength in wavelength_array:
             # from the Pixels converting to galctic to Equatorial coordinates + flux grid
             grid = []
             for i in range( y_range+1):
-                if i%20== 0:
-                    print("line-",i)
+                # if i%20== 0:
+                    # print("line-",i)
                 glon, glat = get_world_coordinates(x_array, [i]*3600, fits_filename)
                 # print(glon, glat)
                 ra_line, dec_line = conv_gal_to_eq(glon,glat)
