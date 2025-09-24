@@ -62,7 +62,8 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         solar_marker, lunar_marker, G_plane,  _ = read_components()
 
         # set titles
-        title = sat_name + ' Satellite position @ ' + time_arr[0].item().strftime('%Y-%m-%d - %H:%M:%S.')        
+        title = sat_name + ' Satellite position @ ' + time_arr[0].datetime.strftime('%Y-%m-%d - %H:%M:%S')
+       
         ax.set_title(title)        
         
         # set labels
@@ -449,7 +450,8 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # stack as np columns for scatter plot
         xyi, xi, yi, zi = get_pos_data_by_frame(i)
         # print ('frame number',i+1,'- satellite path:', xi, yi, zi)
-        title = sat_name+' Satellite position @ ' + time_arr[i].item().strftime('%Y-%m-%d - %H:%M:%S.')        
+        title = sat_name + ' Satellite position @ ' + time_arr[i].datetime.strftime('%Y-%m-%d - %H:%M:%S')
+
         ax2.set_title(title)
         # print("update animation")
         # _offsets3d for scatter

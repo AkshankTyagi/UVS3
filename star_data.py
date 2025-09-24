@@ -96,6 +96,57 @@ def is_point_in_polygon(x, y, poly):
         p1x, p1y = p2x, p2y
     return inside #or any(np.isclose([x, y], poly).all(axis=1))
 
+def is_point_in_polygon_wrapped(ra, dec, poly):
+    """
+    Check if (ra, dec) lies inside a polygon (poly) on the RA-Dec plane,
+    handling RA wrapping at 0/360 degrees.
+
+    Parameters
+    ----------
+    ra : float
+        Right Ascension of the point (degrees).
+    dec : float
+        Declination of the point (degrees).
+    poly : list of (float, float)
+        Polygon vertices as (ra, dec). RAs may be <0 or >360.
+
+    Returns
+    -------
+    bool
+        True if point is inside the polygon (accounting for RA wrap).
+    """
+    def point_in_poly(x, y, poly):
+        n = len(poly)
+        inside = False
+        p1x, p1y = poly[0]
+        for i in range(n + 1):
+            p2x, p2y = poly[i % n]
+            if y == min(p1y, p2y):
+                if x <= max(p1x, p2x) and x >= min(p1x, p2x):
+                    return True
+            if y > min(p1y, p2y):
+                if y <= max(p1y, p2y):
+                    if x <= max(p1x, p2x):
+                        if p1y != p2y:
+                            xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                            if x == xints:
+                                return True
+                        if p1x == p2x or x <= xints:
+                            inside = not inside
+            p1x, p1y = p2x, p2y
+        return inside
+
+    # normalize RA into [0,360)
+    ra = ra % 360
+
+    # make shifted copies of polygon
+    for shift in (-360, 0, 360):
+        shifted_poly = [(x + shift, y) for (x, y) in poly]
+        if point_in_poly(ra, dec, shifted_poly):
+            return True
+
+    return False
+
 
 # get valid frame boundary corners then rotate them by angle chi
 def get_frame_boundaries(w, h, x, y, chi=0):
@@ -131,6 +182,7 @@ def get_frame_boundaries(w, h, x, y, chi=0):
 
     return rotated_corners 
 
+
 # camera fov : height◦ × width◦
 def filter_by_fov(mdf, ra, de, chi): 
     # Frame field of view
@@ -139,7 +191,8 @@ def filter_by_fov(mdf, ra, de, chi):
     
     # Get the rotated corners of the FOV
     rotated_corners = get_frame_boundaries(w, h, ra, de, chi)
-    
+    # print(rotated_corners)
+
     # Calculate min and max RA and Dec from rotated corners
     min_ra, min_dec = rotated_corners.min(axis=0)
     max_ra, max_dec = rotated_corners.max(axis=0)
@@ -148,8 +201,21 @@ def filter_by_fov(mdf, ra, de, chi):
     mdf = mdf[['ra_deg', 'de_deg', 'mar_size', 'hip', 'mag', 'trig_parallax', 'E(B-V)', 'Spectral_type']]
     
     # Filter data within the boundaries
-    q = 'ra_deg >= @min_ra & ra_deg <= @max_ra & de_deg >= @min_dec & de_deg <= @max_dec' 
-    mdf_filtered = mdf.query(q)
+    if min_ra < 0:
+        q = '(ra_deg >= 360 + @min_ra | ra_deg <= @max_ra) & de_deg >= @min_dec & de_deg <= @max_dec' # wrap around 0
+        # print(min_ra, max_ra, "RA wrap around 0")
+        mdf_filtered = mdf.query(q).copy()
+        # shift stars near RA=0 into negative RA space
+        mdf_filtered.loc[mdf_filtered['ra_deg'] >= max_ra, 'ra_deg'] -= 360
+    elif max_ra > 360:
+        q = '(ra_deg >= @min_ra | ra_deg <= @max_ra - 360) & de_deg >= @min_dec & de_deg <= @max_dec' # wrap around 360
+        # print(min_ra, max_ra, "RA wrap around 360")
+        mdf_filtered = mdf.query(q).copy()
+        # shift stars near RA=360 into negative RA space
+        mdf_filtered.loc[mdf_filtered['ra_deg'] <= min_ra, 'ra_deg'] += 360
+    else:
+        q = 'ra_deg >= @min_ra & ra_deg <= @max_ra & de_deg >= @min_dec & de_deg <= @max_dec' 
+        mdf_filtered = mdf.query(q)
 
     # Convert rotated corners to a list of tuples for polygon testing
     polygon = [tuple(corner) for corner in rotated_corners]
@@ -159,19 +225,4 @@ def filter_by_fov(mdf, ra, de, chi):
     
     return mdf_filtered, rotated_corners #, frame_boundaries #
 
-# def get_frame_boundaries(w, h, x, y):
-#     # set x boundaries
-#     xmin = float(x) - float(w) / 2.0
-#     xmax = float(x) + float(w) / 2.0
-#     xmin = 0 if xmin<0 else xmin   
-#     xmax = 360 if xmax>360 else xmax
 
-    
-#     # set y boundaries
-#     ymin = float(y) - float(h) / 2.0
-#     ymax = float(y) + float(h) / 2.0
-#     ymin = -90 if ymin<-90 else ymin
-#     ymax = 90 if ymax>90 else ymax
-    
-#     # return limits 
-#     return  xmin, ymin, xmax, ymax

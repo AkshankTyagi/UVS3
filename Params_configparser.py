@@ -25,25 +25,34 @@ config['Params_1'] = {
     'roll_rate_hrs' : False,
 
     # Specify either Number of frames or period in sec after which the next Frame is given
-    'number of Revolutions' : 1,
+    'number of Revolutions' : 0.005,
     'N_frames' : False,
-    't_slice' : 1000, # Seconds,
+    't_slice' : 1, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
     'width': 0.5, # 0.5 (shorter) width
     'height': 1, # 1 (longer) height
     'starmag_min_threshold' : 0, #threshold for what bright stars we want to avoid
-    'starmag_max_threshold' : 10, #threshold for what apaarent magnitude stars we want to look at
+    'starmag_max_threshold' : 5, #threshold for what apaarent magnitude stars we want to look at
 
     # Direction of Detector from the velocity of Satellite 
-    'allignment_with_orbit' : 0, #gives angle of longer side of slit (height) with the ORBITAL PLANE from 0 to 90 degrees or False, (default 90)
+    'allignment_with_orbit' : 90, # gives angle of longer side of slit (height) with the ORBITAL PLANE from 0 to 90 degrees or False, (default 90)
     'inclination_from_V': 0, #gives the angle of inclination 0 to 180 deg, of the the camera from V vector in ORBITAL PLANE (default 0)
 
+    # Staring Mode parameters
+    'staring RA' : 0, # in degrees (default 0)
+    'staring Dec' : 90, # in degrees (default 90)
+    'staring_time' : 10, # in minutes (default 0)
 
     # Spectrum Parameters (UV Band Wavelengths in Angstroms)
     'limit_min': 1000,
     'limit_max': 3800,
-    'BG_wavelength':  [1100, 1500, 2300], #2300 only
+    'BG_wavelength':  [1100], #, 1500, 2300], #2300 only
+    'diffused_BG_file': fr"{folder_loc}diffused_UV_data{os.sep}",
+
+    # Zodiacal light files
+    'Sol_spectra_file':  fr'{folder_loc}zodiacal_spec.txt', 
+    'Zod_dist_table': fr'{folder_loc}leinert_dist.txt',
 
     #Animation parameters
     # set view
@@ -57,9 +66,11 @@ config['Params_2'] = {
     'sun': True,
     'moon':  True,
     'galactic_plane': True,
-    'diffused_bg': True,
-    'Spectra': True,
-    'fix_start': True,
+    'diffused_bg': False,
+    'zodiacal_bg': True, #True
+    'Spectra': False,
+    'fix_start': False,
+    'Staring_mode': False, #True
     'save_animation': False, #True,
     'Save_data': False #True 
 }

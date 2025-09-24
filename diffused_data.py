@@ -16,8 +16,8 @@ folder_loc, params_file = get_folder_loc()
 def read_parameter_file(filename= params_file, param_set = 'Params_1'):
     config = ConfigParser()
     config.read(filename)
-    global sat_name
-    sat_name = config.get(param_set, 'sat_name')
+    # global sat_name
+    # sat_name = config.get(param_set, 'sat_name')
     diffused_wavelength = config.get(param_set, 'BG_wavelength')
     diffused_wavelength = [int(val) for val in diffused_wavelength[1:-1].split(',')]
     return diffused_wavelength
@@ -25,11 +25,11 @@ def read_parameter_file(filename= params_file, param_set = 'Params_1'):
 
 def get_diffused_in_FOV( data ):
     # print('read_csv')
-    wavelength_array = read_parameter_file()
+    wavelength_array, diffused_BG_file = read_parameter_file()
+
     diffused_data = {}
     for wavelength in wavelength_array:
-
-        filename = fr"{folder_loc}diffused_UV_data{os.sep}RA_sorted_flux_{wavelength}.feather"
+        filename = diffused_BG_file+f'RA_sorted_flux_{wavelength}.feather'
         diffused_data[f'{wavelength}'] = []
         try:
             # df = pd.read_csv(filename, header=None,

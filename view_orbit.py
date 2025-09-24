@@ -8,26 +8,26 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from datetime import datetime, timedelta
 from sgp4.io import twoline2rv
 from sgp4.earth_gravity import wgs72
-from skyfield.api import load, Topos
+from astropy.coordinates import SkyCoord, get_body
+from astropy.time import Time, TimeDelta
 
-# from skyfield.almanac import find_discrete, risings_and_settings
 
 from configparser import ConfigParser
 config = ConfigParser()
 # import pickle
 
-
 # Run the parameter File updators
 from Params_configparser import *
 from Satellite_configparser import *
+
 # Import Functions from other code files
 from star_data import *#, filter_by_fov, read_hipparcos_data
 from plot import *#,animate
 from star_spectrum import *#,GET_SPECTRA
 from diffused_data import *
+from zodiacal_light import *
 # from diffused_Background import *
 from Coordinates import *
 
@@ -73,7 +73,8 @@ def read_components(filename= params_file, param_set = 'Params_2'):
     global diffused_bg
     save_data = config.get(param_set, 'Save_data')
     diffused_bg = config.get(param_set, 'diffused_bg')  
-    return diffused_bg, save_data
+    zodiacal_bg = config.get(param_set, 'zodiacal_bg')
+    return diffused_bg, zodiacal_bg, save_data
 
 # get satellite TLE data from the TLE file
 def read_satellite_TLE(filename= sat_file, sat_name = 'ISS'):
@@ -88,42 +89,41 @@ def get_satellite(line1, line2):
     
     # create satellite object from TLE
     satellite = twoline2rv(line1, line2, wgs72)
+
     # constants
     mu = satellite.mu           # Earth’s gravitational parameter (km³/s²)
     r = satellite.radiusearthkm # Radius of the earth (km).
+
     # orbital parameters
     a = satellite.a * r
-    #e = satellite.ecco
     apo, peri = satellite.alta * r, satellite.altp * r
     print('Perigee : %5.2f km, Apogee : %5.2f km' % (peri, apo))
     print(f'mu ={mu} km^3/s^2, Earth Radius = {r} km \nDistances from Center of Earth: Perigee ={r+peri}km, Semi major ={a}km, Apogee ={r+apo}km' )
-    # perigee and apogee
-    # return
+
     return satellite
 
 # get celestial coordinates of Sun, Moon
 def get_celestial_positions(time_arr):
-    # Load ephemeris data
-    
-    eph = load('de421.bsp')
-    earth, sun, moon = eph['earth'], eph['sun'], eph['moon']
+        # Load ephemeris data for Skyfield calculations
+        # eph = load('de421.bsp')
+        # earth, sun, moon = eph['earth'], eph['sun'], eph['moon']
+        # # Calculate the position of the Sun relative to Earth at the given time
+        # astrometric_sun = earth.at(time).observe(sun)
+        # apparent_sun = astrometric_sun.apparent() # ra_sun, dec_sun, _ = apparent_sun.radec()
+        # # Calculate the position of the Moon relative to Earth at the given time
+        # astrometric_moon = earth.at(time).observe(moon)
+        # apparent_moon = astrometric_moon.apparent() # ra_moon, dec_moon, _ = apparent_moon.radec()
 
     solar = []
     lunar = []
     for time in time_arr:
-        # Calculate the position of the Sun relative to Earth at the given time
-        astrometric_sun = earth.at(time).observe(sun)
-        apparent_sun = astrometric_sun.apparent()
-        ra_sun, dec_sun, _ = apparent_sun.radec()
+        sun_icrs = get_body("sun",time).icrs
+        moon_icrs = get_body("moon",time).icrs
+        solar.append((sun_icrs.ra.hour, sun_icrs.dec.deg))
+        lunar.append((moon_icrs.ra.hour, moon_icrs.dec.deg))
 
-        # Calculate the position of the Moon relative to Earth at the given time
-        astrometric_moon = earth.at(time).observe(moon)
-        apparent_moon = astrometric_moon.apparent()
-        ra_moon, dec_moon, _ = apparent_moon.radec()
-
-        solar.append((ra_sun.hours- 1/60, dec_sun.degrees +4/60))
-        lunar.append((ra_moon.hours -8/60, dec_moon.degrees))
-
+    # print('\nCelestial positions of Sun and Moon calculated')
+    # print(solar[:2],lunar[:2])
     return {
         "sun": solar,
         "moon": lunar
@@ -149,7 +149,8 @@ def get_ra_dec_from_sv(r, v, theta):
     # print(l,m,n)
 
     # declination
-    delta = np.arcsin(n)*180/np.pi                    
+    delta = np.arcsin(n)*180/np.pi   
+
     # right ascension
     np.cosd = lambda x : np.cos( np.deg2rad(x) )
     if m >0:  alfa = np.rad2deg(np.arccos(l/np.cosd(delta)))
@@ -158,59 +159,46 @@ def get_ra_dec_from_sv(r, v, theta):
 
     #calculate Normal vector to the orbital plane
     N = np.cross(R_unit, V_unit)
-    # N = N / np.linalg.norm(N)  # Normalize the normal vector
 
-    # Tangential RA and Dec vectors at the point where V intersects the sphere
     # RA: A vector in the xy-plane (tangential along constant declination)
     RA = np.array([-U[1], U[0], 0])  # Tangent in xy-plane
-    # RA = RA / np.linalg.norm(RA)
-    # Dec: A vector in the vertical plane perpendicular to RA (tangential along constant RA)
-    # Dec = np.cross(U, RA)  # Perpendicular to both V_intersect and RA
-    # Dec = Dec / np.linalg.norm(Dec)  # Normalize Dec to unit length
     angle_rad = angle_between_vectors(N, RA)
-    angle_deg = np.degrees(angle_rad)
 
-    # print("angle between Normal and RA",angle_deg)
+    angle_deg = np.degrees(angle_rad)  # angle between Normal and RA - angle_deg
 
     return alfa, delta, angle_deg
 
-# returns a list of state vectors, ra, dec for a
-# given sgp4 satellite object
+# returns a list of state vectors, ra, dec for a given sgp4 satellite object
 def propagate(sat, time_start, time_end, dt, theta):
-    # time
-    # end = np.arange(0.0,  time_end, dt)
-    # time_arr = time_start + end.astype('timedelta64[s]') 
-    # print(time_arr)
-    end = np.arange(0.0,  time_end*1e6, dt*1e6)
-    # print(end)
-    # list of datetime
-    time_arr = time_start + end.astype('timedelta64[us]')
-    # print(time_arr)   
+
+    #  list of datetime
+    time_arr = time_start + TimeDelta(np.arange(0, time_end, dt), format='sec')
+    
     # state vectors, ra, dec for each time step
     position = []; velocity = []
     right_ascension = []; declination = []
     angle_from_normal = []
-    for j in time_arr.tolist():
-        second = float(str(j.second) + "." + str(j.microsecond))
-        p, v = sat.propagate(j.year, j.month, j.day, j.hour, j.minute, second)
+    for t in time_arr:
+        dt_frac = t.datetime.second + t.datetime.microsecond*1e-6
+        p, v = sat.propagate(t.datetime.year, t.datetime.month, t.datetime.day, t.datetime.hour, t.datetime.minute, dt_frac)
         ra, dec, angle = get_ra_dec_from_sv(p, v, theta)
         # list packing
         position.append(p); velocity.append(v)
         right_ascension.append(ra); declination.append(dec), angle_from_normal.append(angle)
+    # print(f"Satellite FOV RA: {right_ascension[:20]}, \nDec: {declination[:20]}, Angle: \n{angle_from_normal[:20]}")
 
     # slice into columnsṇ
-    pos, vel   = list(zip(*position)), list(zip(*velocity))
-    # print (position)
+    pos, vel   = list(zip(*position)), list(zip(*velocity))   # print (position)
     X, Y, Z    = np.array(pos[0]), np.array(pos[1]), np.array(pos[2])
     VX, VY, VZ = np.array(vel[0]), np.array(vel[1]), np.array(vel[2])
     state_vectors = [X, Y, Z, VX, VY, VZ]
-    celestial_coordinates = [np.array(right_ascension), np.array(declination), np.array(angle_from_normal)]
-    # print(celestial_coordinates)
+    celestial_coordinates = [np.array(right_ascension), np.array(declination), np.array(angle_from_normal)] # print(celestial_coordinates)
 
     return time_arr, state_vectors, celestial_coordinates
 
 # get list of star data in view along with satellite state_vectors
 def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignment, roll=False):
+    
     # state_vectors, celestial_coordinates
     tr, sc, cc = propagate(sat, start_time, sim_secs, time_step, theta)
     # parse celestial_coordinates
@@ -229,40 +217,22 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
     else:
         chi = angle_to_normal + allignment - 180
 
-    # for (alpha, chi_angle) in zip(angle_to_normal, chi):
-        # print("angle between Normal and RA",alpha)
-        # print("angle of rotation of FOV",chi_angle)
-    # print(chi)
-    # Create an empty all frames data
-    frame_row_list = []
+    frame_row_list = [] # all frames boundary + star data
 
     for frame, (r, d, chi_angle) in enumerate(zip(ra, dec, chi)):
-        # print(frame, (r, d))
-
-        tdf_values, frame_boundary = filter_by_fov(df, r, d, chi_angle)
-        # print (frame, tdf_values)
-        # print(frame, frame_boundary)
-        # print(f"Frame {frame+1} has {len(tdf_values)} stars, and frame corners = {frame_boundary}")
+        # print (frame, tdf_values) # print(frame, frame_boundary) # print(f"Frame {frame+1} has {len(tdf_values)} stars, and frame corners = {frame_boundary}")
+        tdf_values, frame_boundary = filter_by_fov(df, r, d, chi_angle) 
         tdf_values = tdf_values.values.tolist()
-        # if (tdf_values):
-        #     print("\n \n--",frame, tr[frame], tdf_values)
-        frame_row_list.append([frame, tdf_values, frame_boundary ])
-    # print (frame_row_list)
+        frame_row_list.append([frame, tdf_values, frame_boundary ]) # print (frame_row_list)
 
-    time_arr2 = []
-    ts = load.timescale()
-    for time in tr:
-        start_time =  time.astype('M8[ms]').astype(datetime.datetime)
-        time_arr2.append(ts.utc(start_time.year, start_time.month, start_time.day, start_time.hour, start_time.minute, start_time.second))
-    sol_positions = get_celestial_positions(time_arr2)
-    # print( sol_positions)
+    # get celestial positions of Sun, Moon
+    sol_positions = get_celestial_positions(tr) # print( sol_positions)
 
     return tr, sc, frame_row_list, sol_positions
 
 # Save a csv file with all required star information 
 def write_to_csv(data, diffused_data, sol_positions, sat_name, start_time):
-    # print('writing to csv')
-    # print(data[0:2])
+    print('writing Simulation output to csv') # print(data[0:2])
     csv_file = f'{folder_loc}Demo_file{os.sep}{sat_name}-{start_time.item().strftime("%d_%m_%Y")}_data.csv'
     header =['Frame Number', 'hip', 'ra', 'dec', 'mag', 'parallax', 'B_V', 'Spectral_type', 'size', 'Frame Boundaries']
 
@@ -276,8 +246,7 @@ def write_to_csv(data, diffused_data, sol_positions, sat_name, start_time):
             # d = d[0]
             if d:
                 for j in range(len(d)):
-                    # print(j, len(d))
-                    # print(zip(*d[j]))
+                    # print(j, len(d)) # print(zip(*d[j]))
                     ra, dec, size, hip, mag, parallax, B_V, Spectral_type = zip(d[j])
                     csv_writer.writerow([frame+1, hip[0], ra[0], dec[0], mag[0], parallax[0], B_V[0], Spectral_type[0], size[0], frame_boundary])
             else:
@@ -301,6 +270,7 @@ def main():
     
     # create satellite object
     satellite = get_satellite(line1, line2)
+
     # read star data
     df = read_hipparcos_data(hipp_file)
     
@@ -322,15 +292,14 @@ def main():
             print('T_slice not found')
 
     # simulation starts from current time to one full orbit
-    start = np.datetime64(datetime.datetime.now()) #+ np.timedelta64(10, 'D')
-    # start = np.datetime64("2024-12-01T04:12:16.033000")
+    start = Time.now()          
     print(f"Start time of Simulation: {start}")
 
-    # times, state_vectors, celestial_coordinates  
-    time_arr, state_vectors, celestial_data, sol_position  = get_simulation_data(satellite, df, start, t_period, t_slice, theta, allignment,  roll)
+    # times, state_vectors, celestial_coordinates
+    time_arr, state_vectors, celestial_data, sol_position = get_simulation_data(satellite, df, start, t_period, t_slice, theta, allignment, roll)
     Spectra = GET_SPECTRA(castelli_dir, celestial_data)
 
-    diffused_bg, save_data = read_components()
+    diffused_bg, zodiacal_bg, save_data = read_components()
 
     if diffused_bg == 'True':
         diffused_data = get_diffused_in_FOV(celestial_data)
@@ -343,8 +312,20 @@ def main():
     else:
         print('Star Data not Saved.')
 
+    if zodiacal_bg == 'True':
+        # print('Zodiacal Background not included in the simulation yet')
+        zodiacal_data, zod_wavelengths = get_zodiacal_in_FOV(celestial_data, time_arr)
+
+        print(zodiacal_data[0][1][2])
+        print(zod_wavelengths)
+    else: 
+        zodiacal_data = [0]
+        zod_wavelengths = [0]
+        print('Zodiacal Background not included in the simulation')
+
+    
     #  animate
-    animate(time_arr, state_vectors, celestial_data, sol_position, Spectra, diffused_data, r)
+    # animate(time_arr, state_vectors, celestial_data, sol_position, Spectra, diffused_data, r)
     return
 
 # main
