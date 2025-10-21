@@ -29,7 +29,7 @@ config['Params_0'] = {
 }
 
 config['Params_1'] = {
-    'sat_name' : 'ISS',
+    'sat_name' : 'Astrosat',
     'roll' : False,
     'roll_rate_hrs' : False,
 

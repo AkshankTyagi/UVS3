@@ -241,7 +241,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             colours = ['blue', 'purple']
             loc_ra, loc_dec = random_scatter_data(diffused_data[f'{BG_wavelength[-1]}'][0])
             loc_ra_zod, loc_dec_zod = random_scatter_zodiacal_data(zod_data[0], wave_index)
-            zodiacal_wave = ax.scatter(loc_ra_zod, loc_dec_zod, s= 0.01, alpha= a, facecolors=colours[1], label = 'Zodiacal UV')
+            zodiacal_wave = ax.scatter(loc_ra_zod, loc_dec_zod, s= 0.04, alpha= a, facecolors=colours[1], label = 'Zodiacal UV')
             diffused_wave = ax.scatter(loc_ra, loc_dec, s= 0.04, alpha= a, facecolors=colours[0], label = 'UV ISRF')
             diffused.append(diffused_wave)
             diffused.append(zodiacal_wave)
@@ -249,6 +249,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             info_diffused = ''
             for wavelength in BG_wavelength:
                 wave_index = np.searchsorted(zod_wavelengths, wavelength, side='right') - 1
+                wave_index = np.clip(wave_index, 0, len(zod_wavelengths)-1)
 
                 info_line =f" {wavelength} $\\AA$ : {round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][0])*fOV_area, 3)} (ISRF) / {round(calc_total_zodiacal_flux(zod_data[0], wave_index)*fOV_area, 3)} (Zod) \n"
                 info_diffused += info_line
@@ -279,6 +280,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
     # init # of Photons plot
     def init_photons(ax):
         global phots
+        zod_data , zod_wavelengths = zodiacal_data
         
         # set labels
         ax.set_xlabel(r'Wavelength ($\AA$)')
@@ -303,11 +305,37 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             # phots= ax.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='No stars in Fov')
             ax.set_xlim(min(wavelengths), max(wavelengths))
 
-        if len(ra)<=10:
-            ax.legend()
-        # ax.clear()
 
-        return ax, phots
+        # Create a twin Axes sharing the x-axis
+        ax_r = ax.twinx() 
+
+        # Calculate the diffused ISRF spectra
+        diffused_isrf = []
+        fOV_area = np.radians(height) * np.radians(width)
+        for wavelength in BG_wavelength:
+            flux = round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][0])*fOV_area, 3)
+            diffused_isrf.append(flux)
+
+        # Calculate the zodiacal light spectra
+        zodiacal_spectra = np.round(calc_total_zodiacal_flux(zod_data[0])*fOV_area, 3)
+
+        # Call the plotting function for background spectra (Diffuse/Zodiacal)
+        ax_r.plot(BG_wavelength, diffused_isrf, marker='o', color='grey', linestyle='--', label='Diffused UV ISRF')
+        ax_r.plot(zod_wavelengths, zodiacal_spectra, color='black', label='Zodiacal UV')
+        
+        ax_r.set_ylabel(r'Diffused Background Photons (s\u207B\u00B9 cm\u207B\u00B2 $\AA$\u207B\u00B9)')
+        ax_r.yaxis.set_label_position("right")
+        
+        # Combine legends from both axes
+        lines1, labels1 = ax.get_legend_handles_labels()
+        lines2, labels2 = ax_r.get_legend_handles_labels()
+        if len(ra)<=10:
+            # ax.legend()
+            ax.legend(lines1 + lines2, labels1 + labels2, loc='upper left', bbox_to_anchor=(-0.47, 1.15))
+
+        return ax, ax_r, phots
+
+        # return ax, phots
     
     # init Absorption Spectra plot for all stars in the FOV
     def init_spectra(ax):
@@ -347,7 +375,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
 
     # initialize plot
     def init():
-        global fig, ax2, ax3, ax4, ax5
+        global fig, ax2, ax3, ax4, ax_r, ax5
         global orbit, satellite, sky, diffused, phots, spectra, sun, moon
         global X, Y, Z
         global RA, DEC
@@ -381,9 +409,10 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # row 0, col 1
         # ax4 = subfigs[0,1].add_subplot()
         ax4 = fig.add_subplot(gs[0, 1])
+        # ax_r = ax4.twinx()
         # ax4.set_aspect('equal', adjustable='box')
         # initialize Photons Plot
-        ax4, phots = init_photons(ax4)
+        ax4, ax_r, phots = init_photons(ax4)
 
         # row 1, col 1
         # ax5 = subfigs[1,1].add_subplot()
@@ -505,7 +534,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             max_p = get_max_photon(Y_photons_per_star)
 
             for k in range(len(Y_photons_per_star)):
-                phots = ax4.plot(X_wavelength,  Y_photons_per_star[k], label = f'ra: {ra[k]:.3f}  ; dec: {dec[k]:.3f}') 
+                ax4.plot(X_wavelength,  Y_photons_per_star[k], label = f'ra: {ra[k]:.3f}  ; dec: {dec[k]:.3f}') 
                 ax4.set_xlim(wave_min, wave_max)
 
         else:
@@ -514,8 +543,31 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             phots= ax4.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='No stars in Fov')
             ax4.set_xlim(min(wavelengths), max(wavelengths))
 
+        ax_r.clear()
+        # ax_r = ax4.twinx()
+
+        # Calculate the diffused ISRF spectra
+        diffused_isrf = []
+        fOV_area = np.radians(height) * np.radians(width)
+        for wavelength in BG_wavelength:
+            flux = round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][i])*fOV_area, 3)
+            diffused_isrf.append(flux)
+
+        # Calculate the zodiacal light spectra
+        zodiacal_spectra = np.round(calc_total_zodiacal_flux(zod_data[i])*fOV_area, 3)
+
+        # Call the plotting function for background spectra (Diffuse/Zodiacal)
+        ax_r.plot(BG_wavelength, diffused_isrf, marker='o', color='grey', linestyle='--', label='Diffused UV ISRF')
+        ax_r.plot(zod_wavelengths, zodiacal_spectra, color='black', label='Zodiacal UV')
+        ax_r.set_ylabel('Diffused Background Photons (s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9)')
+        ax_r.yaxis.set_label_position("right")
+        
+        # Combine legends from both axes
+        lines1, labels1 = ax4.get_legend_handles_labels()
+        lines2, labels2 = ax_r.get_legend_handles_labels()
+
         if len(ra)<=10:
-            ax4.legend()
+            ax4.legend(lines1 + lines2, labels1 + labels2, loc='upper left', bbox_to_anchor=(-0.47, 1.15))
 
         # setting up the absorption spectra plots
         ax5.clear()
