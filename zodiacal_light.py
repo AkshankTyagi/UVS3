@@ -123,20 +123,20 @@ def read_zodiacal_distribution(zod_file):
     lines = [line for line in lines if not line.strip().startswith('#')]
 
     # First non-comment line: longitudes
-    hecl_lon = np.array([float(x) for x in lines[0].split()])[1:]
+    hecl_lat = np.array([float(x) for x in lines[0].split()])[1:]
 
     # Remaining lines: each starts with latitude, then intensity values
-    hecl_lat = []
+    hecl_lon = []
     zod_data = []
 
     for line in lines[1:]:
         parts = line.split()
         if len(parts) < 2:
             continue
-        hecl_lat.append(float(parts[0]))
+        hecl_lon.append(float(parts[0]))
         zod_data.append([float(x) for x in parts[1:]])
 
-    hecl_lat = np.array(hecl_lat)
+    hecl_lon = np.array(hecl_lon)
     zod_array = np.array(zod_data)*252  # to convert into ph cm-2 s-1 sr-1 A-1 at 5000 A, Multiply by 252     
 
     return zod_array, hecl_lon, hecl_lat
@@ -164,25 +164,30 @@ def scale_zodiacal_spectrum(zod_dist, table_ecl, table_beta, sol_wavelengths, so
 
     Zodiacal_spec_arr = []
 
+    # Create interpolator with linear interpolation and extrapolation
+    interpolator = RegularGridInterpolator(
+        (table_ecl, table_beta),  # grid: latitude, longitude
+        zod_dist,
+        method='linear',
+        bounds_error=False,
+        fill_value=None  # None allows extrapolation
+    )
+    # intensity = interpolator([[abs(160), abs(30)]])[0] # Test point
+    # print(f"Zodiacal intensity at helio_ecl=160, helio_beta=30: {intensity} ph/cm²/s/sr/Å")
+
     for helio_ecl, helio_beta in zip(helio_ecl_arr, helio_beta_arr):
 
-        # Create interpolator with linear interpolation and extrapolation
-        interpolator = RegularGridInterpolator(
-            (table_beta, table_ecl),  # grid: latitude, longitude
-            zod_dist,
-            method='linear',
-            bounds_error=False,
-            fill_value=None  # None allows extrapolation
-        )
         # Evaluate zodiacal intensity at the target coordinates # Absolute latitude because table is symmetric
-        zod_intensity = interpolator([[abs(helio_beta), helio_ecl]])[0]
-
+        zod_intensity = interpolator([[abs(helio_ecl), abs(helio_beta)]])[0]
+        print
         # Find index closest to 5000 Å
         wave_index = np.searchsorted(sol_wavelengths, 5000, side='right') - 1
         wave_index = np.clip(wave_index, 0, len(sol_wavelengths)-1)
 
         # Scale factor
         zod_scale = zod_intensity / sol_spec[wave_index]
+        if zod_intensity < 0:
+            print(f"Warning: Negative zodiacal intensity ({zod_intensity}) at helio_ecl={helio_ecl}, helio_beta={helio_beta}. Setting scale factor to zero.")
 
         # print(f"Solar intensity at 5000 Å: {sol_spec[wave_index]:.4f} ph/cm²/s/sr/Å")
         # print(f"Zodiacal intensity at target: {zod_intensity:.4f} ph/cm²/s/sr/Å")
@@ -204,6 +209,8 @@ def get_zodiacal_in_FOV( data, time_arr ):
     wavelength, flux = read_zodiacal_spectrum(spec_file)
     # Read the Zodiacal light Distribution table
     zod_array, table_lon, table_lat = read_zodiacal_distribution(Zod_dist_file)
+    # print(f'helio ecl lon grid: {table_lon}')
+    # print(f'helio beta lat grid: {table_lat}')
 
     zodiacal_data = []
     for f in range(len(data)):    # f represents frame number
@@ -242,6 +249,7 @@ def calc_total_zodiacal_flux(diffused_data, wavelength_idx = None):
     tot_flux  = sum(c[2])
     # print(tot_flux)
     if wavelength_idx is not None:
+        # print(tot_flux[wavelength_idx])
         return tot_flux[wavelength_idx]
     else:
         return tot_flux
@@ -259,8 +267,8 @@ def random_scatter_zodiacal_data(diffused_data, wavelength_idx):
     ra_norm = []
     dec_norm = []
     for i, flux in enumerate(fluxes):
-        if flux <= 0:
-            continue
+        # if flux <= 0:
+        #     continue
         ra_N = np.random.normal(ra[i], 0.07, size= int(1e4*flux*pixel_size))
         dec_N = np.random.normal(dec[i], 0.07, size= int(1e4*flux*pixel_size))
         for j in range(len(ra_N)):

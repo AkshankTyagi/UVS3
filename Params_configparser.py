@@ -29,14 +29,14 @@ config['Params_0'] = {
 }
 
 config['Params_1'] = {
-    'sat_name' : 'Astrosat',
+    'sat_name' : 'ISS',
     'roll' : False,
     'roll_rate_hrs' : False,
 
     # Specify either Number of frames or period in sec after which the next Frame is given
-    'number of Revolutions' : 0.6,
+    'number of Revolutions' : 1,
     'N_frames' : False,
-    't_slice' : 20, # Seconds,
+    't_slice' : 40, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
     'width': 1, # 0.5 (shorter) width
@@ -75,8 +75,8 @@ config['Params_2'] = {
     'Spectra': True,
     'fix_start': False,
     'Staring_mode': False, #True
-    'save_animation': False, #True,
-    'Save_data': False #True 
+    'save_animation': True, #True,
+    'Save_data': True #True 
 }
 
 

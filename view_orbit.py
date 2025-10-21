@@ -64,7 +64,7 @@ def read_parameter_file(filename=params_file ):
     theta = float(config.get(param_set, 'inclination_from_V'))
     
     print(f'Satellite name: {sat_name},  N_revolutions: {N_revolutions}, Num frames: {N_frames}, T_slice: {T_slice}')
-    print(f' FOV Allignment with orbit = {allignment}, FOV Inclination from V = {theta}, \nSatellite roll: {roll},  roll_rate_hrs: {roll_rate_hrs}' )
+    print(f'FOV Allignment with orbit = {allignment}, FOV Inclination from V = {theta}, \nSatellite roll: {roll},  roll_rate_hrs: {roll_rate_hrs}' )
     return hipp_file, castelli_file, sat_name, float(T_slice), N_frames, float(N_revolutions), roll, theta, allignment #, Threshold
 
 # get trigger fo the Simulation accesories from the init_params file
@@ -245,12 +245,12 @@ def write_to_csv(data, diffused_ISRF_data, zod_data, sol_positions, sat_name, st
             # csv_writer.writerow([frame+1, "Celestial_data for frame:", "      ", ]) #  "Diffused UV ISRF in frame (Total_photons):", ]) 
 
             if diffused_data != [0]: # diffused UV ISRF present in the frame
-                diffused_summary = [f"{wl}: {calc_total_diffused_flux(diffused_data[str(wl)][i]):.4e}" for wl in diffused_wavelengths]
+                diffused_summary = [f"{wl}: {calc_total_diffused_flux(diffused_data[str(wl)][i]):.4f}" for wl in diffused_wavelengths]
                 csv_writer.writerow([frame+1, "Diffused UV ISRF in frame (Total_photons):", "      ", *diffused_summary])
 
             if zod_data != [0]: # zodiacal UV present in the frame
                 tot_flux = calc_total_zodiacal_flux(zodiacal_data[i])
-                zod_summary = [f"{wl}: {tot_flux[j]:.4e}" for j, wl in enumerate(zod_wavelengths)]
+                zod_summary = [f"{wl}: {tot_flux[j]:.4f}" for j, wl in enumerate(zod_wavelengths)]
                 csv_writer.writerow([frame+1, "Zodiacal UV in frame (Total_photons):", "      ", *zod_summary])
 
             if d: # stars present in the frame
@@ -268,6 +268,8 @@ def main():
     # global data
     hipp_file, castelli_dir, sat_name, t_slice, n_frames, N_revolutions, roll, theta, allignment  = read_parameter_file(params_file)
     line1, line2 = read_satellite_TLE(sat_file, sat_name)
+    
+
     
     # create satellite object
     satellite = get_satellite(line1, line2)
@@ -294,7 +296,7 @@ def main():
 
     # simulation starts from current time to one full orbit
     start = Time.now()          
-    print(f"Start time of Simulation: {start}\n------------------")
+    print(f"Start time (UTC) of Simulation: {start}\n------------------")
 
     # times, state_vectors, celestial_coordinates
     time_arr, state_vectors, celestial_data, sol_position = get_simulation_data(satellite, df, start, t_period, t_slice, theta, allignment, roll)
