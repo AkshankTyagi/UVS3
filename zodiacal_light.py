@@ -196,7 +196,8 @@ def scale_zodiacal_spectrum(zod_dist, table_ecl, table_beta, sol_wavelengths, so
 
 
 def get_zodiacal_in_FOV( data, time_arr ):
-    # print('read_csv')
+    print('Calculating Zodiacal UV in the FOV.')
+
     spec_file, Zod_dist_file, _, _ = read_parameter_file()
     
     # Read the Solar Spectra File
@@ -206,22 +207,15 @@ def get_zodiacal_in_FOV( data, time_arr ):
 
     zodiacal_data = []
     for f in range(len(data)):    # f represents frame number
-        # print('frame :',f)
         _, _, frame_corner = zip(data[f])
         frame_corner= frame_corner[0]
         xmin, ymin = frame_corner.min(axis=0)
         xmax, ymax = frame_corner.max(axis=0)
 
-        # xmin, ymin = 20,19
-        # xmax, ymax = 21,20
-
         # Create arrays with 0.1 degree spacing
         x_arr = np.arange(xmin, xmax + 0.1, 0.1)  # include xmax
         y_arr = np.arange(ymin, ymax + 0.1, 0.1)  # include ymax
-
         X, Y = np.meshgrid(x_arr, y_arr)
-
-        # print(f"Zodiacal)Frame {f+1} has {len(data[f])} stars, and frame corners = {frame_corner}")
 
         # Now, use is_point_in_polygon to keep only the points inside the rotated FOV
         polygon = frame_corner  # The polygon is defined by the rotated FOV corners
@@ -237,15 +231,40 @@ def get_zodiacal_in_FOV( data, time_arr ):
         scaled_spectrum, zod_wavelengths = scale_zodiacal_spectrum(zod_array, table_lon, table_lat, wavelength, flux, elong_arr, beta_arr)
 
         points_with_spectrum = [(ra, dec, s) for (ra, dec), s in zip(filtered_points, scaled_spectrum)]
-        zodiacal_data.append([f, points_with_spectrum])
+        zodiacal_data.append(points_with_spectrum)
 
     return zodiacal_data, zod_wavelengths
 
 
-def calc_total_zodiacal_flux(diffused_data, wavelength):
-    _, data = zip(diffused_data)
-    wave_index = np.searchsorted(sol_wavelengths, wavelength, side='right') - 1
-    wave_index = np.clip(wave_index, 0, len(sol_wavelengths)-1)
-    c = list(zip(*data[0]))
+def calc_total_zodiacal_flux(diffused_data, wavelength_idx = None):
+    data = diffused_data
+    c = list(zip(*data))
     tot_flux  = sum(c[2])
-    return tot_flux
+    # print(tot_flux)
+    if wavelength_idx is not None:
+        return tot_flux[wavelength_idx]
+    else:
+        return tot_flux
+    
+def random_scatter_zodiacal_data(diffused_data, wavelength_idx):
+    data = diffused_data
+    c = list(zip(*data))
+    ra, dec, fluxes = c[0], c[1], c[2]
+    fluxes = np.array(fluxes)
+    # print(fluxes[:, wavelength_idx], fluxes)
+    fluxes = fluxes[:, wavelength_idx]
+
+    pixel_size = np.radians(0.1)*np.radians(0.1)
+
+    ra_norm = []
+    dec_norm = []
+    for i, flux in enumerate(fluxes):
+        if flux <= 0:
+            continue
+        ra_N = np.random.normal(ra[i], 0.07, size= int(1e4*flux*pixel_size))
+        dec_N = np.random.normal(dec[i], 0.07, size= int(1e4*flux*pixel_size))
+        for j in range(len(ra_N)):
+            ra_norm.append(ra_N[j])
+            dec_norm.append(dec_N[j])
+    
+    return ra_norm, dec_norm

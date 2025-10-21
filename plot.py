@@ -16,6 +16,7 @@ from configparser import ConfigParser
 
 from star_spectrum import *
 from diffused_data import *
+from zodiacal_light import *
 from Coordinates import *
 from Params_configparser import get_folder_loc
 
@@ -235,26 +236,30 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
 
         if diffused_data != [0] or zodiacal_data != [0]:
             zod_data , zod_wavelengths = zodiacal_data
-            # print(zod_wavelengths, zod_data[0], diffused_data[f'{BG_wavelength[j]}'][0])
+            wave_index = np.searchsorted(zod_wavelengths, BG_wavelength[1], side='right') - 1
             
             colours = ['blue', 'purple']
-            loc_ra, loc_dec = random_scatter_data(diffused_data[f'{BG_wavelength[0]}'][0])
-            diffused_wave = ax3.scatter(loc_ra, loc_dec, s= 0.04, alpha= a,  facecolors=colours[0])
+            loc_ra, loc_dec = random_scatter_data(diffused_data[f'{BG_wavelength[1]}'][0])
+            loc_ra_zod, loc_dec_zod = random_scatter_zodiacal_data(zod_data[0], wave_index)
+            zodiacal_wave = ax.scatter(loc_ra_zod, loc_dec_zod, s= 0.01, alpha= a, facecolors=colours[1], label = 'Zodiacal UV')
+            diffused_wave = ax.scatter(loc_ra, loc_dec, s= 0.04, alpha= a, facecolors=colours[0], label = 'UV ISRF')
             diffused.append(diffused_wave)
-
+            diffused.append(zodiacal_wave)
 
             info_diffused = ''
-            for j in range(len(BG_wavelength)):
-                info_line =f" {BG_wavelength[j]} $\AA$ : {round(calc_total_diffused_flux(diffused_data[f'{BG_wavelength[j]}'][0])* fOV_area, 3)} (ISRF) , {round(calc_total_diffused_flux(diffused_data[f'{BG_wavelength[j]}'][0])* fOV_area, 3)} (Zod) \n"
+            for wavelength in BG_wavelength:
+                wave_index = np.searchsorted(zod_wavelengths, wavelength, side='right') - 1
+
+                info_line =f" {wavelength} $\\AA$ : {round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][0])*fOV_area, 3)} (ISRF) / {round(calc_total_zodiacal_flux(zod_data[0], wave_index)*fOV_area, 3)} (Zod) \n"
                 info_diffused += info_line
 
-            info_text = f" Total Diffused UV Background in FOV \n Wavelength - Num_photons(s\u207B\u00B9 cm\u207B\u00B2 $\AA$\u207B\u00B9) \n{info_diffused}"
+            info_text = f" Total Diffused UV Background in FOV \n Wavelength - # Photons(s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9) \n{info_diffused}"
             text = ax.text(1.04, 0.6, info_text, transform=ax.transAxes, fontsize=7.5, va='center')
             # print(info_text)
         else:
             info_text = ' Diffused UV Background\nNot included'
-            text = ax3.text(1.04, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
-
+            text = ax.text(1.04, 0.6, info_text, transform=ax.transAxes, fontsize=7.5, va='center')
+    
         # Scatter plot for stars
         if (S[0] == 0.0001) : #no star in the FOV
             sky = ax.scatter(P[0], P[1], s=S[0], facecolors='White')
@@ -430,7 +435,6 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # # Update the legend
         # ax2.legend()
 
-
         ax3.clear()
         # get frame data. pos[ra, dec], size
         P, S, corners, Size = get_cles_data_by_frame(i, celestial_coordinates)
@@ -442,23 +446,31 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         fOV_area = np.radians(height) * np.radians(width)
         a =  0.1* 1/height * 1/width  #alpha value for scatter plot
 
-        if diffused_data != [0]:
-            colours = ['purple', 'indigo', 'blue']
-            info_diffused = ''
-            height
-            for j in range(len(BG_wavelength)):
-                loc_ra, loc_dec = random_scatter_data(diffused_data[f'{BG_wavelength[j]}'][i])
-                diffused_wave = ax3.scatter(loc_ra, loc_dec, s= 0.04, alpha= a,  facecolors=colours[j%3])
-                diffused.append(diffused_wave)
-                info_line =f" {BG_wavelength[j]} $\\AA$ : {round(calc_total_diffused_flux(diffused_data[f'{BG_wavelength[j]}'][i])*fOV_area, 3)} \n"
+        if diffused_data != [0] or zodiacal_data != [0]:
+            zod_data , zod_wavelengths = zodiacal_data
+            wave_index = np.searchsorted(zod_wavelengths, BG_wavelength[0], side='right') - 1
+
+            colours = ['blue', 'purple']
+            loc_ra, loc_dec = random_scatter_data(diffused_data[f'{BG_wavelength[0]}'][i])
+            loc_ra_zod, loc_dec_zod = random_scatter_zodiacal_data(zod_data[i], wave_index)
+            zodiacal_wave = ax3.scatter(loc_ra_zod, loc_dec_zod, s= 0.04, alpha= a, facecolors=colours[1], label = 'Zodiacal UV')
+            diffused_wave = ax3.scatter(loc_ra, loc_dec, s= 0.04, alpha= a, facecolors=colours[0], label = 'UV ISRF') 
+            diffused.append(diffused_wave)
+            diffused.append(zodiacal_wave)
+
+            info_diffused = ' '
+            for wavelength in BG_wavelength:
+                wave_index = np.searchsorted(zod_wavelengths, wavelength, side='right') - 1
+
+                info_line =f" {wavelength} $\\AA$ : {round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][i])*fOV_area, 3)} (ISRF) / {round(calc_total_zodiacal_flux(zod_data[i], wave_index)*fOV_area, 3)} (Zod)\n"
                 info_diffused += info_line
 
-            info_text = f" Total Diffused UV Background in FOV \n Wavelength : Num_photons(s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9) \n{info_diffused}"
-            text = ax3.text(1.04, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
+            info_text = f" Total Diffused UV Background in FOV \n Wavelength : # photons (s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9) \n{info_diffused}"
+            ax3.text(1.04, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
             # print(info_text)
         else:
             info_text = ' Diffused Background Not included'
-            text = ax3.text(1.04, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
+            ax3.text(1.04, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
 
         # Scatter plot for stars
         if (S[0] == 0.0001) : #no star in the FOV
@@ -482,8 +494,6 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         ax4.clear()
         ax4.set_xlabel(r'Wavelength ($\AA$)')
         ax4.set_ylabel('Number of Photons s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9')
-        # ax4.set_xlabel('Log[Wavelength ($\AA$)]')
-        # ax4.set_ylabel('log[Number of Photons]')
         ax4.set_title('# of Photons from the stars in the Sky view')
         # get updated photons data by frame
         X_wavelength, Y_photons_per_star, ra, dec = get_photons_data_by_frame(i, spectral_fov)
@@ -491,26 +501,19 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             wave_min = min(X_wavelength)
             wave_max = max(X_wavelength)
             max_p = get_max_photon(Y_photons_per_star)
-            # y_offset = [float(float(d) - Size[1]) * (Size[3] - Size[1]) for d in np.array(dec)]
-            # flux = ax4.plot(np.log10(X_wavelength), np.log10(Y_Spectra_per_star[0]), label = f'{ra[0]},{dec[0]}')
+
             for k in range(len(Y_photons_per_star)):
-                # y_offset = (dec[i] - Size[1])*(Size[3] - Size[1]) 
-                # phots = ax4.plot(np.log10(X_wavelength), np.log10(Y_photons_per_star[k]), label = f'ra: {ra[k]}  ; dec: {dec[k]}') #+ [y_offset]*len(Y_Spectra_per_star[i])
-                phots = ax4.plot(X_wavelength,  Y_photons_per_star[k], label = f'ra: {ra[k]}  ; dec: {dec[k]}') # + [y_offset]*len(Y_Spectra_per_star[i])
+                phots = ax4.plot(X_wavelength,  Y_photons_per_star[k], label = f'ra: {ra[k]}  ; dec: {dec[k]}') 
                 ax4.set_xlim(wave_min, wave_max)
-                # ax4.set_ylim(-1, max_p)
-                # ax4.set_ylim(0, np.log10(max_p))
+
         else:
             wavelengths = np.linspace(1000, 3800, 1000)
             y_zeros = np.zeros_like(wavelengths) 
             phots= ax4.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='No stars in Fov')
-            # phots= ax4.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='No stars in Fov')
             ax4.set_xlim(min(wavelengths), max(wavelengths))
-            # ax4.set_ylim(-1, 1e+6)
-            # ax4.set_ylim(-1, 6)
+
         if len(ra)<=10:
             ax4.legend()
-
 
         # setting up the absorption spectra plots
         ax5.clear()
@@ -527,12 +530,11 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             ax5.invert_yaxis()
         else:
             wavelength = np.linspace(10,3800, 400)
-            color_data = np.zeros(( int((Size[3]-Size[1])*100), len(wavelength) ))
+            color_data = np.zeros(( int((Size[3]-Size[1])*100), len(wavelength)))
             spectra = ax5.imshow(color_data, cmap=BtoB_cmap, aspect='auto', extent=(min(wavelength), max(wavelength), Size[3],Size[1]), vmin=0, vmax=1)
             ax5.invert_yaxis()
         # return
         return satellite, orbit, sun, moon, sky, diffused, phots, spectra
-    # Press space bar to pause animation
 
     # run animation
     def run():
@@ -540,7 +542,6 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         fig, satellite, orbit, sun, moon, sky, diffused, phots, spectra = init()
         # total no of frames
         frame_count = len(X)
-        # print (frame_count)
         
         global ani, paused
         paused = False
@@ -552,7 +553,6 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
                                       fargs=(satellite, orbit, sun, moon, sky, diffused, phots, spectra ),
                                       blit=False, repeat=False)
 
-        
         # show
         plt.show()
         print("Animation complete")
@@ -567,9 +567,9 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         else:
             print("Animation not Saved")
 
-
         return ani
     
+    # Press space bar to pause animation
     def toggle_pause(event, *args, **kwargs):
         global ani, paused
         if event.key == ' ':
@@ -659,12 +659,12 @@ def get_cles_data_by_frame(i, data):
             print('  The stars in the FOV are:')
             for i in range(len(c[0])):     
                 Temp = GET_STAR_TEMP(str(Spectral_type[i]))
-                print( f"{str(i+1)}) Hipp_number= {str(hip[i])}; Ra & Dec: {str(ra[i])} {str(dec[i])}; Johnson Mag= {str(mag[i])}; trig Parallax= {str(parallax[i])}; E(B-V)= {str(B_V[i])}; Spectral_Type: {str(Spectral_type[i]).strip()};" , end="\n")
+                print( f"{str(i+1)}) Hipp number= {str(hip[i])}; Ra & Dec: {str(ra[i])} {str(dec[i])}; Johnson Mag= {str(mag[i])}; Trig Parallax= {str(parallax[i])}; E(B-V)= {str(B_V[i])}; Spectral_Type: {str(Spectral_type[i]).strip()};" , end="\n")
 
         else:
             print('  The star in the FOV is:')
             Temp = GET_STAR_TEMP(str(Spectral_type[0]))
-            print( f"  Hipp_number= {str(hip[0])}; Ra & Dec: {str(ra[0])} {str(dec[0])}; Johnson Mag= {str(mag[0])}; trig Parallax= {str(parallax[0])}; E(B-V)= {str(B_V[0])}; Spectral_Type: {str(Spectral_type[0]).strip()};", end="\n")
+            print( f"  Hipp number= {str(hip[0])}; Ra & Dec: {str(ra[0])} {str(dec[0])}; Johnson Mag= {str(mag[0])}; Trig Parallax= {str(parallax[0])}; E(B-V)= {str(B_V[0])}; Spectral_Type: {str(Spectral_type[0]).strip()};", end="\n")
 
         # return
         return cles_pos, size,frame_corner, frame_boundary 

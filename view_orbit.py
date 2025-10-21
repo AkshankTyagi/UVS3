@@ -63,8 +63,8 @@ def read_parameter_file(filename=params_file ):
         print('Allignment_with_orbit = False, The FOV will be alligned to the RA and DEC axis')
     theta = float(config.get(param_set, 'inclination_from_V'))
     
-    print('sat_name:', sat_name, ', roll:',roll,',  roll_rate_hrs:',roll_rate_hrs, ',  N_revolutions:',N_revolutions, ',  N_frames:', N_frames, ',  T_slice:', T_slice)
-    print('Allignment_with_orbit=', allignment, ', Inclination_from_V =', theta )
+    print(f'Satellite name: {sat_name},  N_revolutions: {N_revolutions}, Num frames: {N_frames}, T_slice: {T_slice}')
+    print(f' FOV Allignment with orbit = {allignment}, FOV Inclination from V = {theta}, \nSatellite roll: {roll},  roll_rate_hrs: {roll_rate_hrs}' )
     return hipp_file, castelli_file, sat_name, float(T_slice), N_frames, float(N_revolutions), roll, theta, allignment #, Threshold
 
 # get trigger fo the Simulation accesories from the init_params file
@@ -98,22 +98,14 @@ def get_satellite(line1, line2):
     # orbital parameters
     a = satellite.a * r
     apo, peri = satellite.alta * r, satellite.altp * r
-    print('Perigee : %5.2f km, Apogee : %5.2f km' % (peri, apo))
-    print(f'mu ={mu} km^3/s^2, Earth Radius = {r} km \nDistances from Center of Earth: Perigee ={r+peri}km, Semi major ={a}km, Apogee ={r+apo}km' )
+
+    print(f'mu ={mu} km^3/s^2, Earth Radius = {r} km ')
+    print(f'Orbital Perigee Height : {peri:.2f} km, Apogee Height:{apo:.2f} km \nDistances from Center of Earth: Perigee = {r+peri} km, Semi major = {a} km, Apogee = {r+apo} km' )
 
     return satellite
 
 # get celestial coordinates of Sun, Moon
 def get_celestial_positions(time_arr):
-        # Load ephemeris data for Skyfield calculations
-        # eph = load('de421.bsp')
-        # earth, sun, moon = eph['earth'], eph['sun'], eph['moon']
-        # # Calculate the position of the Sun relative to Earth at the given time
-        # astrometric_sun = earth.at(time).observe(sun)
-        # apparent_sun = astrometric_sun.apparent() # ra_sun, dec_sun, _ = apparent_sun.radec()
-        # # Calculate the position of the Moon relative to Earth at the given time
-        # astrometric_moon = earth.at(time).observe(moon)
-        # apparent_moon = astrometric_moon.apparent() # ra_moon, dec_moon, _ = apparent_moon.radec()
 
     solar = []
     lunar = []
@@ -232,36 +224,43 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
     return tr, sc, frame_row_list, sol_positions
 
 # Save a csv file with all required star information 
-def write_to_csv(data, diffused_data, sol_positions, sat_name, start_time):
+def write_to_csv(data, diffused_ISRF_data, zod_data, sol_positions, sat_name, start_time):
     print('writing Simulation output to csv') 
     os.makedirs(f'{folder_loc}Output', exist_ok=True)
     csv_file = f'{folder_loc}Output{os.sep}{sat_name}-{start_time.datetime.strftime("%d_%m_%Y")}_data.csv'
-    header =['Frame Number', 'hip', 'ra', 'dec', 'mag', 'parallax', 'B_V', 'Spectral_type', 'size', 'Frame Boundaries']
+    header =['Frame Number', 'Hip #', 'RA', 'Dec', 'B mag', 'Parallax', 'B-V', 'Spectral Type', 'Sim size']
+    zodiacal_data, zod_wavelengths = zod_data
+    diffused_data, diffused_wavelengths = diffused_ISRF_data
 
-    # dz.to_csv(csv_file, index=False)
     with open(csv_file, 'w', newline='') as csvfile:
         csv_writer = csv.writer(csvfile)
+        csv_writer.writerow([f"Simulation output for {sat_name} at Start time: {start_time.datetime}"])
         csv_writer.writerow(header)
         for i in range(len(data)):
             frame, d, frame_boundary = data[i]
             frame = int(frame)
-            # d = d[0]
-            if d:
-                for j in range(len(d)):
-                    # print(j, len(d)) # print(zip(*d[j]))
-                    ra, dec, size, hip, mag, parallax, B_V, Spectral_type = zip(d[j])
-                    csv_writer.writerow([frame+1, hip[0], ra[0], dec[0], mag[0], parallax[0], B_V[0], Spectral_type[0], size[0], frame_boundary])
-            else:
-                csv_writer.writerow([frame+1, "Empty frame", None, None, None, None, None, None, None, frame_boundary[0]])
-            
-            csv_writer.writerow([frame+1, "Celestial_data for frame:", "      ", 'Sun', sol_positions['sun'][i], 'moon', sol_positions['moon'][i]])
-            if diffused_data != [0]:
-                tot_phot_1 = calc_total_diffused_flux(diffused_data['1100'][i])
-                tot_phot_2 = calc_total_diffused_flux(diffused_data['1500'][i])
-                tot_phot_3 = calc_total_diffused_flux(diffused_data['2300'][i])
-                csv_writer.writerow([frame+1, "Diffused UV data in frame (Total_photons):", "      ", '1100A', tot_phot_1, '1500A', tot_phot_2, '2300A', tot_phot_3])
 
-    print(f'Star Data saved in: Demo_file{os.sep}{sat_name}-{start_time.datetime.strftime("%d_%m_%Y")}_data.csv')
+            csv_writer.writerow([]) # empty row between frames
+            csv_writer.writerow([frame+1,f'FOV:', f'[{frame_boundary[0]}, {frame_boundary[1]}, {frame_boundary[2]}, {frame_boundary[3]}]', f'Sun:', sol_positions['sun'][i], f'moon: ', sol_positions['moon'][i]]) 
+            # csv_writer.writerow([frame+1, "Celestial_data for frame:", "      ", ]) #  "Diffused UV ISRF in frame (Total_photons):", ]) 
+
+            if diffused_data != [0]: # diffused UV ISRF present in the frame
+                diffused_summary = [f"{wl}: {calc_total_diffused_flux(diffused_data[str(wl)][i]):.4e}" for wl in diffused_wavelengths]
+                csv_writer.writerow([frame+1, "Diffused UV ISRF in frame (Total_photons):", "      ", *diffused_summary])
+
+            if zod_data != [0]: # zodiacal UV present in the frame
+                tot_flux = calc_total_zodiacal_flux(zodiacal_data[i])
+                zod_summary = [f"{wl}: {tot_flux[j]:.4e}" for j, wl in enumerate(zod_wavelengths)]
+                csv_writer.writerow([frame+1, "Zodiacal UV in frame (Total_photons):", "      ", *zod_summary])
+
+            if d: # stars present in the frame
+                for j in range(len(d)):
+                    ra, dec, size, hip, mag, parallax, B_V, Spectral_type = zip(d[j])
+                    csv_writer.writerow([frame+1, hip[0], ra[0], dec[0], mag[0], parallax[0], B_V[0], Spectral_type[0], size[0]])
+            else:
+                csv_writer.writerow([frame+1, "Empty frame", None, None, None, None, None, None, None])
+
+    print(f'Star Data saved in: Demo_file{os.sep}{sat_name}-{start_time.datetime.strftime("%d_%m_%Y")}_data.csv\n----------------')
     return 1
 
 
@@ -284,18 +283,18 @@ def main():
     # each time slice
     if t_slice:
         t_step = int(t_period / t_slice) + 1
-        print(f"N_Frames: {t_step}; t_slice = {t_slice} sec")
+        print(f"Num Frames: {t_step}; time interval = {t_slice} sec")
     else:
         # set Number of frames
         if n_frames:
             t_slice = t_period/int(n_frames)
-            print(f"N_Frames: {t_step}; t_slice = {t_slice} sec")
+            print(f"Num Frames: {t_step}; time interval = {t_slice} sec")
         else:
             print('T_slice not found')
 
     # simulation starts from current time to one full orbit
     start = Time.now()          
-    print(f"Start time of Simulation: {start}")
+    print(f"Start time of Simulation: {start}\n------------------")
 
     # times, state_vectors, celestial_coordinates
     time_arr, state_vectors, celestial_data, sol_position = get_simulation_data(satellite, df, start, t_period, t_slice, theta, allignment, roll)
@@ -304,24 +303,26 @@ def main():
     diffused_bg, zodiacal_bg, save_data = read_components()
 
     if diffused_bg == 'True':
-        diffused_data = get_diffused_in_FOV(celestial_data)
+        diffused_data, diffused_wavelengths = get_diffused_in_FOV(celestial_data)
+        # print( diffused_data["1100"][0], diffused_data["1100"][0][0], diffused_data["1100"][0][0][0],diffused_data["1100"][0][0][1] , diffused_data["1100"][0][0][2] )
     else: 
         diffused_data = [0]
         print('Diffused UV Background not included in the simulation')
 
-    if save_data == 'True':
-        write_to_csv(celestial_data, diffused_data, sol_position, sat_name, start)
-    else:
-        print('Star Data not Saved.')
-
     if zodiacal_bg == 'True':
         # print('Zodiacal Background not included in the simulation yet')
         zodiacal_data, zod_wavelengths = get_zodiacal_in_FOV(celestial_data, time_arr)
-        print(zod_wavelengths, zodiacal_data[0], zodiacal_data[0][1][0], zodiacal_data[0][1][1], zodiacal_data[0][1][2])
+        # print( zodiacal_data[0], zodiacal_data[0][0], zodiacal_data[0][0][0],zodiacal_data[0][0][1] , zodiacal_data[0][0][2] )
     else: 
         zodiacal_data = [0]
         zod_wavelengths = [0]
         print('Zodiacal Background not included in the simulation')
+
+
+    if save_data == 'True':
+        write_to_csv(celestial_data, (diffused_data, diffused_wavelengths), (zodiacal_data, zod_wavelengths), sol_position, sat_name, start)
+    else:
+        print('Star Data not Saved.\n')
 
     
     #  animate
