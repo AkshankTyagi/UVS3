@@ -16,12 +16,15 @@ from star_spectrum import index_greater_than
 folder_loc, params_file = get_folder_loc()
 # print(" diffused data")
 
-def read_parameter_file(filename= params_file, param_set = 'Params_1'):
+def read_parameter_file(filename= params_file):
+    file_loc_set = 'Params_0'
+    param_set = 'Params_1'
+    
     config = ConfigParser()
     config.read(filename)
 
-    Sol_spec_file = config.get(param_set, 'Sol_spectra_file')
-    Zod_dist_file = config.get(param_set, 'Zod_dist_table')
+    Sol_spec_file = config.get(file_loc_set, 'Sol_spectra_file')
+    Zod_dist_file = config.get(file_loc_set, 'Zod_dist_table')
     min_lim = float(config.get(param_set, 'limit_min'))
     max_lim = float(config.get(param_set, 'limit_max'))
 
@@ -239,4 +242,10 @@ def get_zodiacal_in_FOV( data, time_arr ):
     return zodiacal_data, zod_wavelengths
 
 
-# get_zodiacal_in_FOV([(1,2, [[[20, 21],[20,19],[21,21],[21,19]]])])
+def calc_total_zodiacal_flux(diffused_data, wavelength):
+    _, data = zip(diffused_data)
+    wave_index = np.searchsorted(sol_wavelengths, wavelength, side='right') - 1
+    wave_index = np.clip(wave_index, 0, len(sol_wavelengths)-1)
+    c = list(zip(*data[0]))
+    tot_flux  = sum(c[2])
+    return tot_flux

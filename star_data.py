@@ -14,11 +14,13 @@ from Params_configparser import get_folder_loc
 
 folder_loc, params_file = get_folder_loc()
 
-def read_parameter_file(filename= params_file, param_set = 'Params_1'):
+def read_parameter_file(filename= params_file):
+    file_loc_set = 'Params_0'
+    param_set = 'Params_1'
     config = ConfigParser()
     config.read(filename)
     global hipp_file 
-    hipp_file = config.get(param_set, 'hipparcos_catalogue')
+    hipp_file = config.get(file_loc_set, 'hipparcos_catalogue')
     # Field of View size:
     width = float(config.get(param_set, 'width'))
     height = float(config.get(param_set, 'height'))

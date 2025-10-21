@@ -13,14 +13,15 @@ from star_data import is_point_in_polygon
 folder_loc, params_file = get_folder_loc()
 # print(" diffused data")
 
-def read_parameter_file(filename= params_file, param_set = 'Params_1'):
+def read_parameter_file(filename= params_file):
     config = ConfigParser()
     config.read(filename)
-    # global sat_name
-    # sat_name = config.get(param_set, 'sat_name')
+    file_loc_set = 'Params_0'
+    param_set = 'Params_1'
+    diffused_file = config.get(file_loc_set, 'diffused_BG_file')
     diffused_wavelength = config.get(param_set, 'BG_wavelength')
     diffused_wavelength = [int(val) for val in diffused_wavelength[1:-1].split(',')]
-    return diffused_wavelength
+    return diffused_wavelength, diffused_file
 
 
 def get_diffused_in_FOV( data ):

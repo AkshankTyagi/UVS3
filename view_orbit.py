@@ -37,13 +37,14 @@ folder_loc, params_file = get_folder_loc()
 sat_file = f'{folder_loc}Satellite_TLE.txt'
 
 # get Simulation parameters from the init_params file
-def read_parameter_file(filename=params_file, param_set = 'Params_1'):
+def read_parameter_file(filename=params_file ):
     config.read(filename)
+    file_loc_set = 'Params_0'
+    param_set = 'Params_1'
 
     global roll_rate_hrs, sat_name
-
-    hipp_file = config.get(param_set, 'hipparcos_catalogue')
-    castelli_file = config.get(param_set, 'Castelli_data')
+    hipp_file = config.get(file_loc_set, 'hipparcos_catalogue')
+    castelli_file = config.get(file_loc_set, 'Castelli_data')
     sat_name = config.get(param_set, 'sat_name')
     roll =config.get(param_set, 'roll')
     if roll == "True":
@@ -232,8 +233,9 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
 
 # Save a csv file with all required star information 
 def write_to_csv(data, diffused_data, sol_positions, sat_name, start_time):
-    print('writing Simulation output to csv') # print(data[0:2])
-    csv_file = f'{folder_loc}Demo_file{os.sep}{sat_name}-{start_time.item().strftime("%d_%m_%Y")}_data.csv'
+    print('writing Simulation output to csv') 
+    os.makedirs(f'{folder_loc}Output', exist_ok=True)
+    csv_file = f'{folder_loc}Output{os.sep}{sat_name}-{start_time.datetime.strftime("%d_%m_%Y")}_data.csv'
     header =['Frame Number', 'hip', 'ra', 'dec', 'mag', 'parallax', 'B_V', 'Spectral_type', 'size', 'Frame Boundaries']
 
     # dz.to_csv(csv_file, index=False)
@@ -259,13 +261,13 @@ def write_to_csv(data, diffused_data, sol_positions, sat_name, start_time):
                 tot_phot_3 = calc_total_diffused_flux(diffused_data['2300'][i])
                 csv_writer.writerow([frame+1, "Diffused UV data in frame (Total_photons):", "      ", '1100A', tot_phot_1, '1500A', tot_phot_2, '2300A', tot_phot_3])
 
-    print(f'Star Data saved in: Demo_file{os.sep}{sat_name}-{start_time.item().strftime("%d_%m_%Y")}_data.csv')
+    print(f'Star Data saved in: Demo_file{os.sep}{sat_name}-{start_time.datetime.strftime("%d_%m_%Y")}_data.csv')
     return 1
 
 
 def main():
-    global data
-    hipp_file, castelli_dir, sat_name, t_slice, n_frames, N_revolutions, roll, theta, allignment  = read_parameter_file(params_file,'Params_1')
+    # global data
+    hipp_file, castelli_dir, sat_name, t_slice, n_frames, N_revolutions, roll, theta, allignment  = read_parameter_file(params_file)
     line1, line2 = read_satellite_TLE(sat_file, sat_name)
     
     # create satellite object
@@ -315,9 +317,7 @@ def main():
     if zodiacal_bg == 'True':
         # print('Zodiacal Background not included in the simulation yet')
         zodiacal_data, zod_wavelengths = get_zodiacal_in_FOV(celestial_data, time_arr)
-
-        print(zodiacal_data[0][1][2])
-        print(zod_wavelengths)
+        print(zod_wavelengths, zodiacal_data[0], zodiacal_data[0][1][0], zodiacal_data[0][1][1], zodiacal_data[0][1][2])
     else: 
         zodiacal_data = [0]
         zod_wavelengths = [0]
@@ -325,7 +325,7 @@ def main():
 
     
     #  animate
-    # animate(time_arr, state_vectors, celestial_data, sol_position, Spectra, diffused_data, r)
+    animate(time_arr, state_vectors, celestial_data, sol_position, Spectra, diffused_data, (zodiacal_data, zod_wavelengths), r)
     return
 
 # main

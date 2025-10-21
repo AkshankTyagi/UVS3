@@ -38,12 +38,15 @@ gas_to_dust = 5.8e21
 
 folder_loc, params_file = get_folder_loc()
 
-def read_parameter_file(filename= params_file, param_set = 'Params_1'):
+def read_parameter_file(filename= params_file):
+    file_loc_set = 'Params_0'
+    param_set = 'Params_1'
     config = ConfigParser()
     config.read(filename)
     global Castelli_data , dust_c_section
-    Castelli_data = config.get(param_set, 'Castelli_data')
-    dust_c_section = config.get(param_set, 'dust_C_section')
+    Castelli_data = config.get(file_loc_set, 'Castelli_data')
+    dust_c_section = config.get(file_loc_set, 'dust_C_section')
+    
     # Wavelength range:
     min_lim = float(config.get(param_set, 'limit_min'))
     max_lim = float(config.get(param_set, 'limit_max'))
