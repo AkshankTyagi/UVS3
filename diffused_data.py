@@ -77,7 +77,7 @@ def get_diffused_in_FOV( data ):
 
             diffused_data[f'{wavelength}'].append(filtered_points)
 
-        print(f"Total Time per wavelength:{time.perf_counter() - t1}, per frame: {(time.perf_counter() - t1)/len(data)}")
+        print(f"Total Time for {wavelength}$\\AA$ wavelength: {time.perf_counter() - t1}, per frame: {(time.perf_counter() - t1)/len(data)}")
 
     return diffused_data, wavelength_array
 

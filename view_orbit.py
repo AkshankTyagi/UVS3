@@ -198,6 +198,7 @@ def propagate(sat, time_start, time_end, dt, theta):
 # get list of star data in view along with satellite state_vectors
 def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignment, roll=False):
     
+    print('Calculating Satellite State Vectors and Objects in the FOV.')
     # state_vectors, celestial_coordinates
     tr, sc, cc = propagate(sat, start_time, sim_secs, time_step, theta)
     # parse celestial_coordinates
@@ -328,7 +329,7 @@ def main():
     if save_data == 'True':
         write_to_csv(celestial_data, (diffused_data, diffused_wavelengths), (zodiacal_data, zod_wavelengths), sol_position, sat_name, start)
     else:
-        print('Star Data not Saved.\n')
+        print('Star Data not Saved.\n------------------')
 
     
     #  animate

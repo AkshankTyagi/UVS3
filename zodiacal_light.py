@@ -229,9 +229,8 @@ def get_zodiacal_in_FOV( data, time_arr ):
         zodiacal_data (list): list of points_with_spectrum per frame.
         zod_wavelengths (np.ndarray): wavelengths returned by scale_zodiacal_spectrum.
     """
-    print('\nCalculating Zodiacal UV in the FOV (timed).')
-
-    # print('Calculating Zodiacal UV in the FOV.')
+    # print('\nCalculating Zodiacal UV in the FOV (timed).')
+    print('Calculating Zodiacal UV in the FOV.')
 
     # Read the Parameter file to get Data file locations
     spec_file, Zod_dist_file, _, _ = read_parameter_file()
@@ -243,8 +242,8 @@ def get_zodiacal_in_FOV( data, time_arr ):
     zod_array, table_lon, table_lat = read_zodiacal_distribution(Zod_dist_file)
 
     zodiacal_data = []
-
     t0 = time.perf_counter()
+    
     for f in range(len(data)):    # f represents frame number
         _, _, frame_corner = zip(data[f])
         frame_corner= frame_corner[0]
@@ -274,7 +273,7 @@ def get_zodiacal_in_FOV( data, time_arr ):
         zodiacal_data.append(points_with_spectrum)
 
     t1 = time.perf_counter()
-    print(f"total time to calculate zodiacal: {t1 - t0}, per frame: {(t1-t0)/len(data)}")
+    print(f"Total time to calculate zodiacal: {t1 - t0}, per frame: {(t1-t0)/len(data)}")
 
     return zodiacal_data, zod_wavelengths
 
