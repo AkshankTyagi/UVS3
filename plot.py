@@ -282,30 +282,6 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         global phots
         zod_data , zod_wavelengths = zodiacal_data
         
-        # set labels
-        ax.set_xlabel(r'Wavelength ($\AA$)')
-        ax.set_ylabel('Number of Photons s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9')
-
-        # set titles
-        ax.set_title('# of Photons from the stars in the Sky view')
-
-        X_wavelength, Y_photons_per_star, ra, dec = get_photons_data_by_frame(0, spectral_fov)
-        
-        if (X_wavelength[0]!=0):
-            wave_min = min(X_wavelength)
-            wave_max = max(X_wavelength)
-            max_p = get_max_photon(Y_photons_per_star)
-            for i in range(len(Y_photons_per_star)):
-                phots = ax.plot(X_wavelength, Y_photons_per_star[i], label = f'ra: {ra[i]:.3f}  ; dec: {dec[i]:.3f}')
-                ax.set_xlim(wave_min, wave_max)
-        else:
-            wavelengths = np.linspace(1000, 3800, 1000)
-            y_zeros = np.zeros_like(wavelengths) 
-            phots= ax.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='No stars in Fov')
-            # phots= ax.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='No stars in Fov')
-            ax.set_xlim(min(wavelengths), max(wavelengths))
-
-
         # Create a twin Axes sharing the x-axis
         ax_r = ax.twinx() 
 
@@ -325,6 +301,28 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         
         ax_r.set_ylabel(r'Diffused Background Photons (s\u207B\u00B9 cm\u207B\u00B2 $\AA$\u207B\u00B9)')
         ax_r.yaxis.set_label_position("right")
+
+        # set  up the Stellar SED plot
+        # set labels
+        ax.set_xlabel(r'Wavelength ($\AA$)')
+        ax.set_ylabel('Number of Photons s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9')
+        ax.set_title('# of Photons from the stars in the Sky view')
+
+        X_wavelength, Y_photons_per_star, ra, dec = get_photons_data_by_frame(0, spectral_fov)
+        
+        if (X_wavelength[0]!=0):
+            wave_min = min(X_wavelength)
+            wave_max = max(X_wavelength)
+            max_p = get_max_photon(Y_photons_per_star)
+            for i in range(len(Y_photons_per_star)):
+                phots = ax.plot(X_wavelength, Y_photons_per_star[i], label = f'ra: {ra[i]:.3f}  ; dec: {dec[i]:.3f}')
+                ax.set_xlim(wave_min, wave_max)
+        else:
+            wavelengths = np.linspace(1000, 3800, 1000)
+            y_zeros = np.zeros_like(wavelengths) 
+            phots= ax.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='No stars in Fov')
+            # phots= ax.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='No stars in Fov')
+            ax.set_xlim(min(wavelengths), max(wavelengths))
         
         # Combine legends from both axes
         lines1, labels1 = ax.get_legend_handles_labels()
@@ -521,7 +519,26 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         ax3.set_xlim(Size[0], Size[2])
         ax3.set_ylim(Size[1], Size[3])    
         
-        # setting up the number of photons vs wavelength plot
+        # setting up the number of photons vs wavelength plot first the Diffused UV axis
+        ax_r.clear()
+
+        # Calculate the diffused ISRF spectra
+        diffused_isrf = []
+        fOV_area = np.radians(height) * np.radians(width)
+        for wavelength in BG_wavelength:
+            flux = round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][i])*fOV_area, 3)
+            diffused_isrf.append(flux)
+
+        # Calculate the zodiacal light spectra
+        zodiacal_spectra = np.round(calc_total_zodiacal_flux(zod_data[i])*fOV_area, 3)
+
+        # Call the plotting function for background spectra (Diffuse/Zodiacal)
+        ax_r.plot(BG_wavelength, diffused_isrf, marker='o', color='grey', linestyle='--', label='Diffused UV ISRF')
+        ax_r.plot(zod_wavelengths, zodiacal_spectra, color='black', label='Zodiacal UV')
+        ax_r.set_ylabel('Diffused Background Photons (s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9)')
+        ax_r.yaxis.set_label_position("right")
+
+        # setting up the number of photons vs wavelength plot for stars
         ax4.clear()
         ax4.set_xlabel(r'Wavelength ($\AA$)')
         ax4.set_ylabel('Number of Photons s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9')
@@ -542,25 +559,6 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             y_zeros = np.zeros_like(wavelengths) 
             phots= ax4.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='No stars in Fov')
             ax4.set_xlim(min(wavelengths), max(wavelengths))
-
-        ax_r.clear()
-        # ax_r = ax4.twinx()
-
-        # Calculate the diffused ISRF spectra
-        diffused_isrf = []
-        fOV_area = np.radians(height) * np.radians(width)
-        for wavelength in BG_wavelength:
-            flux = round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][i])*fOV_area, 3)
-            diffused_isrf.append(flux)
-
-        # Calculate the zodiacal light spectra
-        zodiacal_spectra = np.round(calc_total_zodiacal_flux(zod_data[i])*fOV_area, 3)
-
-        # Call the plotting function for background spectra (Diffuse/Zodiacal)
-        ax_r.plot(BG_wavelength, diffused_isrf, marker='o', color='grey', linestyle='--', label='Diffused UV ISRF')
-        ax_r.plot(zod_wavelengths, zodiacal_spectra, color='black', label='Zodiacal UV')
-        ax_r.set_ylabel('Diffused Background Photons (s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9)')
-        ax_r.yaxis.set_label_position("right")
         
         # Combine legends from both axes
         lines1, labels1 = ax4.get_legend_handles_labels()

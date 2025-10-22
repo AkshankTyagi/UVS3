@@ -12,7 +12,7 @@ roll = False
 roll_rate_hrs = False
 number of revolutions = 1
 n_frames = False
-t_slice = 1000
+t_slice = 40
 width = 1
 height = 2
 starmag_min_threshold = 0
@@ -39,6 +39,6 @@ zodiacal_bg = True
 spectra = True
 fix_start = False
 staring_mode = False
-save_animation = False
-save_data = False
+save_animation = True
+save_data = True
 
