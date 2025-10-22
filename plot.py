@@ -254,12 +254,12 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
                 info_line =f"{wavelength} $\\AA$ : {round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][0])*fOV_area, 3)}  |  {round(calc_total_zodiacal_flux(zod_data[0], wave_index)*fOV_area, 3)}\n"
                 info_diffused += info_line
 
-            info_text = f"Total Diffused UV Background in FOV \n   $\\lambda$   : ISRF  |  Zod  (# Photons-s\u207B\u00B9cm\u207B\u00B2$\\AA$\u207B\u00B9)\n{info_diffused}"
-            text = ax.text(1.04, 0.6, info_text, transform=ax.transAxes, fontsize=7.5, va='center')
+            info_text = f"Total Diffused UV Background in FOV \n  $\\lambda$   : ISRF  |  Zod  (# Photons-s\u207B\u00B9cm\u207B\u00B2$\\AA$\u207B\u00B9)\n{info_diffused}"
+            text = ax.text(1.1, 0.6, info_text, transform=ax.transAxes, fontsize=7.5, va='center')
             # print(info_text)
         else:
-            info_text = ' Diffused UV Background\nNot included'
-            text = ax.text(1.04, 0.6, info_text, transform=ax.transAxes, fontsize=7.5, va='center')
+            info_text = 'Diffused UV Background\nNot included'
+            text = ax.text(1.1, 0.6, info_text, transform=ax.transAxes, fontsize=7.5, va='center')
     
         # Scatter plot for stars
         if (S[0] == 0.0001) : #no star in the FOV
@@ -335,9 +335,8 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # Combine legends from both axes
         lines1, labels1 = ax.get_legend_handles_labels()
         lines2, labels2 = ax_r.get_legend_handles_labels()
-        if len(ra)<=10:
-            # ax.legend()
-            ax.legend(lines1 + lines2, labels1 + labels2, loc='upper left', bbox_to_anchor=(-0.47, 1.15), markerscale=0.5)
+        # if len(ra)<=10:
+        ax.legend(lines1 + lines2, labels1 + labels2, loc='upper left', bbox_to_anchor=(-0.4, 1.15), markerscale=0.5)
 
         return ax, ax_r, phots
 
@@ -393,43 +392,29 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         plt.rc('font', **font)
             
         # Create 2x2 sub plots
-        gs = gridspec.GridSpec(2, 2, wspace=0.3, hspace=0.3, width_ratios=[1, 1] ) # , , width_ratios=[1, 2]
-
-        fig = plt.figure(layout='constrained', figsize=(12.7,6.5)) # figsize=(8,6)
-        subfigs = fig.subfigures(2, 2, wspace=0.01, hspace= 0.02, width_ratios=[1, 1]) #, gridspec_kw={'width_ratios': [1, 1], 'height_ratios': [1, 1]})
+        fig = plt.figure( figsize=(12.7, 6.5)) # figsize=(8,6)
+        gs = gridspec.GridSpec(2, 2, figure = fig, wspace = 0.6, hspace = 0.3,  width_ratios=[1, 1.7])
 
         # row 0, col 0
-        # ax2 = subfigs[0,0].add_subplot( projection='3d')
         ax2 = fig.add_subplot(gs[0, 0], projection='3d' )
-        # set layout
+        # set Earth- satellite layout
         ax2, satellite, orbit, sun, moon = init_orbit(ax2)  
 
-        # plt.subplots_adjust(left=0.3, right=0.6, bottom=0.1, top=0.9)
-
         # row 1, col 0
-        # ax3 = subfigs[1,0].add_subplot( facecolor="black", aspect= 0.6)
         ax3 = fig.add_subplot(gs[1, 0], facecolor="black", aspect= 1 )
         # initialize sky
         ax3, sky, diffused = init_sky(ax3)
 
         # row 0, col 1
-        # ax4 = subfigs[0,1].add_subplot()
         ax4 = fig.add_subplot(gs[0, 1])
-        # ax_r = ax4.twinx()
-        # ax4.set_aspect('equal', adjustable='box')
         # initialize Photons Plot
         ax4, ax_r, phots = init_photons(ax4)
 
         # row 1, col 1
-        # ax5 = subfigs[1,1].add_subplot()
         ax5 = fig.add_subplot(gs[1, 1])
-        # initialize Photons Plot
+        # initialize abs Spectra Plot
         ax5, spectra = init_spectra(ax5)
 
-
-        # to avoid subplot title overlap with x-tick
-        # fig.tight_layout()
-        
         # return
         return fig, satellite, orbit, sun, moon, sky, diffused, phots, spectra
 
@@ -478,7 +463,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         #Scatter plot for Diffused light
         diffused = []
         fOV_area = np.radians(height) * np.radians(width)
-        a =  0.1* 1/height * 1/width  #alpha value for scatter plot
+        a =  0.1#* 1/height * 1/width  #alpha value for scatter plot
 
         if diffused_data != [0] or zodiacal_data != [0]:
             zod_data , zod_wavelengths = zodiacal_data
@@ -502,12 +487,12 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
                 info_line =f"{wavelength} $\\AA$: {round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][i])*fOV_area, 3)}  |  {round(zod_tot*fOV_area, 3)}\n"
                 info_diffused += info_line
 
-            info_text = f"  Total Diffused UV Background in FOV \n   $\\lambda$   :   ISRF  |  Zod  (# Photons- s\u207B\u00B9cm\u207B\u00B2$\\AA$\u207B\u00B9)\n{info_diffused}"
-            ax3.text(1.04, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
+            info_text = f"Total Diffused UV Background in FOV \n  $\\lambda$   :   ISRF  |  Zod  (# Photons- s\u207B\u00B9cm\u207B\u00B2$\\AA$\u207B\u00B9)\n{info_diffused}"
+            ax3.text(1.1, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
             # print(info_text)
         else:
-            info_text = ' Diffused Background Not included'
-            ax3.text(1.04, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
+            info_text = 'Diffused Background Not included'
+            ax3.text(1.1, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
 
         # Scatter plot for stars
         if (S[0] == 0.0001) : #no star in the FOV
@@ -580,8 +565,8 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         lines1, labels1 = ax4.get_legend_handles_labels()
         lines2, labels2 = ax_r.get_legend_handles_labels()
 
-        if len(ra)<=10:
-            ax4.legend(lines1 + lines2, labels1 + labels2, loc='upper left', bbox_to_anchor=(-0.47, 1.15), markerscale=0.5)
+        # if len(ra)<=10:
+        ax4.legend(lines1 + lines2, labels1 + labels2, loc='upper left', bbox_to_anchor=(-0.4, 1.15), markerscale=0.5)
 
         # setting up the absorption spectra plots
         ax5.clear()

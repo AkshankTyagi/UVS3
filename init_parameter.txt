@@ -39,6 +39,6 @@ zodiacal_bg = True
 spectra = True
 fix_start = False
 staring_mode = False
-save_animation = True
-save_data = True
+save_animation = False
+save_data = False
 

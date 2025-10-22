@@ -75,8 +75,8 @@ config['Params_2'] = {
     'Spectra': True,
     'fix_start': False,
     'Staring_mode': False, #True
-    'save_animation': True, #True,
-    'Save_data': True #True 
+    'save_animation': False, #True,
+    'Save_data': False #True 
 }
 
 
