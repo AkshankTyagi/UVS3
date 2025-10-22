@@ -36,7 +36,7 @@ config['Params_1'] = {
     # Specify either Number of frames or period in sec after which the next Frame is given
     'number of Revolutions' : 1,
     'N_frames' : False,
-    't_slice' : 40, # Seconds,
+    't_slice' : 200, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
     'width': 1, # 0.5 (shorter) width
@@ -63,7 +63,7 @@ config['Params_1'] = {
     'azm': 104,
     'ele': 60,
     'longitudinal_spectral_width' : 0.1, #Declination width of spectral spread to fall on detector in degrees
-    'interval_bw_Frames' : 1000 # milliSec
+    'interval_bw_Frames' : 2000 # milliSec
 }
 
 config['Params_2'] = {

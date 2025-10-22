@@ -80,9 +80,15 @@ def read_components(filename= params_file, param_set = 'Params_2'):
 # get satellite TLE data from the TLE file
 def read_satellite_TLE(filename= sat_file, sat_name = 'ISS'):
     config.read(filename)
-    line1 = config.get(sat_name, 'line1')
-    line2 = config.get(sat_name, 'line2')
-    return line1, line2
+    if sat_name in config:
+        line1 = config.get(sat_name, 'line1')
+        line2 = config.get(sat_name, 'line2')
+        return line1, line2
+    else:
+        print(f"WARNING: Satellite TLE for {sat_name} not found in \n{filename}\n--------------------")
+        raise ValueError(f"Satellite TLE for {sat_name} not found in {filename}")
+
+    return 0
 
 # get satellite object from TLE (2 lines data)
 def get_satellite(line1, line2):
@@ -228,7 +234,7 @@ def write_to_csv(data, diffused_ISRF_data, zod_data, sol_positions, sat_name, st
     print('writing Simulation output to csv') 
     os.makedirs(f'{folder_loc}Output', exist_ok=True)
     csv_file = f'{folder_loc}Output{os.sep}{sat_name}-{start_time.datetime.strftime("%d_%m_%Y")}_data.csv'
-    header =['Frame Number', 'Hip #', 'RA', 'Dec', 'B mag', 'Parallax', 'B-V', 'Spectral Type', 'Sim size']
+    header =['Frame Number', 'Hip #', 'RA', 'Dec', 'V mag', 'Parallax', 'B-V', 'Spectral Type', 'Sim size']
     zodiacal_data, zod_wavelengths = zod_data
     diffused_data, diffused_wavelengths = diffused_ISRF_data
 
@@ -256,7 +262,7 @@ def write_to_csv(data, diffused_ISRF_data, zod_data, sol_positions, sat_name, st
             if d: # stars present in the frame
                 for j in range(len(d)):
                     ra, dec, size, hip, mag, parallax, B_V, Spectral_type = zip(d[j])
-                    csv_writer.writerow([frame+1, hip[0], ra[0], dec[0], mag[0], parallax[0], B_V[0], Spectral_type[0], size[0]])
+                    csv_writer.writerow([frame+1, hip[0], ra[0], dec[0], mag[0], parallax[0], B_V[0], Spectral_type[0], f"{size[0]:.2f}"])
             else:
                 csv_writer.writerow([frame+1, "Empty frame", None, None, None, None, None, None, None])
 
@@ -270,7 +276,6 @@ def main():
     line1, line2 = read_satellite_TLE(sat_file, sat_name)
     
 
-    
     # create satellite object
     satellite = get_satellite(line1, line2)
 
@@ -296,7 +301,7 @@ def main():
 
     # simulation starts from current time to one full orbit
     start = Time.now()          
-    print(f"Start time (UTC) of Simulation: {start}\n------------------")
+    print(f"Start time of Simulation (UTC): {start}\n------------------")
 
     # times, state_vectors, celestial_coordinates
     time_arr, state_vectors, celestial_data, sol_position = get_simulation_data(satellite, df, start, t_period, t_slice, theta, allignment, roll)

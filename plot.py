@@ -285,6 +285,13 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # Create a twin Axes sharing the x-axis
         ax_r = ax.twinx() 
 
+        # Put left axis on top of right axis
+        ax.set_zorder(2)      # draw ax after ax_r
+        ax.patch.set_visible(False)   # make ax background transparent so ax_r grid/labels don't hide it
+
+        ax_r.set_zorder(1)
+        ax_r.patch.set_visible(False)  # make right axis patch transparent too
+
         # Calculate the diffused ISRF spectra
         diffused_isrf = []
         fOV_area = np.radians(height) * np.radians(width)
@@ -315,7 +322,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             wave_max = max(X_wavelength)
             max_p = get_max_photon(Y_photons_per_star)
             for i in range(len(Y_photons_per_star)):
-                phots = ax.plot(X_wavelength, Y_photons_per_star[i], label = f'ra: {ra[i]:.3f}  ; dec: {dec[i]:.3f}')
+                phots = ax.plot(X_wavelength, Y_photons_per_star[i], label = f'ra: {ra[i]:.3f}  ; dec: {dec[i]:.3f}', zorder = 5)
                 ax.set_xlim(wave_min, wave_max)
         else:
             wavelengths = np.linspace(1000, 3800, 1000)
@@ -323,6 +330,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             phots= ax.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='No stars in Fov')
             # phots= ax.plot(np.log10(wavelengths), y_zeros, color='gray', linestyle='--', label='No stars in Fov')
             ax.set_xlim(min(wavelengths), max(wavelengths))
+        ax.grid(True, which='major', linestyle='--', linewidth=0.8, alpha=0.4)
         
         # Combine legends from both axes
         lines1, labels1 = ax.get_legend_handles_labels()
@@ -521,6 +529,14 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         
         # setting up the number of photons vs wavelength plot first the Diffused UV axis
         ax_r.clear()
+        ax4.clear()
+
+        # Put left axis on top of right axis
+        ax4.set_zorder(2)      # draw ax after ax_r
+        ax4.patch.set_visible(False)   # make ax background transparent so ax_r grid/labels don't hide it
+        
+        ax_r.set_zorder(1)
+        ax_r.patch.set_visible(False)  # make right axis patch transparent too
 
         # Calculate the diffused ISRF spectra
         diffused_isrf = []
@@ -539,7 +555,6 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         ax_r.yaxis.set_label_position("right")
 
         # setting up the number of photons vs wavelength plot for stars
-        ax4.clear()
         ax4.set_xlabel(r'Wavelength ($\AA$)')
         ax4.set_ylabel('Number of Photons s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9')
         ax4.set_title('# of Photons from the stars in the Sky view')
@@ -551,7 +566,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             max_p = get_max_photon(Y_photons_per_star)
 
             for k in range(len(Y_photons_per_star)):
-                ax4.plot(X_wavelength,  Y_photons_per_star[k], label = f'ra: {ra[k]:.3f}  ; dec: {dec[k]:.3f}') 
+                ax4.plot(X_wavelength,  Y_photons_per_star[k], label = f'ra: {ra[k]:.3f}  ; dec: {dec[k]:.3f}', zorder = 5) 
                 ax4.set_xlim(wave_min, wave_max)
 
         else:
@@ -559,6 +574,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             y_zeros = np.zeros_like(wavelengths) 
             phots= ax4.plot(wavelengths, y_zeros, color='gray', linestyle='--', label='No stars in Fov')
             ax4.set_xlim(min(wavelengths), max(wavelengths))
+        ax4.grid(True, which='major', linestyle='--', linewidth=0.5, alpha=0.3)
         
         # Combine legends from both axes
         lines1, labels1 = ax4.get_legend_handles_labels()

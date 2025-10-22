@@ -12,7 +12,7 @@ roll = False
 roll_rate_hrs = False
 number of revolutions = 1
 n_frames = False
-t_slice = 40
+t_slice = 200
 width = 1
 height = 2
 starmag_min_threshold = 0
@@ -28,7 +28,7 @@ bg_wavelength = [1100, 1500, 2300]
 azm = 104
 ele = 60
 longitudinal_spectral_width = 0.1
-interval_bw_frames = 1000
+interval_bw_frames = 2000
 
 [Params_2]
 sun = True
