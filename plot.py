@@ -502,7 +502,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
                 info_line =f"{wavelength} $\\AA$: {round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][i])*fOV_area, 3)}  |  {round(zod_tot*fOV_area, 3)}\n"
                 info_diffused += info_line
 
-            info_text = f"Total Diffused UV Background in FOV \n   $\\lambda$   : ISRF  |  Zod  (# Photons- s\u207B\u00B9cm\u207B\u00B2$\\AA$\u207B\u00B9)\n{info_diffused}"
+            info_text = f"  Total Diffused UV Background in FOV \n   $\\lambda$   :   ISRF  |  Zod  (# Photons- s\u207B\u00B9cm\u207B\u00B2$\\AA$\u207B\u00B9)\n{info_diffused}"
             ax3.text(1.04, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
             # print(info_text)
         else:

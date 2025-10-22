@@ -250,9 +250,9 @@ def get_zodiacal_in_FOV( data, time_arr ):
         xmin, ymin = frame_corner.min(axis=0)
         xmax, ymax = frame_corner.max(axis=0)
 
-        # Create arrays with 0.1 degree spacing
-        x_arr = np.arange(xmin, xmax + 0.1, 0.1)  # include xmax
-        y_arr = np.arange(ymin, ymax + 0.1, 0.1)  # include ymax
+        # Create arrays with 0.2 degree spacing
+        x_arr = np.arange(xmin, xmax + 0.2, 0.2)  # include xmax
+        y_arr = np.arange(ymin, ymax + 0.2, 0.2)  # include ymax
         X, Y = np.meshgrid(x_arr, y_arr)
 
         # Now, use is_point_in_polygon to keep only the points inside the rotated FOV
@@ -273,7 +273,7 @@ def get_zodiacal_in_FOV( data, time_arr ):
         zodiacal_data.append(points_with_spectrum)
 
     t1 = time.perf_counter()
-    print(f"Total time to calculate zodiacal: {t1 - t0}, per frame: {(t1-t0)/len(data)}")
+    print(f"Total time to calculate zodiacal: {t1 - t0:.3f}s, per frame: {(t1-t0)/len(data):.3f}s")
 
     return zodiacal_data, zod_wavelengths
 

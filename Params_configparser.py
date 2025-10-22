@@ -36,11 +36,11 @@ config['Params_1'] = {
     # Specify either Number of frames or period in sec after which the next Frame is given
     'number of Revolutions' : 1,
     'N_frames' : False,
-    't_slice' : 40, # Seconds,
+    't_slice' : 50, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
-    'width': 0.5, # 0.5 (shorter) width
-    'height': 1, # 1 (longer) height
+    'width': 1, # 0.5 (shorter) width
+    'height': 4, # 1 (longer) height
     'starmag_min_threshold' : 0, #threshold for what bright stars we want to avoid
     'starmag_max_threshold' : 8, #threshold for what maximum apaarent magnitude stars we want/can to look at
 
@@ -75,8 +75,8 @@ config['Params_2'] = {
     'Spectra': True,
     'fix_start': False,
     'Staring_mode': False, #True
-    'save_animation': False, #True,
-    'Save_data': False #True 
+    'save_animation': True, #True,
+    'Save_data': True #True 
 }
 
 
