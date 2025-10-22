@@ -1,7 +1,7 @@
 import numpy as np
 import csv
 import pandas as pd
-import os
+import time
 
 from configparser import ConfigParser
 
@@ -29,7 +29,9 @@ def get_diffused_in_FOV( data ):
     wavelength_array, diffused_BG_file = read_parameter_file()
 
     diffused_data = {}
+    
     for wavelength in wavelength_array:
+        t1 = time.perf_counter()
         filename = diffused_BG_file+f'RA_sorted_flux_{wavelength}.feather'
         diffused_data[f'{wavelength}'] = []
         try:
@@ -41,6 +43,12 @@ def get_diffused_in_FOV( data ):
         except FileNotFoundError:
             print("df is empty. File not found.")
 
+        # Convert to numpy arrays once (fast)
+        ra_arr = df['ra'].to_numpy()
+        dec_arr = df['dec'].to_numpy()
+        flux_arr = df['flux'].to_numpy()
+        del df  # free memory
+        
         for f in range(len(data)): # f represents frame number
             # print('frame :',f)
             _, _, frame_corner = zip(data[f])
@@ -48,23 +56,28 @@ def get_diffused_in_FOV( data ):
             xmin, ymin = frame_corner.min(axis=0)
             xmax, ymax = frame_corner.max(axis=0)
             # print(f"diffused)Frame {f+1} has {len(data[f])} stars, and frame corners = {frame_corner}")
-
-            mdf = df[['ra', 'dec', 'flux']]
+            # mdf = df[['ra', 'dec', 'flux']]
             # Apply a buffer to include points close to the polygon boundary
             buffer = 0.01
-            q = f'ra >= @xmin - {buffer} & ra <= @xmax + {buffer} & dec >= @ymin - {buffer} & dec <= @ymax + {buffer}' 
-            mdf = mdf.query(q)
-            mdf = mdf.values.tolist()
+            mask_bbox = (
+                (ra_arr >= (xmin - buffer)) &
+                (ra_arr <= (xmax + buffer)) &
+                (dec_arr >= (ymin - buffer)) &
+                (dec_arr <= (ymax + buffer))
+            )
+            idx_candidates = np.nonzero(mask_bbox)[0]   # integer indices
 
             # Now, use is_point_in_polygon to keep only the points inside the rotated FOV
             polygon = frame_corner  # The polygon is defined by the rotated FOV corners
             filtered_points = []
-            for point in mdf:
-                ra, dec, flux = point
+            for ra, dec, flux  in zip(ra_arr[idx_candidates], dec_arr[idx_candidates], flux_arr[idx_candidates]):
+                # ra, dec, flux = point
                 if is_point_in_polygon(ra, dec, polygon):
                     filtered_points.append([ra, dec, flux])
 
             diffused_data[f'{wavelength}'].append(filtered_points)
+
+        print(f"Total Time per wavelength:{time.perf_counter() - t1}, per frame: {(time.perf_counter() - t1)/len(data)}")
 
     return diffused_data, wavelength_array
 

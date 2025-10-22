@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import RegularGridInterpolator
 from configparser import ConfigParser
+import time
 
 
 # from star_spectrum import GET_STAR_TEMP
@@ -46,31 +47,49 @@ def pointing_geometry(target_coords, obstime):
     if not isinstance(obstime, Time):  # convert to astropy Time if needed
             obstime = Time(obstime)
 
-    elongation_arr =[]
-    beta_arr =[]
+    ra_arr, dec_arr = list(zip(*target_coords))
+    # print(list(zip(*target_coords)))
 
-    for coord in target_coords:
-        ra_deg, dec_deg = coord
+    # Build a single SkyCoord with array inputs (fast)
+    target = SkyCoord(ra=ra_arr * u.deg, dec=dec_arr * u.deg, frame="icrs")
 
-        # Target in ICRS
-        target = SkyCoord(ra=ra_deg*u.deg, dec=dec_deg*u.deg, frame="icrs")
-        # Sun position at obstime
-        sun_icrs = get_sun(obstime)
+    # Get Sun once (vectorized if obstime is array, but here we assume single time)
+    sun_icrs = get_sun(obstime)
 
-        # Convert both to true ecliptic coordinates
-        target_ecl = target.barycentrictrueecliptic
-        sun_ecl = sun_icrs.barycentrictrueecliptic
+    # Transform both to ecliptic frame (vectorized)
+    target_ecl = target.barycentrictrueecliptic
+    sun_ecl = sun_icrs.barycentrictrueecliptic
 
-        # Longitude difference (wrap to [0, 180])
-        delta_lon = abs((target_ecl.lon - sun_ecl.lon).wrap_at(180*u.deg))
-        elongation = delta_lon.deg
-        # Ecliptic latitude of target
-        beta = abs(target_ecl.lat.deg)
+    # Compute longitude difference and wrap to [0,180]
+    # astropy Angle arithmetic is vectorized; result .deg yields numpy array
+    delta_lon = np.abs((target_ecl.lon - sun_ecl.lon).wrap_at(180 * u.deg).deg)
+    beta = np.abs(target_ecl.lat.deg)
 
-        elongation_arr.append(elongation)
-        beta_arr.append(beta)
+    return np.asarray(delta_lon), np.asarray(beta)
+    # elongation_arr =[]
+    # beta_arr =[]
+    # for coord in target_coords:
+    #     ra_deg, dec_deg = coord
 
-    return elongation_arr, beta_arr
+    #     # Target in ICRS
+    #     target = SkyCoord(ra=ra_deg*u.deg, dec=dec_deg*u.deg, frame="icrs")
+    #     # Sun position at obstime
+    #     sun_icrs = get_sun(obstime)
+
+    #     # Convert both to true ecliptic coordinates
+    #     target_ecl = target.barycentrictrueecliptic
+    #     sun_ecl = sun_icrs.barycentrictrueecliptic
+
+    #     # Longitude difference (wrap to [0, 180])
+    #     delta_lon = abs((target_ecl.lon - sun_ecl.lon).wrap_at(180*u.deg))
+    #     elongation = delta_lon.deg
+    #     # Ecliptic latitude of target
+    #     beta = abs(target_ecl.lat.deg)
+
+    #     elongation_arr.append(elongation)
+    #     beta_arr.append(beta)
+
+    # return elongation_arr, beta_arr
 
 
 def read_zodiacal_spectrum(spec_file):
@@ -201,18 +220,31 @@ def scale_zodiacal_spectrum(zod_dist, table_ecl, table_beta, sol_wavelengths, so
 
 
 def get_zodiacal_in_FOV( data, time_arr ):
-    print('Calculating Zodiacal UV in the FOV.')
+    """
+    Calculate zodiacal spectra for points inside each frame and report timing.
+    Args:
+        data (list): Frame celestial data list.
+        time_arr (list or astropy.time.Time): Observation times aligned with frames.
+    Returns:
+        zodiacal_data (list): list of points_with_spectrum per frame.
+        zod_wavelengths (np.ndarray): wavelengths returned by scale_zodiacal_spectrum.
+    """
+    print('\nCalculating Zodiacal UV in the FOV (timed).')
 
+    # print('Calculating Zodiacal UV in the FOV.')
+
+    # Read the Parameter file to get Data file locations
     spec_file, Zod_dist_file, _, _ = read_parameter_file()
     
     # Read the Solar Spectra File
     wavelength, flux = read_zodiacal_spectrum(spec_file)
+
     # Read the Zodiacal light Distribution table
     zod_array, table_lon, table_lat = read_zodiacal_distribution(Zod_dist_file)
-    # print(f'helio ecl lon grid: {table_lon}')
-    # print(f'helio beta lat grid: {table_lat}')
 
     zodiacal_data = []
+
+    t0 = time.perf_counter()
     for f in range(len(data)):    # f represents frame number
         _, _, frame_corner = zip(data[f])
         frame_corner= frame_corner[0]
@@ -234,11 +266,15 @@ def get_zodiacal_in_FOV( data, time_arr ):
 
         # Calculate the elongation and beta angle for each mesh point
         elong_arr, beta_arr = pointing_geometry(filtered_points, time_arr[f])
+
         # Calculate the Zodiacal spectra for each point
         scaled_spectrum, zod_wavelengths = scale_zodiacal_spectrum(zod_array, table_lon, table_lat, wavelength, flux, elong_arr, beta_arr)
 
         points_with_spectrum = [(ra, dec, s) for (ra, dec), s in zip(filtered_points, scaled_spectrum)]
         zodiacal_data.append(points_with_spectrum)
+
+    t1 = time.perf_counter()
+    print(f"total time to calculate zodiacal: {t1 - t0}, per frame: {(t1-t0)/len(data)}")
 
     return zodiacal_data, zod_wavelengths
 

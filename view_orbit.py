@@ -319,7 +319,6 @@ def main():
     if zodiacal_bg == 'True':
         # print('Zodiacal Background not included in the simulation yet')
         zodiacal_data, zod_wavelengths = get_zodiacal_in_FOV(celestial_data, time_arr)
-        # print( zodiacal_data[0], zodiacal_data[0][0], zodiacal_data[0][0][0],zodiacal_data[0][0][1] , zodiacal_data[0][0][2] )
     else: 
         zodiacal_data = [0]
         zod_wavelengths = [0]
