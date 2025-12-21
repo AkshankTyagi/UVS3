@@ -75,7 +75,19 @@ def read_components(filename= params_file, param_set = 'Params_2'):
     save_data = config.get(param_set, 'Save_data')
     diffused_bg = config.get(param_set, 'diffused_bg')  
     zodiacal_bg = config.get(param_set, 'zodiacal_bg')
-    return diffused_bg, zodiacal_bg, save_data
+    stare_mode = config.get(param_set, 'Staring_mode')
+
+    return stare_mode, diffused_bg, zodiacal_bg, save_data
+
+def read_stare_params(filename= params_file, param_set = 'Params_1'):
+    config = ConfigParser()
+    config.read(filename)
+    staring_RA = float(config.get(param_set, 'staring RA'))
+    staring_Dec = float(config.get(param_set, 'staring Dec'))
+    staring_time = float(config.get(param_set, 'staring_time'))
+    trigger_radius = float(config.get(param_set, 'trigger_radius'))
+    return staring_RA, staring_Dec, staring_time, trigger_radius
+
 
 # get satellite TLE data from the TLE file
 def read_satellite_TLE(filename= sat_file, sat_name = 'ISS'):
@@ -196,13 +208,31 @@ def propagate(sat, time_start, time_end, dt, theta):
     return time_arr, state_vectors, celestial_coordinates
 
 # get list of star data in view along with satellite state_vectors
-def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignment, roll=False):
+def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignment, roll=False, stare_mode=False):
     
     print('Calculating Satellite State Vectors and Objects in the FOV.')
+
+    # if stare mode on, read stare parameters
+    if stare_mode == 'True':
+        stare_RA, stare_Dec, stare_time, trigger_radius = read_stare_params()
+        stare_vec = np.array(conv_eq_to_cart(stare_RA, stare_Dec, 1))
+        print(f'Staring Mode ON: RA* = {stare_RA} deg, Dec* = {stare_Dec} deg, duration = {stare_time} sec')
+    else:
+        print('Staring Mode OFF')
+
     # state_vectors, celestial_coordinates
     tr, sc, cc = propagate(sat, start_time, sim_secs, time_step, theta)
     # parse celestial_coordinates
     ra, dec, angle_to_normal = cc
+
+    b_vec = np.vstack(conv_eq_to_cart(ra, dec, 1)).T
+
+    # if stare mode on, find frames where staring is to be done
+    mask = np.dot(b_vec, stare_vec) >= np.cos(np.deg2rad(trigger_radius))
+    if np.any(mask):
+        print("Stare opportunity exists in this simulation window")
+        first_idx = np.argmax(mask)
+        print(f'First Stare Frame at index: {first_idx}, Time: {tr[first_idx].datetime}, RA: {ra[first_idx]}, Dec: {dec[first_idx]}')
 
     # [TESTING] Roll about velocity direction 
     if roll:
@@ -304,11 +334,13 @@ def main():
     start = Time.now()          
     print(f"Start time of Simulation (UTC): {start}\n------------------")
 
+    # Read components to include in simulation
+    stare_mode, diffused_bg, zodiacal_bg, save_data = read_components()
+
     # times, state_vectors, celestial_coordinates
-    time_arr, state_vectors, celestial_data, sol_position = get_simulation_data(satellite, df, start, t_period, t_slice, theta, allignment, roll)
+    time_arr, state_vectors, celestial_data, sol_position = get_simulation_data(satellite, df, start, t_period, t_slice, theta, allignment, roll, stare_mode)
     Spectra = GET_SPECTRA(castelli_dir, celestial_data)
 
-    diffused_bg, zodiacal_bg, save_data = read_components()
 
     if diffused_bg == 'True':
         diffused_data, diffused_wavelengths = get_diffused_in_FOV(celestial_data)

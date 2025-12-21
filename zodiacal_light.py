@@ -28,8 +28,10 @@ def read_parameter_file(filename= params_file):
     Zod_dist_file = config.get(file_loc_set, 'Zod_dist_table')
     min_lim = float(config.get(param_set, 'limit_min'))
     max_lim = float(config.get(param_set, 'limit_max'))
+    FOV_height = float(config.get(param_set, 'height'))
+    FOV_width = float(config.get(param_set, 'width'))
 
-    return Sol_spec_file,Zod_dist_file, min_lim, max_lim
+    return Sol_spec_file,Zod_dist_file, min_lim, max_lim, FOV_height, FOV_width
 
 
 def pointing_geometry(target_coords, obstime):
@@ -177,7 +179,7 @@ def scale_zodiacal_spectrum(zod_dist, table_ecl, table_beta, sol_wavelengths, so
     Returns:
         np.ndarray: Scaled zodiacal light spectrum.
     """
-    _, _, wave_min , wave_max = read_parameter_file()
+    _, _, wave_min , wave_max, _, _ = read_parameter_file()
     low_lim = index_greater_than(sol_wavelengths, wave_min)
     high_lim = index_greater_than(sol_wavelengths, wave_max)
 
@@ -233,7 +235,7 @@ def get_zodiacal_in_FOV( data, time_arr ):
     print('Calculating Zodiacal UV in the FOV.')
 
     # Read the Parameter file to get Data file locations
-    spec_file, Zod_dist_file, _, _ = read_parameter_file()
+    spec_file, Zod_dist_file, _, _, FOV_height, FOV_width = read_parameter_file()
     
     # Read the Solar Spectra File
     wavelength, flux = read_zodiacal_spectrum(spec_file)
@@ -250,9 +252,15 @@ def get_zodiacal_in_FOV( data, time_arr ):
         xmin, ymin = frame_corner.min(axis=0)
         xmax, ymax = frame_corner.max(axis=0)
 
+        if FOV_height > 5 or FOV_width > 5:
+            binsize = max(FOV_height, FOV_width)/20  # larger FOVs get coarser bins
+            # print(f"Using binsize: {binsize} deg for Zodiacal in FOV {FOV_width}x{FOV_height} deg")
+        else:
+            binsize = 0.2
+
         # Create arrays with 0.2 degree spacing
-        x_arr = np.arange(xmin, xmax + 0.2, 0.2)  # include xmax
-        y_arr = np.arange(ymin, ymax + 0.2, 0.2)  # include ymax
+        x_arr = np.arange(xmin, xmax + binsize, binsize)  # include xmax
+        y_arr = np.arange(ymin, ymax + binsize, binsize)  # include ymax
         X, Y = np.meshgrid(x_arr, y_arr)
 
         # Now, use is_point_in_polygon to keep only the points inside the rotated FOV

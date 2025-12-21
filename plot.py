@@ -87,6 +87,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         size = 1.02
         limit = max(max(X), max(Y), max(Z))
         limit_low = min(min(X), min(Y), min(Z))
+        # print(f"X: {X[0]}, Y: {Y[0]}, Z: {Z[0]}, limit: {limit}, limit_low: {limit_low}")
         ax.set_xlim(size*limit, -size*limit)
         ax.set_ylim(size*limit, -size*limit)
         ax.set_zlim(size*limit, -size*limit) 
@@ -106,7 +107,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         orbit = ax.plot(X[0], Y[0], Z[0], linewidth=0.9, linestyle='-.', c='k')[0]
 
 
-        distance = 10000
+        distance = max(10000, size*limit)
         if solar_marker == "True":
             sun_ra, sun_dec = sol_position["sun"][0]
             solar_sv = conv_eq_to_cart(sun_ra*15, sun_dec, 1)
@@ -233,25 +234,36 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
 
         #Scatter plot for Diffused light
         diffused = []
+        zod_data , zod_wavelengths = zodiacal_data
 
-        if diffused_data != [0] or zodiacal_data != [0]:
-            zod_data , zod_wavelengths = zodiacal_data
-            wave_index = np.searchsorted(zod_wavelengths, BG_wavelength[-1], side='right') - 1
-            wave_index = np.clip(wave_index, 0, len(zod_wavelengths)-1)
+        if diffused_data != [0] or zod_data != [0]:
+
             colours = ['blue', 'purple']
-            loc_ra, loc_dec = random_scatter_data(diffused_data[f'{BG_wavelength[-1]}'][0])
-            loc_ra_zod, loc_dec_zod = random_scatter_zodiacal_data(zod_data[0], wave_index)
-            zodiacal_wave = ax.scatter(loc_ra_zod, loc_dec_zod, s= 0.04, alpha= a, facecolors=colours[1], label = 'Zodiacal UV')
-            diffused_wave = ax.scatter(loc_ra, loc_dec, s= 0.04, alpha= a, facecolors=colours[0], label = 'UV ISRF')
-            diffused.append(diffused_wave)
-            diffused.append(zodiacal_wave)
+
+            if zod_data != [0]:
+                wave_index = np.searchsorted(zod_wavelengths, BG_wavelength[-1], side='right') - 1
+                wave_index = np.clip(wave_index, 0, len(zod_wavelengths)-1)
+                loc_ra_zod, loc_dec_zod = random_scatter_zodiacal_data(zod_data[0], wave_index)
+                zodiacal_wave = ax.scatter(loc_ra_zod, loc_dec_zod, s= 0.04, alpha= a, facecolors=colours[1], label = 'Zodiacal UV')
+                diffused.append(zodiacal_wave)
+
+            if diffused_data != [0]:
+                loc_ra, loc_dec = random_scatter_data(diffused_data[f'{BG_wavelength[-1]}'][0])
+                diffused_wave = ax.scatter(loc_ra, loc_dec, s= 0.04, alpha= a, facecolors=colours[0], label = 'UV ISRF')
+                diffused.append(diffused_wave)
+
+            print(f"Diffused Data: {diffused_data}, {type(diffused_data)},  Zodiacal Data: {zodiacal_data}, {type(zodiacal_data)}")
 
             info_diffused = ''
             for wavelength in BG_wavelength:
                 wave_index = np.searchsorted(zod_wavelengths, wavelength, side='right') - 1
                 wave_index = np.clip(wave_index, 0, len(zod_wavelengths)-1)
-
-                info_line =f"{wavelength} $\\AA$ : {round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][0])*fOV_area, 3)}  |  {round(calc_total_zodiacal_flux(zod_data[0], wave_index)*fOV_area, 3)}\n"
+                if diffused_data != [0] and zod_data != [0]:
+                    info_line =f"{wavelength} $\\AA$ : {round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][0])*fOV_area, 3)}  |  {round(calc_total_zodiacal_flux(zod_data[0], wave_index)*fOV_area, 3)}\n"
+                elif diffused_data != [0] and zod_data == [0]:
+                    info_line =f"{wavelength} $\\AA$ : {round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][0])*fOV_area, 3)}  | ---- \n"
+                elif diffused_data == [0] and zod_data != [0]:
+                    info_line =f"{wavelength} $\\AA$ : ----  |  {round(calc_total_zodiacal_flux(zod_data[0], wave_index)*fOV_area, 3)}\n"
                 info_diffused += info_line
 
             info_text = f"Total Diffused UV Background in FOV \n  $\\lambda$   : ISRF  |  Zod  (# Photons-s\u207B\u00B9cm\u207B\u00B2$\\AA$\u207B\u00B9)\n{info_diffused}"
@@ -282,32 +294,35 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         global phots
         zod_data , zod_wavelengths = zodiacal_data
         
-        # Create a twin Axes sharing the x-axis
         ax_r = ax.twinx() 
+        if diffused_data != [0] and zod_data != [0]:
+        # Create a twin Axes sharing the x-axis
+            ax_r.set_zorder(1)
+            ax_r.patch.set_visible(False)  # make right axis patch transparent too
+            # Calculate the diffused ISRF spectra
+            if diffused_data != [0]:
+                diffused_isrf = []
+                fOV_area = np.radians(height) * np.radians(width)
+                for wavelength in BG_wavelength:
+                    flux = round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][0])*fOV_area, 3)
+                    diffused_isrf.append(flux)
+                # Call the plotting function for background spectra (Diffuse/Zodiacal)
+                ax_r.plot(BG_wavelength, diffused_isrf, marker='o', color='grey', label='Diffused UV ISRF')
+
+            if zod_data != [0]:
+                # Calculate the zodiacal light spectra
+                zodiacal_spectra = np.round(calc_total_zodiacal_flux(zod_data[0])*fOV_area, 3)
+                ax_r.plot(zod_wavelengths, zodiacal_spectra, color='black', label='Zodiacal UV')
+            
+            ax_r.set_ylabel(r'Diffused Background Photons (s\u207B\u00B9 cm\u207B\u00B2 $\AA$\u207B\u00B9)')
+            ax_r.yaxis.set_label_position("right")
+            lines2, labels2 = ax_r.get_legend_handles_labels()
+        else:
+            lines2, labels2 = [], []
 
         # Put left axis on top of right axis
         ax.set_zorder(2)      # draw ax after ax_r
         ax.patch.set_visible(False)   # make ax background transparent so ax_r grid/labels don't hide it
-
-        ax_r.set_zorder(1)
-        ax_r.patch.set_visible(False)  # make right axis patch transparent too
-
-        # Calculate the diffused ISRF spectra
-        diffused_isrf = []
-        fOV_area = np.radians(height) * np.radians(width)
-        for wavelength in BG_wavelength:
-            flux = round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][0])*fOV_area, 3)
-            diffused_isrf.append(flux)
-
-        # Calculate the zodiacal light spectra
-        zodiacal_spectra = np.round(calc_total_zodiacal_flux(zod_data[0])*fOV_area, 3)
-
-        # Call the plotting function for background spectra (Diffuse/Zodiacal)
-        ax_r.plot(BG_wavelength, diffused_isrf, marker='o', color='grey', label='Diffused UV ISRF')
-        ax_r.plot(zod_wavelengths, zodiacal_spectra, color='black', label='Zodiacal UV')
-        
-        ax_r.set_ylabel(r'Diffused Background Photons (s\u207B\u00B9 cm\u207B\u00B2 $\AA$\u207B\u00B9)')
-        ax_r.yaxis.set_label_position("right")
 
         # set  up the Stellar SED plot
         # set labels
@@ -334,7 +349,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         
         # Combine legends from both axes
         lines1, labels1 = ax.get_legend_handles_labels()
-        lines2, labels2 = ax_r.get_legend_handles_labels()
+
         # if len(ra)<=10:
         ax.legend(lines1 + lines2, labels1 + labels2, loc='upper left', bbox_to_anchor=(-0.4, 1.15), markerscale=0.5)
 
@@ -465,31 +480,49 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         fOV_area = np.radians(height) * np.radians(width)
         a =  0.1#* 1/height * 1/width  #alpha value for scatter plot
 
-        if diffused_data != [0] or zodiacal_data != [0]:
-            zod_data , zod_wavelengths = zodiacal_data
-            wave_index = np.searchsorted(zod_wavelengths, BG_wavelength[-1], side='right') - 1
-            wave_index = np.clip(wave_index, 0, len(zod_wavelengths)-1)
+        zod_data , zod_wavelengths = zodiacal_data
 
+
+        if diffused_data != [0] or zod_data != [0]:
+            
             colours = ['blue', 'purple']
-            loc_ra, loc_dec = random_scatter_data(diffused_data[f'{BG_wavelength[-1]}'][i])
-            loc_ra_zod, loc_dec_zod = random_scatter_zodiacal_data(zod_data[i], wave_index)
-            zodiacal_wave = ax3.scatter(loc_ra_zod, loc_dec_zod, s= 0.04, alpha= a, facecolors=colours[1], label = 'Zodiacal UV')
-            diffused_wave = ax3.scatter(loc_ra, loc_dec, s= 0.04, alpha= a, facecolors=colours[0], label = 'UV ISRF') 
-            diffused.append(diffused_wave)
-            diffused.append(zodiacal_wave)
+            if zod_data != [0]:
+                wave_index = np.searchsorted(zod_wavelengths, BG_wavelength[-1], side='right') - 1
+                wave_index = np.clip(wave_index, 0, len(zod_wavelengths)-1)
+                loc_ra_zod, loc_dec_zod = random_scatter_zodiacal_data(zod_data[i], wave_index)
+                zodiacal_wave = ax3.scatter(loc_ra_zod, loc_dec_zod, s= 0.04, alpha= a, facecolors=colours[1], label = 'Zodiacal UV')
+                diffused.append(zodiacal_wave)
+
+            if diffused_data != [0]:
+                loc_ra, loc_dec = random_scatter_data(diffused_data[f'{BG_wavelength[-1]}'][i])
+                diffused_wave = ax3.scatter(loc_ra, loc_dec, s= 0.04, alpha= a, facecolors=colours[0], label = 'UV ISRF')
+                diffused.append(diffused_wave)
+
 
             info_diffused = ''
+            diffused_isrf = []
+            fOV_area = np.radians(height) * np.radians(width)
+
             for wavelength in BG_wavelength:
                 wave_index = np.searchsorted(zod_wavelengths, wavelength, side='right') - 1
-                wave_index =np.clip(wave_index, 0, len(zod_wavelengths)-1)
+                wave_index = np.clip(wave_index, 0, len(zod_wavelengths)-1)
+                if diffused_data != [0] and zod_data != [0]:
+                    info_line =f"{wavelength} $\\AA$ : {round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][i])*fOV_area, 3)}  |  {round(calc_total_zodiacal_flux(zod_data[i], wave_index)*fOV_area, 3)}\n"
+                    flux = round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][i])*fOV_area, 3)
+                    diffused_isrf.append(flux)
 
-                zod_tot = calc_total_zodiacal_flux(zod_data[i], wave_index)
-                info_line =f"{wavelength} $\\AA$: {round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][i])*fOV_area, 3)}  |  {round(zod_tot*fOV_area, 3)}\n"
+                elif diffused_data != [0] and zod_data == [0]:
+                    info_line =f"{wavelength} $\\AA$ : {round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][i])*fOV_area, 3)}  | ---- \n"
+                    flux = round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][i])*fOV_area, 3)
+                    diffused_isrf.append(flux)
+
+                elif diffused_data == [0] and zod_data != [0]:
+                    info_line =f"{wavelength} $\\AA$ : ----  |  {round(calc_total_zodiacal_flux(zod_data[i], wave_index)*fOV_area, 3)}\n"
+
                 info_diffused += info_line
 
             info_text = f"Total Diffused UV Background in FOV \n  $\\lambda$   :   ISRF  |  Zod  (# Photons- s\u207B\u00B9cm\u207B\u00B2$\\AA$\u207B\u00B9)\n{info_diffused}"
             ax3.text(1.1, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
-            # print(info_text)
         else:
             info_text = 'Diffused Background Not included'
             ax3.text(1.1, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
@@ -513,29 +546,31 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         ax3.set_ylim(Size[1], Size[3])    
         
         # setting up the number of photons vs wavelength plot first the Diffused UV axis
-        ax_r.clear()
         ax4.clear()
+       
+        if diffused_data != [0] or zod_data != [0]:
+            ax_r.clear()
+            ax_r.set_zorder(1)
+            ax_r.patch.set_visible(False)  # make right axis patch transparent too
+
+            # Calculate the zodiacal light spectra
+            if zod_data != [0]:
+                zodiacal_spectra = np.round(calc_total_zodiacal_flux(zod_data[i])*fOV_area, 3)
+                ax_r.plot(zod_wavelengths, zodiacal_spectra, color='black', label='Zodiacal UV')
+
+            # Call the plotting function for background spectra (Diffuse/Zodiacal)
+            if diffused_data != [0]:
+                ax_r.plot(BG_wavelength, diffused_isrf, marker='o', color='grey', label='Diffused UV ISRF')
+
+            ax_r.set_ylabel('Diffused Background Photons (s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9)')
+            ax_r.yaxis.set_label_position("right")
+            lines2, labels2 = ax_r.get_legend_handles_labels()
+        else:
+            lines2, labels2 = [], []
+
         # Put left axis on top of right axis
         ax4.set_zorder(2)      # draw ax after ax_r
         ax4.patch.set_visible(False)   # make ax background transparent so ax_r grid/labels don't hide it
-        ax_r.set_zorder(1)
-        ax_r.patch.set_visible(False)  # make right axis patch transparent too
-
-        # Calculate the diffused ISRF spectra
-        diffused_isrf = []
-        fOV_area = np.radians(height) * np.radians(width)
-        for wavelength in BG_wavelength:
-            flux = round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][i])*fOV_area, 3)
-            diffused_isrf.append(flux)
-
-        # Calculate the zodiacal light spectra
-        zodiacal_spectra = np.round(calc_total_zodiacal_flux(zod_data[i])*fOV_area, 3)
-
-        # Call the plotting function for background spectra (Diffuse/Zodiacal)
-        ax_r.plot(BG_wavelength, diffused_isrf, marker='o', color='grey', label='Diffused UV ISRF')
-        ax_r.plot(zod_wavelengths, zodiacal_spectra, color='black', label='Zodiacal UV')
-        ax_r.set_ylabel('Diffused Background Photons (s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9)')
-        ax_r.yaxis.set_label_position("right")
 
         # setting up the number of photons vs wavelength plot for stars
         ax4.set_xlabel(r'Wavelength ($\AA$)')
@@ -563,7 +598,6 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         
         # Combine legends from both axes
         lines1, labels1 = ax4.get_legend_handles_labels()
-        lines2, labels2 = ax_r.get_legend_handles_labels()
 
         # if len(ra)<=10:
         ax4.legend(lines1 + lines2, labels1 + labels2, loc='upper left', bbox_to_anchor=(-0.4, 1.15), markerscale=0.5)
