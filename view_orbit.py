@@ -234,7 +234,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
         first_idx = np.argmax(mask)
         n_frames_stare = int(stare_time / time_step)
         print(f'STARE MODE Frames-  {first_idx+1} : {first_idx+n_frames_stare+1},\n')
-        for i in range(n_frames_stare):
+        for i in range(n_frames_stare+1):
             idx = first_idx + i
             if idx < len(ra):
                 ra[idx] = stare_RA
@@ -262,7 +262,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
         # print (frame, tdf_values) # print(frame, frame_boundary) # print(f"Frame {frame+1} has {len(tdf_values)} stars, and frame corners = {frame_boundary}")
         tdf_values, frame_boundary = filter_by_fov(df, r, d, chi_angle) 
         tdf_values = tdf_values.values.tolist()
-        if frame>=first_idx and frame<= first_idx + n_frames_stare:
+        if frame>= first_idx and frame <= first_idx + n_frames_stare:
             frame = f"{frame}*"
         else:
             frame = f"{frame}"

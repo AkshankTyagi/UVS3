@@ -51,7 +51,7 @@ config['Params_1'] = {
     # Staring Mode parameters
     'staring RA' : 22, # in degrees
     'staring Dec' : 35, # in degrees 
-    'staring_time' : 1600, # in seconds (default 0)
+    'staring_time' : 350, # in seconds (default 0)
     'trigger_radius' : 70, # distance from the general FOV to trigger stare in degrees
 
     # Spectrum Parameters (UV Band Wavelengths in Angstroms)
