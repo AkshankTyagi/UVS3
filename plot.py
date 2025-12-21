@@ -28,15 +28,15 @@ def read_parameter_file(filename= params_file):
 
     config = ConfigParser()
     config.read(filename)
-    global sat_name, Interval, spectra_width, BG_wavelength, height, width, allignment
+    global sat_name, Interval, spectra_width, BG_wavelength, FOV_height, FOV_width, allignment
     
     sat_name = config.get(param_set, 'sat_name')
     allignment = config.get(param_set, 'allignment_with_orbit')
     azm = float(config.get(param_set, 'azm'))
     ele = float(config.get(param_set, 'ele'))
     Interval = float(config.get(param_set, 'interval_bw_Frames'))
-    height = float(config.get(param_set, 'height'))
-    width = float(config.get(param_set, 'width'))
+    FOV_height = float(config.get(param_set, 'height'))
+    FOV_width = float(config.get(param_set, 'width'))
     spectra_width = float(config.get(param_set, 'longitudinal_spectral_width'))
     BG_wavelength = config.get(param_set, 'BG_wavelength')
     BG_wavelength  = [int(val) for val in BG_wavelength[1:-1].split(',')]
@@ -229,8 +229,8 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # set axis limits
         ax.set_xlim(Size[0], Size[2])
         ax.set_ylim(Size[1], Size[3])  
-        fOV_area = np.radians(height) * np.radians(width)
-        a =  0.1* 1/height * 1/width  #alpha value for scatter plot
+        fOV_area = np.radians(FOV_height) * np.radians(FOV_width)
+        a =  0.1 #* 1/FOV_height * 1/FOV_width  #alpha value for scatter plot
 
         #Scatter plot for Diffused light
         diffused = []
@@ -252,7 +252,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
                 diffused_wave = ax.scatter(loc_ra, loc_dec, s= 0.04, alpha= a, facecolors=colours[0], label = 'UV ISRF')
                 diffused.append(diffused_wave)
 
-            print(f"Diffused Data: {diffused_data}, {type(diffused_data)},  Zodiacal Data: {zodiacal_data}, {type(zodiacal_data)}")
+            # print(f"Diffused Data: {diffused_data}, {type(diffused_data)},  Zodiacal Data: {zodiacal_data}, {type(zodiacal_data)}")
 
             info_diffused = ''
             for wavelength in BG_wavelength:
@@ -283,7 +283,9 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         if allignment != 'False':
             ax.plot(corners[:, 0], corners[:, 1], 'grey', linestyle='--', linewidth = 0.5, label = 'FOV boundary')
             ax.plot([corners[0, 0], corners[3, 0]], [corners[0, 1], corners[3, 1]], 'grey', linestyle='--', linewidth = 0.5)
-            ax.set_aspect(2*(Size[2] - Size[0]) / (Size[3] - Size[1]))
+            ax.autoscale(False)
+            ax.set_aspect('equal', adjustable='box')
+
         # background_flux = get_flux_ipixel(diffused_BG_wavelength, Size)
         ax.legend(loc='center left', bbox_to_anchor=(1, -0.04), fontsize='small', markerscale=15)
         # return
@@ -302,7 +304,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             # Calculate the diffused ISRF spectra
             if diffused_data != [0]:
                 diffused_isrf = []
-                fOV_area = np.radians(height) * np.radians(width)
+                fOV_area = np.radians(FOV_height) * np.radians(FOV_width)
                 for wavelength in BG_wavelength:
                     flux = round(calc_total_diffused_flux(diffused_data[f'{wavelength}'][0])*fOV_area, 3)
                     diffused_isrf.append(flux)
@@ -472,13 +474,21 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         ax3.clear()
         # get frame data. pos[ra, dec], size
         P, S, corners, Size = get_cles_data_by_frame(i, celestial_coordinates)
+
+        # plot for FOV boundary
+        if allignment!= 'False':
+            ax3.set_aspect('equal')
+            ax3.plot(corners[:, 0], corners[:, 1], 'grey', linestyle='--', linewidth = 0.5, label = 'FOV boundary')
+            ax3.plot([corners[0, 0], corners[3, 0]], [corners[0, 1], corners[3, 1]], 'grey', linestyle='--', linewidth = 0.5)
+
         # set labels
         ax3.set_xlabel(r'Right Ascension $^\circ$')
         ax3.set_ylabel(r'Declination $^\circ$')
+
         #Scatter plot for Diffused light
         diffused = []
-        fOV_area = np.radians(height) * np.radians(width)
-        a =  0.1#* 1/height * 1/width  #alpha value for scatter plot
+        fOV_area = np.radians(FOV_height) * np.radians(FOV_width)
+        a =  0.1#* 1/FOV_height * 1/FOV_width  #alpha value for scatter plot
 
         zod_data , zod_wavelengths = zodiacal_data
 
@@ -501,7 +511,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
 
             info_diffused = ''
             diffused_isrf = []
-            fOV_area = np.radians(height) * np.radians(width)
+            fOV_area = np.radians(FOV_height) * np.radians(FOV_width)
 
             for wavelength in BG_wavelength:
                 wave_index = np.searchsorted(zod_wavelengths, wavelength, side='right') - 1
@@ -532,12 +542,6 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             sky = ax3.scatter(P[0], P[1], s=S[0], facecolors='White')
         else:
             sky = ax3.scatter(P[:,0], P[:,1], s=S, facecolors='white')
-        
-        # plot for FOV boundary
-        if allignment!= 'False':
-            ax3.plot(corners[:, 0], corners[:, 1], 'grey', linestyle='--', linewidth = 0.5, label = 'FOV boundary')
-            ax3.plot([corners[0, 0], corners[3, 0]], [corners[0, 1], corners[3, 1]], 'grey', linestyle='--', linewidth = 0.5)
-            ax3.set_aspect(2*(Size[2] - Size[0]) / (Size[3] - Size[1]))
 
         ax3.legend(loc='center left', bbox_to_anchor=(1.0, -0.04), fontsize='small', markerscale=15)
 
@@ -823,7 +827,7 @@ def get_max_photon(photons_data):
 # make star spectra graph data from photons data
 def get_color_data(data, wavelength, photons_data, dec, min_dec):
     spectra_width 
-    width = spectra_width * height/3
+    width = spectra_width * FOV_height/3
     star_row =[]
     for decli in dec:
         star_row.append(int(((decli) - min_dec)*100))

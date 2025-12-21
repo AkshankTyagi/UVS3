@@ -285,7 +285,7 @@ def write_to_csv(data, diffused_ISRF_data, zod_data, sol_positions, sat_name, st
                 diffused_summary = [f"{wl}: {calc_total_diffused_flux(diffused_data[str(wl)][i]):.4f}" for wl in diffused_wavelengths]
                 csv_writer.writerow([frame+1, "Diffused UV ISRF in frame (Total_photons):", "      ", *diffused_summary])
 
-            if zod_data != [0]: # zodiacal UV present in the frame
+            if zodiacal_data != [0]: # zodiacal UV present in the frame
                 tot_flux = calc_total_zodiacal_flux(zodiacal_data[i])
                 zod_summary = [f"{wl}: {tot_flux[j]:.4f}" for j, wl in enumerate(zod_wavelengths)]
                 csv_writer.writerow([frame+1, "Zodiacal UV in frame (Total_photons):", "      ", *zod_summary])

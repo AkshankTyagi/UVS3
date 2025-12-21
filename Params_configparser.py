@@ -42,7 +42,7 @@ config['Params_1'] = {
     'width': 10, # 0.5 (shorter) width
     'height': 10, # 1 (longer) height
     'starmag_min_threshold' : 0, #threshold for what bright stars we want to avoid
-    'starmag_max_threshold' : 1, #threshold for what maximum apaarent magnitude stars we want/can to look at
+    'starmag_max_threshold' : 3, #threshold for what maximum apaarent magnitude stars we want/can to look at
 
     # Direction of Detector from the velocity of Satellite 
     'allignment_with_orbit' : 90, # gives angle of longer side of slit (height) with the ORBITAL PLANE from 0 to 90 degrees or False, (default 90)
@@ -72,7 +72,7 @@ config['Params_2'] = {
     'moon':  True,
     'galactic_plane': True,
     'diffused_bg': False,
-    'zodiacal_bg': True, #True
+    'zodiacal_bg': False, #True
     'Spectra': False,
     'fix_start': False,
     'Staring_mode': True, #True
