@@ -28,7 +28,7 @@ def read_parameter_file(filename= params_file):
 
     config = ConfigParser()
     config.read(filename)
-    global sat_name, Interval, spectra_width, BG_wavelength, FOV_height, FOV_width, allignment
+    global sat_name, Interval, spectra_width, BG_wavelength, FOV_height, FOV_width, allignment, Stare_RA, Stare_Dec
     
     sat_name = config.get(param_set, 'sat_name')
     allignment = config.get(param_set, 'allignment_with_orbit')
@@ -40,6 +40,8 @@ def read_parameter_file(filename= params_file):
     spectra_width = float(config.get(param_set, 'longitudinal_spectral_width'))
     BG_wavelength = config.get(param_set, 'BG_wavelength')
     BG_wavelength  = [int(val) for val in BG_wavelength[1:-1].split(',')]
+    Stare_RA = float(config.get(param_set, 'staring RA'))
+    Stare_Dec = float(config.get(param_set, 'staring Dec'))
 
     return azm, ele
 
@@ -224,7 +226,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         ax.set_title('Sky view in the direction of Instrument FOV')
         
         # get initial frame celestial_coordinates data 
-        P, S, corners, Size = get_cles_data_by_frame(0, celestial_coordinates) 
+        P, S, corners, Size, stare = get_cles_data_by_frame(0, celestial_coordinates) 
 
         # set axis limits
         ax.set_xlim(Size[0], Size[2])
@@ -272,7 +274,11 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         else:
             info_text = 'Diffused UV Background\nNot included'
             text = ax.text(1.1, 0.6, info_text, transform=ax.transAxes, fontsize=7.5, va='center')
-    
+
+        if stare == True:
+            Stare_info = f"-- Stationery Frame --\n RA: {Stare_RA:.3f}°, Dec: {Stare_Dec:.3f}°"
+            ax.text(1.1, 0.8, Stare_info, transform=ax.transAxes, fontsize=7.5, va='center')
+
         # Scatter plot for stars
         if (S[0] == 0.0001) : #no star in the FOV
             sky = ax.scatter(P[0], P[1], s=S[0], facecolors='White')
@@ -473,7 +479,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
 
         ax3.clear()
         # get frame data. pos[ra, dec], size
-        P, S, corners, Size = get_cles_data_by_frame(i, celestial_coordinates)
+        P, S, corners, Size, stare = get_cles_data_by_frame(i, celestial_coordinates)
 
         # plot for FOV boundary
         if allignment!= 'False':
@@ -512,7 +518,6 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             info_diffused = ''
             diffused_isrf = []
             fOV_area = np.radians(FOV_height) * np.radians(FOV_width)
-
             for wavelength in BG_wavelength:
                 wave_index = np.searchsorted(zod_wavelengths, wavelength, side='right') - 1
                 wave_index = np.clip(wave_index, 0, len(zod_wavelengths)-1)
@@ -532,10 +537,14 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
                 info_diffused += info_line
 
             info_text = f"Total Diffused UV Background in FOV \n  $\\lambda$   :   ISRF  |  Zod  (# Photons- s\u207B\u00B9cm\u207B\u00B2$\\AA$\u207B\u00B9)\n{info_diffused}"
-            ax3.text(1.1, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
+            ax3.text(1.1, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')       
         else:
             info_text = 'Diffused Background Not included'
             ax3.text(1.1, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')
+
+        if stare == True:
+            Stare_info = f"-- Stationery Frame --\n RA: {Stare_RA:.3f}°, Dec: {Stare_Dec:.3f}°"
+            ax3.text(1.1, 0.8, Stare_info, transform=ax3.transAxes, fontsize=7.5, va='center')
 
         # Scatter plot for stars
         if (S[0] == 0.0001) : #no star in the FOV
@@ -738,7 +747,13 @@ def get_cles_data_by_frame(i, data):
         # print(d)
         c = list(zip(*d))
         # print(d[0], c)
-        print('Frame',frame+1,'has', len(c[0]),'stars.' )
+        if frame[-1] =="*":
+            print('(Staring mode) Frame', int(frame[:-1])+1,'has', len(c[0]),'stars.' )
+            stare = True
+        else:
+            print('Frame', int(frame)+1,'has', len(c[0]),'stars.' )
+            stare = False
+
         # pack it
         #ra, dec, size = np.array(c[0]), np.array(c[1]), np.array(c[2])
         ra, dec, size = c[0], c[1], c[2]
@@ -758,12 +773,17 @@ def get_cles_data_by_frame(i, data):
             print( f"  Hipp number= {str(hip[0])}; Ra & Dec: {str(ra[0])} {str(dec[0])}; Johnson Mag= {str(mag[0])}; Trig Parallax= {str(parallax[0])}; E(B-V)= {str(B_V[0])}; Spectral_Type: {str(Spectral_type[0]).strip()};", end="\n")
 
         # return
-        return cles_pos, size,frame_corner, frame_boundary 
+        return cles_pos, size, frame_corner, frame_boundary, stare 
     else:
-        print('Frame',frame+1,'is EMPTY', end="\n")
+        if frame[-1] =="*":
+            print('(Staring mode) Frame', int(frame[:-1])+1,'is EMPTY', end="\n")
+            stare = True
+        else:
+            print('Frame',int(frame)+1,'is EMPTY', end="\n")
+            stare = False
         no_star = [0,0]
         zero_size =(0.0001,)
-        return no_star, zero_size, frame_corner, frame_boundary
+        return no_star, zero_size, frame_corner, frame_boundary, stare
 
 # get Spectral data of the stars for the given frame index 
 def get_spectral_data_by_frame(i, spectral_FOV):

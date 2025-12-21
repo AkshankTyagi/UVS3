@@ -34,21 +34,26 @@ read_parameter_file()
 def read_hipparcos_data(FILENAME = hipp_file):
     # Field H1: Hipparcos Catalogue (HIP) identifier
     # Field H5: V magnitude
-    # Fields H8–9:  The right ascension, α , and declination, δ (in degrees)    
+    # Field H32: B magnitude
+    # Fields H8–9:  The right ascension, α , and declination, δ (in degrees)   
+    # Field H11: Trigonometric parallax (in milliarcseconds)
+    # Field H38: E(B-V)  (in mag)
+    # Field H76: Spectral type 
     _, _, star_mag_min_threshold, star_mag_max_threshold = read_parameter_file()
     print (f'Stars apparent magnitude Threshold= {[star_mag_min_threshold, star_mag_max_threshold]}')
 
     try:
         df = pd.read_csv(FILENAME, header=None,
-                         sep = '|', skipinitialspace=True).iloc[:, [1, 5, 8, 9, 11, 38, 76]]
-        df.columns = ['hip', 'mag', 'ra_deg', 'de_deg', 'trig_parallax', 'E(B-V)', 'Spectral_type']
+                         sep = '|', skipinitialspace=True).iloc[:, [1, 32, 5, 8, 9, 11, 38, 76]]
+        df.columns = ['hip', 'B_mag', 'V_mag', 'ra_deg', 'de_deg', 'trig_parallax', 'E(B-V)', 'Spectral_type']
 
-        df['mar_size'] = 2*(star_mag_max_threshold - df['mag'])
+        df['B_mag'] = df['B_mag'].fillna(df['V_mag'])
+        df['mar_size'] = 2*(star_mag_max_threshold - df['B_mag'])
         
         # filter data above
         max_threshold =  star_mag_max_threshold
         min_threshold =  star_mag_min_threshold
-        q = 'mag <= @max_threshold & mag >= @min_threshold' 
+        q = 'B_mag <= @max_threshold & B_mag >= @min_threshold' 
         df = df.query(q) 
 
         return df  
@@ -67,7 +72,7 @@ def read_hipparcos_data(FILENAME = hipp_file):
 #     # print(frame_boundaries)
 #     # if mdf[0]:
 #     # extract useful columns
-#     mdf = mdf[['ra_deg', 'de_deg', 'mar_size','hip','mag', 'trig_parallax', 'B-V', 'Spectral_type']]
+#     mdf = mdf[['ra_deg', 'de_deg', 'mar_size','hip','B_mag', 'trig_parallax', 'B-V', 'Spectral_type']]
 #     # filter data within the boundaries    
 #     q = 'ra_deg >= @xmin & ra_deg <= @xmax & de_deg >= @ymin & de_deg <= @ymax' 
 #     mdf = mdf.query(q)
@@ -200,7 +205,7 @@ def filter_by_fov(mdf, ra, de, chi):
     max_ra, max_dec = rotated_corners.max(axis=0)
 
     # Extract useful columns
-    mdf = mdf[['ra_deg', 'de_deg', 'mar_size', 'hip', 'mag', 'trig_parallax', 'E(B-V)', 'Spectral_type']]
+    mdf = mdf[['ra_deg', 'de_deg', 'mar_size', 'hip','B_mag', 'trig_parallax', 'E(B-V)', 'Spectral_type', 'V_mag']]
     
     # Filter data within the boundaries
     if min_ra < 0:

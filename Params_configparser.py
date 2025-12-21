@@ -39,20 +39,20 @@ config['Params_1'] = {
     't_slice' : 100, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
-    'width': 10, # 0.5 (shorter) width
+    'width': 5, # 0.5 (shorter) width
     'height': 10, # 1 (longer) height
-    'starmag_min_threshold' : 0, #threshold for what bright stars we want to avoid
-    'starmag_max_threshold' : 3, #threshold for what maximum apaarent magnitude stars we want/can to look at
+    'starmag_min_threshold' : 0, # B-band threshold for what bright stars we want to avoid
+    'starmag_max_threshold' : 7, # threshold for what maximum apaarent magnitude stars we want/can to look at
 
     # Direction of Detector from the velocity of Satellite 
     'allignment_with_orbit' : 90, # gives angle of longer side of slit (height) with the ORBITAL PLANE from 0 to 90 degrees or False, (default 90)
     'inclination_from_V': 0, #gives the angle of inclination 0 to 180 deg, of the the camera from V vector in ORBITAL PLANE (default 0)
 
     # Staring Mode parameters
-    'staring RA' : 10, # in degrees
-    'staring Dec' : 90, # in degrees 
-    'staring_time' : 600, # in seconds (default 0)
-    'trigger_radius' : 90, # distance from the general FOV to trigger stare in degrees
+    'staring RA' : 22, # in degrees
+    'staring Dec' : 35, # in degrees 
+    'staring_time' : 1600, # in seconds (default 0)
+    'trigger_radius' : 70, # distance from the general FOV to trigger stare in degrees
 
     # Spectrum Parameters (UV Band Wavelengths in Angstroms)
     'limit_min': 1000,
