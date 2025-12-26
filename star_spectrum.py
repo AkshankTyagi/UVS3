@@ -343,7 +343,7 @@ def GET_SPECTRA(spec_dir, data):
 def GET_SCALE_FACTOR(j, c, waveL_range, stellar_spectra):
 
     # print(c)
-    V_mag, E_B_V= c[4][j], c[6][j]
+    V_mag, E_B_V= c[8][j], c[6][j]
     # Check if E_B_V is NaN
     if math.isnan(E_B_V):
         E_B_V = 0

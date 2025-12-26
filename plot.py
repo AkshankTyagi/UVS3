@@ -277,7 +277,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
 
         if stare == True:
             Stare_info = f"-- Stationery Frame --\n RA: {Stare_RA:.3f}°, Dec: {Stare_Dec:.3f}°"
-            ax.text(1.1, 0.8, Stare_info, transform=ax.transAxes, fontsize=7.5, va='center')
+            ax.text(1.1, 1, Stare_info, transform=ax.transAxes, fontsize=7.5, va='center')
 
         # Scatter plot for stars
         if (S[0] == 0.0001) : #no star in the FOV
@@ -322,7 +322,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
                 zodiacal_spectra = np.round(calc_total_zodiacal_flux(zod_data[0])*fOV_area, 3)
                 ax_r.plot(zod_wavelengths, zodiacal_spectra, color='black', label='Zodiacal UV')
             
-            ax_r.set_ylabel(r'Diffused Background Photons (s\u207B\u00B9 cm\u207B\u00B2 $\AA$\u207B\u00B9)')
+            ax_r.set_ylabel('Diffused Background ( Photons s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9)')
             ax_r.yaxis.set_label_position("right")
             lines2, labels2 = ax_r.get_legend_handles_labels()
         else:
@@ -344,8 +344,9 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             wave_min = min(X_wavelength)
             wave_max = max(X_wavelength)
             # max_p = get_max_photon(Y_photons_per_star)
+            show_labels = len(Y_photons_per_star) < 8 #only show labels if number of stars less than 8
             for i in range(len(Y_photons_per_star)):
-                phots = ax.plot(X_wavelength, Y_photons_per_star[i], label = f'ra: {ra[i]:.3f}  ; dec: {dec[i]:.3f}', zorder = 5)
+                phots = ax.plot(X_wavelength, Y_photons_per_star[i], label=f'RA, Dec= {ra[i]:.2f}\u00B0, {dec[i]:.2f}\u00B0' if show_labels else f'_({ra[i]:.2f}\u00B0, {dec[i]:.2f}\u00B0)' , zorder = 5)
                 ax.set_xlim(wave_min, wave_max)
         else:
             wavelengths = np.linspace(1000, 3800, 1000)
@@ -544,7 +545,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
 
         if stare == True:
             Stare_info = f"-- Stationery Frame --\n RA: {Stare_RA:.3f}°, Dec: {Stare_Dec:.3f}°"
-            ax3.text(1.1, 0.8, Stare_info, transform=ax3.transAxes, fontsize=7.5, va='center')
+            ax3.text(1.1, 1, Stare_info, transform=ax3.transAxes, fontsize=7.5, va='center')
 
         # Scatter plot for stars
         if (S[0] == 0.0001) : #no star in the FOV
@@ -575,7 +576,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             if diffused_data != [0]:
                 ax_r.plot(BG_wavelength, diffused_isrf, marker='o', color='grey', label='Diffused UV ISRF')
 
-            ax_r.set_ylabel('Diffused Background Photons (s\u207B\u00B9 cm\u207B\u00B2 $\\AA$\u207B\u00B9)')
+            ax_r.set_ylabel('Diffused Background (Photons s\u207B\u00B9 cm\u207B\u00B2 $\\AA$ \u207B\u00B9)')
             ax_r.yaxis.set_label_position("right")
             lines2, labels2 = ax_r.get_legend_handles_labels()
         else:
@@ -594,10 +595,11 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         if (X_wavelength[0]!=0):
             wave_min = min(X_wavelength)
             wave_max = max(X_wavelength)
-            max_p = get_max_photon(Y_photons_per_star)
+            # max_p = get_max_photon(Y_photons_per_star)
 
-            for k in range(len(Y_photons_per_star)):
-                ax4.plot(X_wavelength,  Y_photons_per_star[k], label = f'ra: {ra[k]:.3f}  ; dec: {dec[k]:.3f}', zorder = 5) 
+            show_labels = len(Y_photons_per_star) < 8 #only show labels if number of stars less than 8
+            for i in range(len(Y_photons_per_star)):
+                phots = ax4.plot(X_wavelength, Y_photons_per_star[i], label=f'RA, Dec= {ra[i]:.2f}\u00B0, {dec[i]:.2f}\u00B0' if show_labels else f'_({ra[i]:.2f}\u00B0, {dec[i]:.2f}\u00B0)' , zorder = 5)
                 ax4.set_xlim(wave_min, wave_max)
 
         else:

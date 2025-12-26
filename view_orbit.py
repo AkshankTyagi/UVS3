@@ -225,22 +225,22 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
     # parse celestial_coordinates
     ra, dec, angle_to_normal = cc
 
-    b_vec = np.vstack(conv_eq_to_cart(ra, dec, 1)).T
-
     # if stare mode on, find frames where staring is to be done
-    mask = np.dot(b_vec, stare_vec) >= np.cos(np.deg2rad(trigger_radius))
-    if np.any(mask):
-        print("Stare opportunity available in this simulation window")
-        first_idx = np.argmax(mask)
-        n_frames_stare = int(stare_time / time_step)
-        print(f'STARE MODE Frames-  {first_idx+1} : {first_idx+n_frames_stare+1},\n')
-        for i in range(n_frames_stare+1):
-            idx = first_idx + i
-            if idx < len(ra):
-                ra[idx] = stare_RA
-                dec[idx] = stare_Dec
-    else:
-        print("No Stare opportunity in this simulation window")
+    if stare_mode == 'True':
+        b_vec = np.vstack(conv_eq_to_cart(ra, dec, 1)).T
+        mask = np.dot(b_vec, stare_vec) >= np.cos(np.deg2rad(trigger_radius))
+        if np.any(mask):
+            print("Stare opportunity available in this simulation window")
+            first_idx = np.argmax(mask)
+            n_frames_stare = int(stare_time / time_step)
+            print(f'STARE MODE Frames-  {first_idx+1} : {first_idx+n_frames_stare+1},\n')
+            for i in range(n_frames_stare+1):
+                idx = first_idx + i
+                if idx < len(ra):
+                    ra[idx] = stare_RA
+                    dec[idx] = stare_Dec
+        else:
+            print("No Stare opportunity in this simulation window")
 
 
     # [TESTING] Roll about velocity direction 
@@ -262,10 +262,11 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
         # print (frame, tdf_values) # print(frame, frame_boundary) # print(f"Frame {frame+1} has {len(tdf_values)} stars, and frame corners = {frame_boundary}")
         tdf_values, frame_boundary = filter_by_fov(df, r, d, chi_angle) 
         tdf_values = tdf_values.values.tolist()
-        if frame>= first_idx and frame <= first_idx + n_frames_stare:
-            frame = f"{frame}*"
-        else:
-            frame = f"{frame}"
+        frame = f"{frame}"
+        if stare_mode == 'True':
+            if int(frame)>= first_idx and int(frame) <= first_idx + n_frames_stare:
+                frame += "*" 
+
         frame_row_list.append([frame, tdf_values, frame_boundary ]) # print (frame_row_list)
 
     # get celestial positions of Sun, Moon
@@ -278,7 +279,7 @@ def write_to_csv(data, diffused_ISRF_data, zod_data, sol_positions, sat_name, st
     print('writing Simulation output to csv') 
     os.makedirs(f'{folder_loc}Output', exist_ok=True)
     csv_file = f'{folder_loc}Output{os.sep}{sat_name}-{start_time.datetime.strftime("%d_%m_%Y")}_data.csv'
-    header =['Frame Number', 'Hip #', 'RA', 'Dec', 'V mag', 'Parallax', 'B-V', 'Spectral Type', 'Sim size']
+    header =['Frame Number', 'Hip #', 'RA', 'Dec', 'B mag', 'V mag' , 'Parallax', 'B-V', 'Spectral Type', 'Sim size']
     zodiacal_data, zod_wavelengths = zod_data
     diffused_data, diffused_wavelengths = diffused_ISRF_data
 
@@ -288,10 +289,15 @@ def write_to_csv(data, diffused_ISRF_data, zod_data, sol_positions, sat_name, st
         csv_writer.writerow(header)
         for i in range(len(data)):
             frame, d, frame_boundary = data[i]
-            frame = int(frame)
+            if frame[-1] == '*':
+                stare = True
+                frame = int(frame[:-1])
+            else:
+                stare = False
+                frame = int(frame)
 
             csv_writer.writerow([]) # empty row between frames
-            csv_writer.writerow([frame+1,f'FOV:', f'[{frame_boundary[0]}, {frame_boundary[1]}, {frame_boundary[2]}, {frame_boundary[3]}]', f'Stare: {stare}',  f'Sun:', sol_positions['sun'][i], f'moon: ', sol_positions['moon'][i]]) 
+            csv_writer.writerow([frame+1,f'Stare: {stare}',f'FOV:', f'[{frame_boundary[0]}, {frame_boundary[1]}, {frame_boundary[2]}, {frame_boundary[3]}]',  f'Sun:', sol_positions['sun'][i], f'moon: ', sol_positions['moon'][i]]) 
             # csv_writer.writerow([frame+1, "Celestial_data for frame:", "      ", ]) #  "Diffused UV ISRF in frame (Total_photons):", ]) 
 
             if diffused_data != [0]: # diffused UV ISRF present in the frame
@@ -305,8 +311,8 @@ def write_to_csv(data, diffused_ISRF_data, zod_data, sol_positions, sat_name, st
 
             if d: # stars present in the frame
                 for j in range(len(d)):
-                    ra, dec, size, hip, mag, parallax, B_V, Spectral_type = zip(d[j])
-                    csv_writer.writerow([frame+1, hip[0], ra[0], dec[0], mag[0], parallax[0], B_V[0], Spectral_type[0], f"{size[0]:.2f}"])
+                    ra, dec, size, hip, B_mag, parallax, B_V, Spectral_type, v_mag = zip(d[j])
+                    csv_writer.writerow([frame+1, hip[0], ra[0], dec[0], B_mag[0], v_mag[0], parallax[0], B_V[0], Spectral_type[0], f"{size[0]:.2f}"])
             else:
                 csv_writer.writerow([frame+1, "Empty frame", None, None, None, None, None, None, None])
 
