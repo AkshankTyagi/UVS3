@@ -26,34 +26,37 @@ def read_parameter_file(filename= params_file):
     height = float(config.get(param_set, 'height'))
     star_mag_min_threshold = float(config.get(param_set, 'starmag_min_threshold'))
     star_mag_max_threshold = float(config.get(param_set, 'starmag_max_threshold'))
-    return  width, height ,star_mag_min_threshold, star_mag_max_threshold
+    return  width, height, star_mag_min_threshold, star_mag_max_threshold
 
 read_parameter_file()
 
 # read hipparcos catalogue 'hip_main.dat'
 def read_hipparcos_data(FILENAME = hipp_file):
     # Field H1: Hipparcos Catalogue (HIP) identifier
-    # Field H5: V magnitude
-    # Field H32: B magnitude
+    # Field H5: V johnson magnitude (550 nm)
+    # Field H34: V_T magnitude (Tycho V magnitude - 530 nm)
+    # Field H32: B_T magnitude (Tycho B magnitude - 420 nm)
+    # Field H37: B-V color index (in mag) 
     # Fields H8–9:  The right ascension, α , and declination, δ (in degrees)   
     # Field H11: Trigonometric parallax (in milliarcseconds)
-    # Field H38: E(B-V)  (in mag)
+    # Field H38: error in (B-V)  (in mag) ##---Removed for now (3-1-2026)--##
     # Field H76: Spectral type 
     _, _, star_mag_min_threshold, star_mag_max_threshold = read_parameter_file()
     print (f'Stars apparent magnitude Threshold= {[star_mag_min_threshold, star_mag_max_threshold]}')
 
     try:
         df = pd.read_csv(FILENAME, header=None,
-                         sep = '|', skipinitialspace=True).iloc[:, [1, 32, 5, 8, 9, 11, 38, 76]]
-        df.columns = ['hip', 'B_mag', 'V_mag', 'ra_deg', 'de_deg', 'trig_parallax', 'E(B-V)', 'Spectral_type']
+                         sep = '|', skipinitialspace=True).iloc[:, [1,5, 32, 34,37, 8, 9, 11, 76]]
+        df.columns = ['hip','V_Jmag', 'B_Tmag', 'V_Tmag','B-V', 'ra_deg', 'de_deg', 'trig_parallax', 'Spectral_type']
 
-        df['B_mag'] = df['B_mag'].fillna(df['V_mag'])
-        df['mar_size'] = 2*(star_mag_max_threshold - df['B_mag'])
-        
+        df['V_Tmag'] = df['V_Tmag'].fillna(df['V_Jmag']+(9/85)*(df['B-V'])) # 0.09/0.85 = 0.10588
+        df['B_Tmag'] = df['B_Tmag'].fillna(df['V_Jmag'] + (1-20/85)*df['B-V'] )
+        df['mar_size'] = 2*(star_mag_max_threshold - df['B_Tmag'])
+
         # filter data above
         max_threshold =  star_mag_max_threshold
         min_threshold =  star_mag_min_threshold
-        q = 'B_mag <= @max_threshold & B_mag >= @min_threshold' 
+        q = 'B_Tmag <= @max_threshold & B_Tmag >= @min_threshold' 
         df = df.query(q) 
 
         return df  
@@ -72,7 +75,7 @@ def read_hipparcos_data(FILENAME = hipp_file):
 #     # print(frame_boundaries)
 #     # if mdf[0]:
 #     # extract useful columns
-#     mdf = mdf[['ra_deg', 'de_deg', 'mar_size','hip','B_mag', 'trig_parallax', 'B-V', 'Spectral_type']]
+#     mdf = mdf[['ra_deg', 'de_deg', 'mar_size','hip','B_Tmag', 'trig_parallax', 'B-V', 'Spectral_type']]
 #     # filter data within the boundaries    
 #     q = 'ra_deg >= @xmin & ra_deg <= @xmax & de_deg >= @ymin & de_deg <= @ymax' 
 #     mdf = mdf.query(q)
@@ -205,7 +208,7 @@ def filter_by_fov(mdf, ra, de, chi):
     max_ra, max_dec = rotated_corners.max(axis=0)
 
     # Extract useful columns
-    mdf = mdf[['ra_deg', 'de_deg', 'mar_size', 'hip','B_mag', 'trig_parallax', 'E(B-V)', 'Spectral_type', 'V_mag']]
+    mdf = mdf[['ra_deg', 'de_deg', 'mar_size', 'hip','B_Tmag', 'trig_parallax', 'Spectral_type', 'V_Jmag', 'V_Tmag', 'B-V']]
     
     # Filter data within the boundaries
     if min_ra < 0:

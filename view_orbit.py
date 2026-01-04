@@ -122,6 +122,7 @@ def get_satellite(line1, line2):
 
     return satellite
 
+
 # get celestial coordinates of Sun, Moon
 def get_celestial_positions(time_arr):
 
@@ -139,6 +140,7 @@ def get_celestial_positions(time_arr):
         "sun": solar,
         "moon": lunar
     }
+
 
 # get ra and dec from state vectors
 def get_ra_dec_from_sv(r, v, theta):
