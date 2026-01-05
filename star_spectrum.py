@@ -47,7 +47,7 @@ def read_parameter_file(filename= params_file):
     global Castelli_data , dust_c_section, johnson_U_filter
     Castelli_data = config.get(file_loc_set, 'Castelli_data')
     dust_c_section = config.get(file_loc_set, 'dust_C_section')
-    johnson_U_filter = config.get(file_loc_set, 'Johnson_U_filter')
+    johnson_U_filter = config.get(file_loc_set, 'filter')
     
     # Wavelength range:
     min_lim = float(config.get(param_set, 'limit_min'))

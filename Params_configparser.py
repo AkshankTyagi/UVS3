@@ -20,7 +20,7 @@ config['Params_0'] = {
     'hipparcos_catalogue' : fr'{folder_loc}Star_catalogue{os.sep}hip_main.dat', #path to the Hipparcos file Star_catalogue\hip_main.dat
     'Castelli_data' : fr'{folder_loc}Castelli_data{os.sep}ckp00', #path to the ckp00 file of the Castelli Kurucz Atlas
     'dust_C_section' : fr'{folder_loc}Castelli_data{os.sep}crossec1.dat', #path to the dust_C file of the Castelli Kurucz Atlas
-    'Johnson_U_filter' : fr'{folder_loc}Castelli_data{os.sep}Johnson_U.dat', #path to the Johnson U filter data 
+    'filter' : fr'{folder_loc}Castelli_data{os.sep}Johnson_U.dat', #path to the Johnson U filter data 
 
     # Diffused UV data files
     'diffused_BG_file': fr"{folder_loc}diffused_UV_data{os.sep}",
@@ -37,7 +37,7 @@ config['Params_1'] = {
     # Specify either Number of frames or period in sec after which the next Frame is given
     'number of Revolutions' : 1,
     'N_frames' : False,
-    't_slice' : 30, # Seconds,
+    't_slice' : 300, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
     'width': 0.5, # 0.5 (shorter) width
@@ -68,17 +68,17 @@ config['Params_1'] = {
     'interval_bw_Frames' : 1500 # in milliSec
 }
 
-config['Params_2'] = {
+config['Params_2'] = { ## All components take Boolean values:  True/False
     'sun': True,
-    'moon':  True,
+    'moon':  False,
     'galactic_plane': True,
     'diffused_bg': True,
-    'zodiacal_bg': True, #True
+    'zodiacal_bg': True, 
     'Spectra': True,
     'fix_start': False,
-    'Staring_mode': True, #True
+    'Staring_mode': True, 
 
-    'save_animation': True, #True,
+    'save_animation': False, #True,
     'Save_data': True #True 
 }
 

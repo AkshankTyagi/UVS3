@@ -125,21 +125,36 @@ def get_satellite(line1, line2):
 
 # get celestial coordinates of Sun, Moon
 def get_celestial_positions(time_arr):
-
+    config = ConfigParser()
+    config.read(params_file)
+    sun = config.get('Params_2', 'sun')
+    moon = config.get('Params_2', 'moon')
     solar = []
     lunar = []
-    for time in time_arr:
-        sun_icrs = get_body("sun",time).icrs
-        moon_icrs = get_body("moon",time).icrs
-        solar.append((sun_icrs.ra.hour, sun_icrs.dec.deg))
-        lunar.append((moon_icrs.ra.hour, moon_icrs.dec.deg))
+
+    if sun == 'True' or moon == 'True':
+        # print(sun, moon)
+        for time in time_arr:
+            sun_icrs = get_body("sun",time).icrs
+            moon_icrs = get_body("moon",time).icrs
+            solar.append((sun_icrs.ra.hour, sun_icrs.dec.deg))
+            lunar.append((moon_icrs.ra.hour, moon_icrs.dec.deg))
+        if sun == "False":
+            solar = []
+            # print("sun is false:",solar)
+        if moon == "False":
+            lunar = []
+            # print("moon is false:",lunar)
+
+    else:
+        pass
 
     # print('\nCelestial positions of Sun and Moon calculated')
     # print(solar[:2],lunar[:2])
     return {
         "sun": solar,
         "moon": lunar
-    }
+    }, sun, moon
 
 
 # get ra and dec from state vectors
@@ -260,6 +275,9 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
 
     frame_row_list = [] # all frames boundary + star data
 
+    # get celestial positions of Sun, Moon
+    cel_positions, sun, moon = get_celestial_positions(tr) # print( sol_positions)
+
     for frame, (r, d, chi_angle) in enumerate(zip(ra, dec, chi)):
         # print (frame, tdf_values) # print(frame, frame_boundary) # print(f"Frame {frame+1} has {len(tdf_values)} stars, and frame corners = {frame_boundary}")
         tdf_values, frame_boundary = filter_by_fov(df, r, d, chi_angle) 
@@ -271,10 +289,25 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
 
         frame_row_list.append([frame, tdf_values, frame_boundary ]) # print (frame_row_list)
 
-    # get celestial positions of Sun, Moon
-    sol_positions = get_celestial_positions(tr) # print( sol_positions)
+        if sun == 'True':  # Check if Solar Position is on then check for proximity 
+            sun_ra, sun_dec = cel_positions["sun"][i]
+            sep_sun = angular_sep(r, d, sun_ra, sun_dec)
+            if sep_sun < 5.0:
+                print(
+                    f"⚠️ ALERT: FOV {i} is {sep_sun:.2f}° from SUN "
+                    f"(RA={r:.2f}, Dec={d:.2f})"
+                )     
 
-    return tr, sc, frame_row_list, sol_positions
+        if moon == 'True': # Check if Lunar Position is on then check for proximity
+            moon_ra, moon_dec = cel_positions["moon"][i]
+            sep_moon = angular_sep(r, d, moon_ra, moon_dec)
+            if sep_moon < 5.0:
+                print(
+                    f"⚠️ ALERT: FOV {i} is {sep_moon:.2f}° from MOON "
+                    f"(RA={r:.2f}, Dec={d:.2f})"
+                )
+
+    return tr, sc, frame_row_list, cel_positions
 
 # Save a csv file with all required star information 
 def write_to_csv(data, diffused_ISRF_data, zod_data, sol_positions, sat_name, start_time):
@@ -299,8 +332,12 @@ def write_to_csv(data, diffused_ISRF_data, zod_data, sol_positions, sat_name, st
                 frame = int(frame)
 
             csv_writer.writerow([]) # empty row between frames
-            csv_writer.writerow([frame+1,f'Stare: {stare}',f'FOV:', f'[{frame_boundary[0]}, {frame_boundary[1]}, {frame_boundary[2]}, {frame_boundary[3]}]',  f'Sun:', sol_positions['sun'][i], f'moon: ', sol_positions['moon'][i]]) 
-            # csv_writer.writerow([frame+1, "Celestial_data for frame:", "      ", ]) #  "Diffused UV ISRF in frame (Total_photons):", ]) 
+            if sol_positions["sun"] and sol_positions["moon"]:
+                csv_writer.writerow([frame+1,f'Stare: {stare}',f'FOV:', f'[{frame_boundary[0]}, {frame_boundary[1]}, {frame_boundary[2]}, {frame_boundary[3]}]',  f'Sun:', sol_positions['sun'][i], f'moon: ', sol_positions['moon'][i]]) 
+            elif sol_positions["sun"]:
+                csv_writer.writerow([frame+1,f'Stare: {stare}',f'FOV:', f'[{frame_boundary[0]}, {frame_boundary[1]}, {frame_boundary[2]}, {frame_boundary[3]}]',  f'Sun:', sol_positions['sun'][i], f'moon: ','------'])
+            elif sol_positions["moon"]:
+                csv_writer.writerow([frame+1,f'Stare: {stare}',f'FOV:', f'[{frame_boundary[0]}, {frame_boundary[1]}, {frame_boundary[2]}, {frame_boundary[3]}]',  f'Sun:','------', f'moon: ', sol_positions['moon'][i]])
 
             if diffused_data != [0]: # diffused UV ISRF present in the frame
                 diffused_summary = [f"{wl}: {calc_total_diffused_flux(diffused_data[str(wl)][i]):.4f}" for wl in diffused_wavelengths]
@@ -318,7 +355,7 @@ def write_to_csv(data, diffused_ISRF_data, zod_data, sol_positions, sat_name, st
             else:
                 csv_writer.writerow([frame+1, "Empty frame", None, None, None, None, None, None, None])
 
-    print(f'Star Data saved in: Demo_file{os.sep}{sat_name}-{start_time.datetime.strftime("%d_%m_%Y")}_data.csv\n----------------')
+    print(f'Star Data saved in: Output{os.sep}{sat_name}-{start_time.datetime.strftime("%d_%m_%Y")}_data.csv\n----------------')
     return 1
 
 

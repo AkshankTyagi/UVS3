@@ -149,3 +149,10 @@ def get_world_coordinates(x, y, fits_file):
         # print(ra,dec)
         return ra, dec
            
+def angular_sep(ra1, dec1, ra2, dec2):
+    ra1, dec1, ra2, dec2 = map(np.deg2rad, [ra1, dec1, ra2, dec2])
+    cosang = (
+        np.sin(dec1)*np.sin(dec2)
+        + np.cos(dec1)*np.cos(dec2)*np.cos(ra1 - ra2)
+    )
+    return np.rad2deg(np.arccos(np.clip(cosang, -1, 1)))
