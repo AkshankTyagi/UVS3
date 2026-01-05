@@ -268,7 +268,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
                     info_line =f"{wavelength} $\\AA$ : ----  |  {round(calc_total_zodiacal_flux(zod_data[0], wave_index)*fOV_area, 3)}\n"
                 info_diffused += info_line
 
-            info_text = f"Total Diffused UV Background in FOV \n  $\\lambda$   : ISRF  |  Zod  (# Photons-s\u207B\u00B9cm\u207B\u00B2$\\AA$\u207B\u00B9)\n{info_diffused}"
+            info_text = f"Total Diffused UV Background in FOV \n $\\lambda$ :  ISRF  |  Zod  (Photons s\u207B\u00B9cm\u207B\u00B2$\\AA$\u207B\u00B9)\n{info_diffused}"
             text = ax.text(1.1, 0.6, info_text, transform=ax.transAxes, fontsize=7.5, va='center')
             # print(info_text)
         else:
@@ -537,7 +537,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
 
                 info_diffused += info_line
 
-            info_text = f"Total Diffused UV Background in FOV \n  $\\lambda$   :   ISRF  |  Zod  (# Photons- s\u207B\u00B9cm\u207B\u00B2$\\AA$\u207B\u00B9)\n{info_diffused}"
+            info_text = f"Total Diffused UV Background in FOV \n $\\lambda$ :  ISRF  |  Zod  (Photons s\u207B\u00B9cm\u207B\u00B2$\\AA$\u207B\u00B9)\n{info_diffused}"
             ax3.text(1.1, 0.6, info_text, transform=ax3.transAxes, fontsize=7.5, va='center')       
         else:
             info_text = 'Diffused Background Not included'
@@ -750,10 +750,10 @@ def get_cles_data_by_frame(i, data):
         c = list(zip(*d))
         # print(d[0], c)
         if frame[-1] =="*":
-            print('(Staring mode) Frame', int(frame[:-1])+1,'has', len(c[0]),'stars.' )
+            print('  (Staring mode) Frame', int(frame[:-1])+1,'has', len(c[0]),'stars.' )
             stare = True
         else:
-            print('Frame', int(frame)+1,'has', len(c[0]),'stars.' )
+            print('  Frame', int(frame)+1,'has', len(c[0]),'stars.' )
             stare = False
 
         # pack it
@@ -772,16 +772,16 @@ def get_cles_data_by_frame(i, data):
         else:
             print('  The star in the FOV is:')
             # Temp = GET_STAR_TEMP(str(Spectral_type[0]))
-            print( f" 1) Hipp - {str(hip[0])}; Ra & Dec: {ra[0]:.3f} {dec[0]:.3f}; ; Sim U_mag = {str(U_mag[0])}; Parallax= {str(parallax[0])};  B_T = {str(B_T[0])};  V_J = {str(V_j[0])}; V_T = {str(V_T[0])}; Subclass: {str(Spectral_type[0]).strip()}" , end="\n")
+            print( f"1) Hipp - {str(hip[0])}; Ra & Dec: {ra[0]:.3f} {dec[0]:.3f}; ; Sim U_mag = {str(U_mag[0])}; Parallax= {str(parallax[0])};  B_T = {str(B_T[0])};  V_J = {str(V_j[0])}; V_T = {str(V_T[0])}; Subclass: {str(Spectral_type[0]).strip()}" , end="\n")
 
         # return
         return cles_pos, size, frame_corner, frame_boundary, stare 
     else:
         if frame[-1] =="*":
-            print('(Staring mode) Frame', int(frame[:-1])+1,'is EMPTY', end="\n")
+            print('  (Staring mode) Frame', int(frame[:-1])+1,'is EMPTY', end="\n")
             stare = True
         else:
-            print('Frame',int(frame)+1,'is EMPTY', end="\n")
+            print('  Frame',int(frame)+1,'is EMPTY', end="\n")
             stare = False
         no_star = [0,0]
         zero_size =(0.0001,)

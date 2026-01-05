@@ -35,9 +35,9 @@ config['Params_1'] = {
     'roll_rate_hrs' : False,
 
     # Specify either Number of frames or period in sec after which the next Frame is given
-    'number of Revolutions' : 0.5,
+    'number of Revolutions' : 1,
     'N_frames' : False,
-    't_slice' : 300, # Seconds,
+    't_slice' : 30, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
     'width': 0.5, # 0.5 (shorter) width
@@ -72,14 +72,14 @@ config['Params_2'] = {
     'sun': True,
     'moon':  True,
     'galactic_plane': True,
-    'diffused_bg': False,
-    'zodiacal_bg': False, #True
-    'Spectra': False,
+    'diffused_bg': True,
+    'zodiacal_bg': True, #True
+    'Spectra': True,
     'fix_start': False,
-    'Staring_mode': False, #True
+    'Staring_mode': True, #True
 
-    'save_animation': False, #True,
-    'Save_data': False #True 
+    'save_animation': True, #True,
+    'Save_data': True #True 
 }
 
 

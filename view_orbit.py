@@ -281,7 +281,7 @@ def write_to_csv(data, diffused_ISRF_data, zod_data, sol_positions, sat_name, st
     print('writing Simulation output to csv') 
     os.makedirs(f'{folder_loc}Output', exist_ok=True)
     csv_file = f'{folder_loc}Output{os.sep}{sat_name}-{start_time.datetime.strftime("%d_%m_%Y")}_data.csv'
-    header =['Frame Number', 'Hip #', 'RA', 'Dec', 'V_J mag', 'U mag', 'B_T mag', 'V_T mag', 'Parallax', 'B-V', 'Spectral Type', 'Sim size']
+    header =['Frame Number', 'Hipp #', 'RA', 'Dec', 'Sim U_mag', 'V_J mag', 'B_T mag', 'V_T mag', 'Parallax', 'B-V', 'Spectral Type', 'Sim size']
     zodiacal_data, zod_wavelengths = zod_data
     diffused_data, diffused_wavelengths = diffused_ISRF_data
 
@@ -314,7 +314,7 @@ def write_to_csv(data, diffused_ISRF_data, zod_data, sol_positions, sat_name, st
             if d: # stars present in the frame
                 for j in range(len(d)):
                     ra, dec, mar_size, hip, B_Tmag, parallax, Spectral_type, V_Jmag, V_Tmag, B_V, U_mag = zip(d[j])
-                    csv_writer.writerow([frame+1, hip[0], ra[0], dec[0], V_Jmag[0], U_mag[0], B_Tmag[0], V_Tmag[0], parallax[0], B_V[0], Spectral_type[0], f"{mar_size[0]:.2f}"])
+                    csv_writer.writerow([frame+1, hip[0], ra[0], dec[0], U_mag[0], V_Jmag[0], B_Tmag[0], V_Tmag[0], parallax[0], B_V[0], Spectral_type[0], f"{mar_size[0]:.2f}"])
             else:
                 csv_writer.writerow([frame+1, "Empty frame", None, None, None, None, None, None, None])
 
