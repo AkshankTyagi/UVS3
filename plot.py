@@ -762,17 +762,17 @@ def get_cles_data_by_frame(i, data):
         # stack as np columns for scatter plot
         cles_pos = np.column_stack((ra, dec))
         # Print Stellar Data of the stars in the FOV
-        hip, mag, parallax, B_V, Spectral_type = c[3], c[4], c[5], c[6], c[7]
+        hip, B_T, parallax, Spectral_type, V_j, V_T, U_mag = c[3], c[4], c[5], c[6], c[7], c[8], c[10]
         if (len(c[0])>1):
             print('  The stars in the FOV are:')
             for i in range(len(c[0])):     
-                Temp = GET_STAR_TEMP(str(Spectral_type[i]))
-                print( f"{str(i+1)}) Hipp number= {str(hip[i])}; Ra & Dec: {str(ra[i])} {str(dec[i])}; Johnson Mag= {str(mag[i])}; Trig Parallax= {str(parallax[i])}; E(B-V)= {str(B_V[i])}; Spectral_Type: {str(Spectral_type[i]).strip()};" , end="\n")
+                # Temp = GET_STAR_TEMP(str(Spectral_type[i]))
+                print( f"{str(i+1)}) Hipp - {str(hip[i])}; Ra & Dec: {ra[i]:.3f} {dec[i]:.3f}; Sim U_mag = {str(U_mag[i])}; Parallax= {str(parallax[i])};  B_T = {str(B_T[i])};  V_J = {str(V_j[i])}; V_T = {str(V_T[i])}; Subclass: {str(Spectral_type[i]).strip()}" , end="\n")
 
         else:
             print('  The star in the FOV is:')
-            Temp = GET_STAR_TEMP(str(Spectral_type[0]))
-            print( f"  Hipp number= {str(hip[0])}; Ra & Dec: {str(ra[0])} {str(dec[0])}; Johnson Mag= {str(mag[0])}; Trig Parallax= {str(parallax[0])}; E(B-V)= {str(B_V[0])}; Spectral_Type: {str(Spectral_type[0]).strip()};", end="\n")
+            # Temp = GET_STAR_TEMP(str(Spectral_type[0]))
+            print( f" 1) Hipp - {str(hip[0])}; Ra & Dec: {ra[0]:.3f} {dec[0]:.3f}; ; Sim U_mag = {str(U_mag[0])}; Parallax= {str(parallax[0])};  B_T = {str(B_T[0])};  V_J = {str(V_j[0])}; V_T = {str(V_T[0])}; Subclass: {str(Spectral_type[0]).strip()}" , end="\n")
 
         # return
         return cles_pos, size, frame_corner, frame_boundary, stare 

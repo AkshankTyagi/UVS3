@@ -25,6 +25,7 @@ class Spectral_FOV:
         self.ra = []
         self.dec = []
         self.scale = []
+        self.u_mag = []
         self.photons = []
         self.frame_size = []
 
@@ -43,9 +44,10 @@ def read_parameter_file(filename= params_file):
     param_set = 'Params_1'
     config = ConfigParser()
     config.read(filename)
-    global Castelli_data , dust_c_section
+    global Castelli_data , dust_c_section, johnson_U_filter
     Castelli_data = config.get(file_loc_set, 'Castelli_data')
     dust_c_section = config.get(file_loc_set, 'dust_C_section')
+    johnson_U_filter = config.get(file_loc_set, 'Johnson_U_filter')
     
     # Wavelength range:
     min_lim = float(config.get(param_set, 'limit_min'))
@@ -265,6 +267,7 @@ def GET_SPECTRA(spec_dir, data):
         spectral_wavelength = []
         scale_per_star = []
         photons_per_star = []
+        u_mag_array = []
 
         _, d, frame_corner = zip(data[i])
 
@@ -291,16 +294,18 @@ def GET_SPECTRA(spec_dir, data):
                     flux = data1['spectrum']
                     # print(f"{j+1}) Spectral type: {spectral_type[j]};   Temperature index: {t_index}   ;   Temperature= {data1['temp']}")
                     # print(f" Flux {flux[low_lim:high_lim]}")
-                    scale, photons = GET_SCALE_FACTOR(j, c, wavelengths, flux )
+                    scale, photons, u_mag = GET_SCALE_FACTOR(j, c, wavelengths, flux, u_mag=True)
 
                     spectral_wavelength = wavelengths[low_lim:high_lim]
                     spectral_flux.append(flux[low_lim:high_lim])
                     scale_per_star.append(scale)
                     photons_per_star.append(photons[low_lim:high_lim])
+                    u_mag_array.append(u_mag)
                 spectral_FOV.spectra_per_star.append(spectral_flux)
                 spectral_FOV.wavelength.append(spectral_wavelength)
                 spectral_FOV.scale.append(scale_per_star)
                 spectral_FOV.photons.append(photons_per_star)
+                spectral_FOV.u_mag.append(u_mag_array)
 
             else:
                 # print(f' Frame {i +1})  The spectra of star in the FOV is:')
@@ -310,17 +315,19 @@ def GET_SPECTRA(spec_dir, data):
                 flux = data1['spectrum']
                 # print(f"{1}) Spectral type: {spectral_type[0]};   Temperature index: {t_index}   ;   Temperature= {data1['temp']}")
                 # print(f" Flux {flux[low_lim:high_lim]}")
-                scale, photons = GET_SCALE_FACTOR(0, c, wavelengths, flux )
+                scale, photons, u_mag = GET_SCALE_FACTOR(0, c, wavelengths, flux, u_mag=True)
 
                 spectral_wavelength = wavelengths[low_lim:high_lim]
                 spectral_flux.append(flux[low_lim:high_lim])
                 scale_per_star.append(scale)
                 photons_per_star.append(photons[low_lim:high_lim])
+                u_mag_array.append(u_mag)
 
                 spectral_FOV.spectra_per_star.append(spectral_flux)
                 spectral_FOV.wavelength.append(spectral_wavelength)
                 spectral_FOV.scale.append(scale_per_star)
                 spectral_FOV.photons.append(photons_per_star)
+                spectral_FOV.u_mag.append(u_mag_array)
 
 
         else:
@@ -331,10 +338,11 @@ def GET_SPECTRA(spec_dir, data):
             spectral_FOV.dec.append([0])
             spectral_FOV.scale.append([0])
             spectral_FOV.photons.append([[0]])
+            spectral_FOV.u_mag.append([0])
     
     return spectral_FOV
 
-def GET_SCALE_FACTOR(j, c, waveL_range, stellar_spectra):
+def GET_SCALE_FACTOR(j, c, waveL_range, stellar_spectra, u_mag = False):
 
     # print(c)
     B_Tmag = c[4][j]
@@ -354,7 +362,8 @@ def GET_SCALE_FACTOR(j, c, waveL_range, stellar_spectra):
         b_mag = -2.5 * math.log10(bflux / 6.61e-9)
         v_mag = -2.5 * math.log10(vflux / 3.64e-9)
         # B_V = 0.85*(B_Tmag - V_Tmag)  # Johnson B_V conversion from Tycho magnitudes
-        print (b_mag,'V band mag:', v_mag, V_jmag,' B-V :', b_mag - v_mag, B_V, c[6][j])
+
+        # print (b_mag,'V band mag:', v_mag, V_jmag,' B-V :', b_mag - v_mag, B_V, c[6][j])
         # print(V_jmag, V_Tmag-0.09*(B_Tmag - V_Tmag), 'B-V:', B_V, 0.85*(B_Tmag - V_Tmag))
         ebv = B_V - (b_mag - v_mag)
         ebv = max(ebv, 0)
@@ -369,15 +378,36 @@ def GET_SCALE_FACTOR(j, c, waveL_range, stellar_spectra):
         scale = 3.64e-9 * pow(10, -0.4 * (V_jmag - 3.1 * ebv))  / vflux #* 4 * math.pi
         tau = cross_sec['c_section'] * ebv * gas_to_dust
 
-# scale = scale /distance**2
-# 3.336 x 10^{-19} x lambda^{2} x (4pi)^{-1}
+        # scale = scale /distance**2
+        # 3.336 x 10^{-19} x lambda^{2} x (4pi)^{-1}
 
         tot_photons = stellar_spectra * scale * np.exp(-tau) * ERG_TO_PHOT * waveL_range
 
         # if hipstar['HD_NO'] in [158926, 160578]:
         #     print(f"{hipstar['HIP_NO']} {hipstar['sp_type']} {stellar_spectra[sindex]['filename']} {sindex} {hipstar['V_mag']} {bflux} {vflux} {hipstar['scale']} {stellar_spectra[sindex]['spectrum'][windex]}")
-    # print(scale, tot_photons)
-    return scale, tot_photons
+
+        if u_mag == True:
+            # Read Johnson U filter data
+            U_filter = np.loadtxt(johnson_U_filter)
+                # --- Interpolate filter to spectrum grid ---
+            S_U = np.interp(
+                waveL_range,
+                U_filter[:, 0],
+                U_filter[:, 1],
+                left=0.0,
+                right=0.0
+            )
+
+            num = np.trapz( stellar_spectra * scale * np.exp(-tau) * S_U * waveL_range, waveL_range)
+            den = 0.008432773775787133      
+            U_mag = -2.5 * np.log10(num / den)
+            # print(f"{c[3][j]})U_mag = {U_mag}, num = {num}, den = {den}")
+        else:
+            U_mag = None
+ 
+
+
+    return scale, tot_photons, U_mag
 
 
 # # Example usage----------------------------------
@@ -504,198 +534,201 @@ def GET_SCALE_FACTOR(j, c, waveL_range, stellar_spectra):
 
 #--------------------------------------------------------------
 
-# TEST STARS...
+# # TEST STARS...
 
-# HD 57061 - HIP 35415 ( o type)
-# HD 122451 (HADAR) - HIP 68702 (B)
-# HD 172167 (VEGA) - HIP 91262 (A)
-# HD 61421 (PROCYON) - HIP 37279 (F)
+# # HD 57061 - HIP 35415 ( o type)
+# # HD 122451 (HADAR) - HIP 68702 (B)
+# # HD 172167 (VEGA) - HIP 91262 (A)
+# # HD 61421 (PROCYON) - HIP 37279 (F)
 
-target_hips = [ 35415, 68702, 91262, 37279] # [32349,
-names= ['HD 57061', 'Hadar', 'Vega', 'Procyon'] # ['Sirius',
+# target_hips = [ 35415, 68702, 91262, 37279] # [32349,
+# names= ['HD 57061', 'Hadar', 'Vega', 'Procyon'] # ['Sirius',
 
-df = pd.read_csv("Star_catalogue/hip_std.dat", header=None,
-                    sep = '|', skipinitialspace=True).iloc[:, [1, 5, 8, 9, 11, 32, 34, 37, 76]]
-df.columns = ['hip', 'mag', 'ra_deg', 'de_deg', 'trig_parallax','B_mag', 'V_mag', 'B-V', 'Spectral_type']
+# df = pd.read_csv("Star_catalogue/hip_std.dat", header=None,
+#                     sep = '|', skipinitialspace=True).iloc[:, [1, 5, 8, 9, 11, 32, 34, 37, 76]]
+# df.columns = ['hip', 'mag', 'ra_deg', 'de_deg', 'trig_parallax','B_mag', 'V_mag', 'B-V', 'Spectral_type']
 
-df = df[df['hip'].isin(target_hips)].reset_index(drop=True)
+# df = df[df['hip'].isin(target_hips)].reset_index(drop=True)
+# # print(df)
+
+# df['mar_size'] = 2*(10 - df['mag'])
+# temp = []
+# for i in range(len(df)):
+#     temp.append(GET_STAR_TEMP(df["Spectral_type"][i]))
+#     # print(i, temp)
+# df["temp"] = temp
+# df['distance'] = 1000/df["trig_parallax"]
+# df['B_V'] = 0.85*(df['B_mag'] - df['V_mag'])
 # print(df)
 
-df['mar_size'] = 2*(10 - df['mag'])
-temp = []
-for i in range(len(df)):
-    temp.append(GET_STAR_TEMP(df["Spectral_type"][i]))
-    # print(i, temp)
-df["temp"] = temp
-df['distance'] = 1000/df["trig_parallax"]
-df['B_V'] = 0.85*(df['B_mag'] - df['V_mag'])
-print(df)
-
-ebv_array = [ 0.140, 0.03, 0.009, 0.00]
-filename2 = r'Castelli_data/crossec1.dat'
-new_df = pd.read_csv(filename2, delimiter=r'\s+', names=['wavelength', 'c_section'])
+# ebv_array = [ 0.140, 0.03, 0.009, 0.00]
+# filename2 = r'Castelli_data/crossec1.dat'
+# new_df = pd.read_csv(filename2, delimiter=r'\s+', names=['wavelength', 'c_section'])
 
 
-for j in range (3,4): 
-    all_spectra = READ_CASTELLI_SPECTRA(Castelli_data)
-    stellar_spectra = StellarSpectrum()
-    temperature = df['temp'][j]
-    data1 = all_spectra[temperature]
-    stellar_spectra.temperature = float(data1['temp'])
-    stellar_spectra.wavelength = np.array(data1['wavelength'])
-    stellar_spectra.spectrum = np.array(data1['spectrum'])
-    # print(data1)
+# for j in range (3,4): 
+#     all_spectra = READ_CASTELLI_SPECTRA(Castelli_data)
+#     stellar_spectra = StellarSpectrum()
+#     temperature = df['temp'][j]
+#     data1 = all_spectra[temperature]
+#     stellar_spectra.temperature = float(data1['temp'])
+#     stellar_spectra.wavelength = np.array(data1['wavelength'])
+#     stellar_spectra.spectrum = np.array(data1['spectrum'])
+#     # print(data1)
 
-    low_UV = index_greater_than(stellar_spectra.wavelength, 800) #1150
-    high_UV = index_greater_than(stellar_spectra.wavelength, 3800) #3100
-    low_vis = index_greater_than(stellar_spectra.wavelength, 3800) 
-    high_vis = index_greater_than(stellar_spectra.wavelength, 7500)
+#     low_UV = index_greater_than(stellar_spectra.wavelength, 800) #1150
+#     high_UV = index_greater_than(stellar_spectra.wavelength, 3800) #3100
+#     low_vis = index_greater_than(stellar_spectra.wavelength, 3800) 
+#     high_vis = index_greater_than(stellar_spectra.wavelength, 7500)
 
-    vindex = index_greater_than(stellar_spectra.wavelength, 5450)
-    bindex = index_greater_than(stellar_spectra.wavelength, 4360)
-    bflux = stellar_spectra.spectrum[bindex]
-    vflux = stellar_spectra.spectrum[vindex]
-    # print (f'bflux:{bflux}, vflux:{vflux}')
-    b_mag = -2.5 * math.log10(bflux / 6.61e-9)
-    v_mag = -2.5 * math.log10(vflux / 3.64e-9)
+#     vindex = index_greater_than(stellar_spectra.wavelength, 5450)
+#     bindex = index_greater_than(stellar_spectra.wavelength, 4360)
+#     bflux = stellar_spectra.spectrum[bindex]
+#     vflux = stellar_spectra.spectrum[vindex]
+#     # print (f'bflux:{bflux}, vflux:{vflux}')
+#     b_mag = -2.5 * math.log10(bflux / 6.61e-9)
+#     v_mag = -2.5 * math.log10(vflux / 3.64e-9)
 
-    print(df['B-V'][j], b_mag- v_mag)
+#     print(df['B-V'][j], b_mag - v_mag)
 
-    # if df['B_mag'].isna().any():
-    ebv = df['B-V'][j] - (b_mag - v_mag)
-    # else:
-    # ebv = df['B_V'][j] - (b_mag - v_mag)
-    print('ebv- calc:', ebv,'data', ebv_array[j])
-    ebv = max(ebv, 0)
+#     # if df['B_mag'].isna().any():
+#     ebv = df['B-V'][j] - (b_mag - v_mag)
+#     # else:
+#     # ebv = df['B_V'][j] - (b_mag - v_mag)
+#     print('ebv- calc:', ebv,'data', ebv_array[j])
+#     ebv = max(ebv, 0)
 
-    scale = 3.64e-9 * pow(10, -0.4 * (df["mag"][j] - 3.1 * ebv_array[j] )) / vflux #df['e_B-V'][j]
-    Tau = new_df['c_section'] * ebv_array[j] * gas_to_dust
-    print(f'scale: {scale}, \nTau: {Tau[:5]}')
-    tot_flux = stellar_spectra.spectrum  *scale * np.exp(-Tau)
-    tot_photons = stellar_spectra.spectrum * scale * np.exp(-Tau) * ERG_TO_PHOT * stellar_spectra.wavelength
-    # if j == 2:
-    #     print("VEGA\n",vflux,bflux,v_mag,b_mag)
-    #     print(tot_flux[vindex], tot_flux[bindex])
-    #     print(-2.5 * math.log10(tot_flux[vindex] / 3.64e-9))
-    # tau = 3.1 * ebv / 1.0863
-    # scale = 3.64e-9 * pow(10, -0.4 * (df["mag"][j] )) * np.exp(tau) / vflux
-    # tot_flux2 = stellar_spectra.spectrum  *scale
-    # print(list(zip(stellar_spectra.wavelength, tot_flux, tot_flux2)))
+#     scale = 3.64e-9 * pow(10, -0.4 * (df["mag"][j] - 3.1 * ebv_array[j] )) / vflux #df['e_B-V'][j]
+#     Tau = new_df['c_section'] * ebv_array[j] * gas_to_dust
+#     print(f'scale: {scale}, \nTau: {Tau[:5]}')
+#     tot_flux = stellar_spectra.spectrum  *scale * np.exp(-Tau)
+#     tot_photons = stellar_spectra.spectrum * scale * np.exp(-Tau) * ERG_TO_PHOT * stellar_spectra.wavelength
+#     if j == 2:
+#         print("VEGA\n",vflux,bflux,v_mag,b_mag)
+#         print(tot_flux[vindex], tot_flux[bindex])
+#         print(-2.5 * math.log10(tot_flux[vindex] / 3.64e-9))
 
-    if names[target_hips.index(df['hip'][j])] == 'Sirius':
-        # Create the initial figure and axes
-        fig, ax1 = plt.subplots(figsize=(8, 5))
-        ax2 = ax1.twinx()  # Create a twin axis sharing the same x-axis
-        color2 = 'red'
-        ax2.set_ylabel(r'Star photon Flux (#photons/s/cm²/A)', color=color2)  # Secondary y-axis label
-        ax2.plot(stellar_spectra.wavelength[low_UV:high_UV], tot_photons[low_UV:high_UV], '--', label='_Photon flux', color = color2, linewidth = 0.7, zorder = 1)
-        ax2.tick_params(axis='y', labelcolor=color2)
+#     # tau = 3.1 * ebv / 1.0863
+#     # scale = 3.64e-9 * pow(10, -0.4 * (df["mag"][j] )) * np.exp(tau) / vflux
+#     # tot_flux2 = stellar_spectra.spectrum  *scale
+#     # print(list(zip(stellar_spectra.wavelength, tot_flux, tot_flux2)))
+
+#     if names[target_hips.index(df['hip'][j])] == 'Sirius':
+#         # Create the initial figure and axes
+#         fig, ax1 = plt.subplots(figsize=(8, 5))
+#         ax2 = ax1.twinx()  # Create a twin axis sharing the same x-axis
+#         color2 = 'red'
+#         ax2.set_ylabel(r'Star photon Flux (#photons/s/cm²/A)', color=color2)  # Secondary y-axis label
+#         ax2.plot(stellar_spectra.wavelength[low_UV:high_UV], tot_photons[low_UV:high_UV], '--', label='_Photon flux', color = color2, linewidth = 0.7, zorder = 1)
+#         ax2.tick_params(axis='y', labelcolor=color2)
     
-        # Plot the stellar spectrum on the primary y-axis (left)
-        color1 = 'grey'
-        ax1.set_xlabel(r'Wavelength (Å)')
-        ax1.set_ylabel(r'Star Energy Flux at earth (ergs/s/cm²/A)', color=color1)
-        ax1.plot(stellar_spectra.wavelength[low_UV:high_UV], tot_flux[low_UV:high_UV], color= 'black', label='Simulated Stellar Flux', zorder =2)
-        ax1.tick_params(axis='y', labelcolor=color1)
-        ax1.legend()
-        # Add a title to the plot
-        plt.title(f'SED for {names[j]} (HIP-{df['hip'][j]})')
-        ax1.grid(True, which ="both", alpha = 0.2, linestyle='--')
-        # plt.savefig(fr'Output\Demo\{df['hip'][j]}_spectrum.pdf')
-        plt.show()
+#         # Plot the stellar spectrum on the primary y-axis (left)
+#         color1 = 'grey'
+#         ax1.set_xlabel(r'Wavelength (Å)')
+#         ax1.set_ylabel(r'Star Energy Flux at earth (ergs/s/cm²/A)', color=color1)
+#         ax1.plot(stellar_spectra.wavelength[low_UV:high_UV], tot_flux[low_UV:high_UV], color= 'black', label='Simulated Stellar Flux', zorder =2)
+#         ax1.tick_params(axis='y', labelcolor=color1)
+#         ax1.legend()
+#         # Add a title to the plot
+#         plt.title(f'SED for {names[j]} (HIP-{df['hip'][j]})')
+#         ax1.grid(True, which ="both", alpha = 0.2, linestyle='--')
+#         # plt.savefig(fr'Output\Demo\{df['hip'][j]}_spectrum.pdf')
+#         plt.show()
 
-    else:
-        file_path = fr'Output\Demo\{df['hip'][j]}_spectra.txt'
+#     else:
+#         file_path = fr'Output\Demo\{df['hip'][j]}_spectra.txt'
 
-        # Read the file into a DataFrame
-        df2 = pd.read_csv(file_path, delimiter=r'\s+', header=None, names=['wavelength', 'flux'])
-        low_UV2 = index_greater_than(df2['wavelength'], 800)
-        high_UV2 = index_greater_than(df2['wavelength'], 3800)
+#         # Read the file into a DataFrame
+#         df2 = pd.read_csv(file_path, delimiter=r'\s+', header=None, names=['wavelength', 'flux'])
+#         low_UV2 = index_greater_than(df2['wavelength'], 800)
+#         high_UV2 = index_greater_than(df2['wavelength'], 3800)
 
-        # Create the initial figure and axes
-        fig, ax1 = plt.subplots(figsize=(8, 5))
+#         # Create the initial figure and axes
+#         fig, ax1 = plt.subplots(figsize=(8, 5))
 
-        # Create a second y-axis (right) and plot the stellar spectra
-        ax2 = ax1.twinx()  # Create a twin axis sharing the same x-axis
-        color2 = 'red'
-        ax2.set_ylabel(r'Star photon Flux (#photons/s/cm²/A)', color=color2)  # Secondary y-axis label
-        ax2.plot(stellar_spectra.wavelength[low_UV:high_UV], tot_photons[low_UV:high_UV], '--', label='_Photon flux', color = color2, linewidth = 0.7, zorder = 1)
-        # ax2.plot(stellar_spectra.wavelength[low_UV:high_vis], stellar_spectra.spectrum[low_UV:high_vis],"--" , linewidth = 1 , color=color2, label='Energy distr.')
-        ax2.tick_params(axis='y', labelcolor=color2)
-        # ax2.legend().set_visible(False)
+#         # Create a second y-axis (right) and plot the stellar spectra
+#         ax2 = ax1.twinx()  # Create a twin axis sharing the same x-axis
+#         color2 = 'red'
+#         ax2.set_ylabel(r'Star photon Flux (#photons/s/cm²/A)', color=color2)  # Secondary y-axis label
+#         ax2.plot(stellar_spectra.wavelength[low_UV:high_UV], tot_photons[low_UV:high_UV], '--', label='_Photon flux', color = color2, linewidth = 0.7, zorder = 1)
+#         # ax2.plot(stellar_spectra.wavelength[low_UV:high_vis], stellar_spectra.spectrum[low_UV:high_vis],"--" , linewidth = 1 , color=color2, label='Energy distr.')
+#         ax2.tick_params(axis='y', labelcolor=color2)
+#         # ax2.legend().set_visible(False)
 
-        # Plot the stellar spectrum on the primary y-axis (left)
-        color1 = 'black'
-        ax1.set_xlabel(r'Wavelength (Å)')
-        ax1.set_ylabel(r'Star Energy Flux at earth (ergs/s/cm²/A)', color=color1)
-        ax1.scatter(df2['wavelength'][low_UV2:high_UV2], df2['flux'][low_UV2:high_UV2], color ='grey', label='Observed SED', s =6, zorder =3)
-        ax1.plot(df2['wavelength'][low_UV2:high_UV2], df2['flux'][low_UV2:high_UV2],linewidth=1, color = 'grey', zorder =3)
-        ax1.plot(stellar_spectra.wavelength[low_UV:high_UV], tot_flux[low_UV:high_UV], color= 'black', label='Simulated Stellar Flux', zorder =2)
+#         # Plot the stellar spectrum on the primary y-axis (left)
+#         color1 = 'black'
+#         ax1.set_xlabel(r'Wavelength (Å)')
+#         ax1.set_ylabel(r'Star Energy Flux at earth (ergs/s/cm²/A)', color=color1)
+#         ax1.scatter(df2['wavelength'][low_UV2:high_UV2], df2['flux'][low_UV2:high_UV2], color ='grey', label='Observed SED', s =6, zorder =3)
+#         ax1.plot(df2['wavelength'][low_UV2:high_UV2], df2['flux'][low_UV2:high_UV2],linewidth=1, color = 'grey', zorder =3)
+#         ax1.plot(stellar_spectra.wavelength[low_UV:high_UV], tot_flux[low_UV:high_UV], color= 'black', label='Simulated Stellar Flux', zorder =2)
 
-        # ax1.plot(stellar_spectra.wavelength[low_UV:high_vis], tot_photons[low_UV:high_vis], color=color1, label='Photon flux')
-        ax1.tick_params(axis='y', labelcolor=color1)
-        # ax1.legend(loc='upper right')
-        ax1.legend()
-
-
-
-        # Add a title to the plot
-        plt.title(f'SED for {names[j]} (HIP-{df['hip'][j]})')
-        ax1.grid(True, which ="both", alpha = 0.2, linestyle='--')
-        # plt.legend()
+#         # ax1.plot(stellar_spectra.wavelength[low_UV:high_vis], tot_photons[low_UV:high_vis], color=color1, label='Photon flux')
+#         ax1.tick_params(axis='y', labelcolor=color1)
+#         # ax1.legend(loc='upper right')
+#         ax1.legend()
 
 
-        # plt.savefig(fr'Output\Demo\{df['hip'][j]}_spectrum.pdf')
-        # Show the plot
-        plt.show()
+
+#         # Add a title to the plot
+#         plt.title(f'SED for {names[j]} (HIP-{df['hip'][j]})')
+#         ax1.grid(True, which ="both", alpha = 0.2, linestyle='--')
+#         # plt.legend()
 
 
-    # --- Load Johnson U filter ---
-    U_filter = np.loadtxt("Castelli_data/Johnson.U.dat")   # wavelength [Å], transmission
-    waveL_range = stellar_spectra.wavelength
-
-    # --- Interpolate filter to spectrum grid ---
-    S_U = np.interp(
-        waveL_range,
-        U_filter[:, 0],
-        U_filter[:, 1],
-        left=0.0,
-        right=0.0
-    )
-    new_df = pd.DataFrame({'wavelength': stellar_spectra.wavelength, 'Johnson_U': S_U})
-    filename2 = r'Castelli_data/Johnson_U_interp.dat'
-    new_df.to_csv(filename2, sep='\t', index=False, header=False, float_format='%.8e')
-
-    # --- Band-integrated flux ---
-    # num = np.trapz( tot_flux * S_U * waveL_range, waveL_range)
-    # den = 0.008432773775787133  #np.trapz(vega_flux * S_U * waveL_range, waveL_range)
-    # Vega_U_band = num
-
-    # print("Vega Total U band flux (ergs/s/cm²/A): ", Vega_U_band)
-
-    uindex = index_greater_than(df2['wavelength'], 3600)
-    # print(f"Vega U zero point observed flux (ergs/s/cm²/A) (@ {df2['wavelength'][uindex]} Å): ", df2['flux'][uindex])
-
-    uindex2 = index_greater_than(stellar_spectra.wavelength, 3600)
-    # print(f"Vega U zero point simulated flux (ergs/s/cm²/A) (@ {stellar_spectra.wavelength[uindex2]} Å): ", tot_flux[uindex2])
-
-    # U_mag = -2.5 * np.log10(num / den)
-    # print("Vega U magnitude: ", U_mag)
+#         # plt.savefig(fr'Output\Demo\{df['hip'][j]}_spectrum.pdf')
+#         # Show the plot
+#         plt.show()
 
 
-    num = np.trapz( tot_flux * S_U * waveL_range, waveL_range)
-    den = 0.008432773775787133  # np.trapz(vega_flux * S_U * waveL_range, waveL_range)
+#     # --- Load Johnson U filter ---
+#     U_filter = np.loadtxt("Castelli_data/Johnson.U.dat")   # wavelength [Å], transmission
+#     waveL_range = stellar_spectra.wavelength
 
-    u_mag = -2.5 * np.log10( num / den)
-    u_mag1 = -2.5 * np.log10( df2['flux'][uindex] / 3.08589188e-09)
-    u_mag2 = -2.5 * np.log10( tot_flux[uindex2] / 3.006893995802142e-09)
+#     # --- Interpolate filter to spectrum grid ---
+#     S_U = np.interp(
+#         waveL_range,
+#         U_filter[:, 0],
+#         U_filter[:, 1],
+#         left=0.0,
+#         right=0.0
+#     )
+#     new_df = pd.DataFrame({'wavelength': stellar_spectra.wavelength, 'Johnson_U': S_U})
+#     filename2 = r'Castelli_data/Johnson_U_interp.dat'
+#     new_df.to_csv(filename2, sep='\t', index=False, header=False, float_format='%.8e')
 
-    print(f"{names[j]} (HIP-{df['hip'][j]}) \n U band magnitude: Integrated: {u_mag},   observed: {u_mag1},   Simulated: {u_mag2}")
+#     # --- Band-integrated flux ---
+#     # num = np.trapz( tot_flux * S_U * waveL_range, waveL_range)
+#     # den = 0.008432773775787133  #np.trapz(vega_flux * S_U * waveL_range, waveL_range)
+#     # Vega_U_band = num
+
+#     # print("Vega Total U band flux (ergs/s/cm²/A): ", Vega_U_band)
+
+#     uindex = index_greater_than(df2['wavelength'], 3600)
+#     # print(f"Vega U zero point observed flux (ergs/s/cm²/A) (@ {df2['wavelength'][uindex]} Å): ", df2['flux'][uindex])
+
+#     uindex2 = index_greater_than(stellar_spectra.wavelength, 3600)
+#     # print(f"Vega U zero point simulated flux (ergs/s/cm²/A) (@ {stellar_spectra.wavelength[uindex2]} Å): ", tot_flux[uindex2])
+
+#     # U_mag = -2.5 * np.log10(num / den)
+#     # print("Vega U magnitude: ", U_mag)
 
 
-# Vega Total U band flux (ergs/s/cm²/A):  0.008432773775787133
-# Vega U zero point observed flux (ergs/s/cm²/A) (@ 3600.0 Å):  3.08589188e-09
-# Vega U zero point simulated flux (ergs/s/cm²/A) (@ 3610.0 Å):  3.006893995802142e-09
+#     num = np.trapz( tot_flux * S_U * waveL_range, waveL_range)
+#     den = 0.008432773775787133  # np.trapz(vega_flux * S_U * waveL_range, waveL_range)
+
+#     u_mag = -2.5 * np.log10( num / den)
+#     u_mag1 = -2.5 * np.log10( df2['flux'][uindex] / 3.08589188e-09)
+#     u_mag2 = -2.5 * np.log10( tot_flux[uindex2] / 3.006893995802142e-09)
+
+#     print(f"{names[j]} (HIP-{df['hip'][j]}) \n U band magnitude: Integrated: {u_mag},   observed: {u_mag1},   Simulated: {u_mag2}")
+
+# # ---------------------------------------------------$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$------------------------------------------------
+# # Vega Total U band flux (ergs/s/cm²/A):  0.008432773775787133
+
+
+# # Vega U zero point observed flux (ergs/s/cm²/A) (@ 3600.0 Å):  3.08589188e-09
+# # Vega U zero point simulated flux (ergs/s/cm²/A) (@ 3610.0 Å):  3.006893995802142e-09
                         
-# u_mag = -2.5 * np.log10( Integrated U_band / 0.008432773775787133)
-# u_mag = -2.5 * np.log10( flux[u_index]/ 3.006893995802142e-09)
+# # u_mag = -2.5 * np.log10( Integrated U_band / 0.008432773775787133)
+# # u_mag = -2.5 * np.log10( flux[u_index]/ 3.006893995802142e-09)

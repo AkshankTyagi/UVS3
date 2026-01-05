@@ -49,9 +49,11 @@ def read_hipparcos_data(FILENAME = hipp_file):
                          sep = '|', skipinitialspace=True).iloc[:, [1,5, 32, 34,37, 8, 9, 11, 76]]
         df.columns = ['hip','V_Jmag', 'B_Tmag', 'V_Tmag','B-V', 'ra_deg', 'de_deg', 'trig_parallax', 'Spectral_type']
 
+        df['B-V'] = df['B-V'].fillna(0.85*(df['B_Tmag']-df['V_Tmag']))  # fill NaN B-V
         df['V_Tmag'] = df['V_Tmag'].fillna(df['V_Jmag']+(9/85)*(df['B-V'])) # 0.09/0.85 = 0.10588
         df['B_Tmag'] = df['B_Tmag'].fillna(df['V_Jmag'] + (1-20/85)*df['B-V'] )
         df['mar_size'] = 2*(star_mag_max_threshold - df['B_Tmag'])
+        df['U_mag'] = np.nan  # Placeholder for U magnitude
 
         # filter data above
         max_threshold =  star_mag_max_threshold
@@ -208,7 +210,7 @@ def filter_by_fov(mdf, ra, de, chi):
     max_ra, max_dec = rotated_corners.max(axis=0)
 
     # Extract useful columns
-    mdf = mdf[['ra_deg', 'de_deg', 'mar_size', 'hip','B_Tmag', 'trig_parallax', 'Spectral_type', 'V_Jmag', 'V_Tmag', 'B-V']]
+    mdf = mdf[['ra_deg', 'de_deg', 'mar_size', 'hip','B_Tmag', 'trig_parallax', 'Spectral_type', 'V_Jmag', 'V_Tmag', 'B-V', 'U_mag']]
     
     # Filter data within the boundaries
     if min_ra < 0:
@@ -230,9 +232,9 @@ def filter_by_fov(mdf, ra, de, chi):
     # Convert rotated corners to a list of tuples for polygon testing
     polygon = [tuple(corner) for corner in rotated_corners]
     # Apply polygonal filtering
-    mdf_filtered = mdf_filtered[mdf_filtered.apply(lambda row: is_point_in_polygon(row['ra_deg'], row['de_deg'], polygon), axis=1)  ]
+    mdf_filtered = mdf_filtered[mdf_filtered.apply(lambda row: is_point_in_polygon(row['ra_deg'], row['de_deg'], polygon), axis=1)]
     # frame_boundaries = [min_ra, min_dec, max_ra, max_dec]
     
-    return mdf_filtered, rotated_corners #, frame_boundaries #
+    return mdf_filtered, rotated_corners #, frame_boundaries 
 
 

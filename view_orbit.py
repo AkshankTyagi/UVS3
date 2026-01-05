@@ -281,7 +281,7 @@ def write_to_csv(data, diffused_ISRF_data, zod_data, sol_positions, sat_name, st
     print('writing Simulation output to csv') 
     os.makedirs(f'{folder_loc}Output', exist_ok=True)
     csv_file = f'{folder_loc}Output{os.sep}{sat_name}-{start_time.datetime.strftime("%d_%m_%Y")}_data.csv'
-    header =['Frame Number', 'Hip #', 'RA', 'Dec', 'B mag', 'V mag' , 'Parallax', 'B-V', 'Spectral Type', 'Sim size']
+    header =['Frame Number', 'Hip #', 'RA', 'Dec', 'V_J mag', 'U mag', 'B_T mag', 'V_T mag', 'Parallax', 'B-V', 'Spectral Type', 'Sim size']
     zodiacal_data, zod_wavelengths = zod_data
     diffused_data, diffused_wavelengths = diffused_ISRF_data
 
@@ -313,8 +313,8 @@ def write_to_csv(data, diffused_ISRF_data, zod_data, sol_positions, sat_name, st
 
             if d: # stars present in the frame
                 for j in range(len(d)):
-                    ra, dec, size, hip, B_mag, parallax, B_V, Spectral_type, v_mag = zip(d[j])
-                    csv_writer.writerow([frame+1, hip[0], ra[0], dec[0], B_mag[0], v_mag[0], parallax[0], B_V[0], Spectral_type[0], f"{size[0]:.2f}"])
+                    ra, dec, mar_size, hip, B_Tmag, parallax, Spectral_type, V_Jmag, V_Tmag, B_V, U_mag = zip(d[j])
+                    csv_writer.writerow([frame+1, hip[0], ra[0], dec[0], V_Jmag[0], U_mag[0], B_Tmag[0], V_Tmag[0], parallax[0], B_V[0], Spectral_type[0], f"{mar_size[0]:.2f}"])
             else:
                 csv_writer.writerow([frame+1, "Empty frame", None, None, None, None, None, None, None])
 
@@ -362,6 +362,12 @@ def main():
     time_arr, state_vectors, celestial_data, sol_position = get_simulation_data(satellite, df, start, t_period, t_slice, theta, allignment, roll, stare_mode)
     Spectra = GET_SPECTRA(castelli_dir, celestial_data)
 
+    for i in range(len(celestial_data)):
+        for j in range(len(celestial_data[i][1])):
+            celestial_data[i][1][j][-1] = np.round(Spectra.u_mag[i][j], 3)
+
+
+    # print(celestial_data)
 
     if diffused_bg == 'True':
         diffused_data, diffused_wavelengths = get_diffused_in_FOV(celestial_data)
