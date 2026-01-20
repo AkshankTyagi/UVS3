@@ -37,7 +37,7 @@ config['Params_1'] = {
     # Specify either Number of frames or period in sec after which the next Frame is given
     'number of Revolutions' : 1,
     'N_frames' : False,
-    't_slice' : 300, # Seconds,
+    't_slice' : 200, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
     'width': 0.5, # 0.5 (shorter) width
@@ -70,16 +70,16 @@ config['Params_1'] = {
 
 config['Params_2'] = { ## All components take Boolean values:  True/False
     'sun': True,
-    'moon':  False,
+    'moon':  True,
     'galactic_plane': True,
-    'diffused_bg': True,
-    'zodiacal_bg': True, 
+    'diffused_bg': False,
+    'zodiacal_bg': False, 
     'Spectra': True,
     'fix_start': False,
-    'Staring_mode': True, 
+    'Staring_mode': False, 
 
     'save_animation': False, #True,
-    'Save_data': True #True 
+    'Save_data': False #True 
 }
 
 

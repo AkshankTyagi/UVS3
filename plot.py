@@ -374,12 +374,13 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         X_wavelength, Y_photons_per_star, ra, dec = get_photons_data_by_frame(0, spectral_fov)
         # print(f"init_spec: {spectral_fov.frame_size}")
         FOV_size = spectral_fov.frame_size[0]
-        
+        _, _, FOV_corners = celestial_coordinates[0]
+            
         # set title
         ax.set_title('Absorption Spectra of each star')
         # set labels
         ax.set_xlabel(r'Wavelength $\AA$')
-        ax.set_ylabel(r'Declination $^\circ$')
+        ax.set_ylabel('FOV height')
 
         # Create a custom colormap (black to blue gradient)
         colors = [(0, 0, 0), (0, 0, 1)]  # Black to blue
@@ -387,17 +388,19 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         BtoB_cmap = mc.LinearSegmentedColormap.from_list(cmap_name, colors)
 
         if (X_wavelength[0]!=0): #checks for stars in the field of view
-            twoD_array = np.zeros((int((FOV_size[3]-FOV_size[1])*100), len(X_wavelength)))
-            color_data = get_color_data(twoD_array, X_wavelength, Y_photons_per_star, dec, FOV_size[1])
+            y_stars = compute_star_y(ra, dec, FOV_corners)
+            # print(y_stars)
+            twoD_array = np.zeros((int((FOV_height)*100), len(X_wavelength)))
+            color_data = get_color_data(twoD_array, X_wavelength, Y_photons_per_star, y_stars)
 
             # Create the absorption Spectra plot
-            spectra = ax.imshow(color_data, cmap=BtoB_cmap, aspect='auto', extent=(min(X_wavelength), max(X_wavelength), FOV_size[3],FOV_size[1]), vmin=0, vmax=1) # , aspect='auto'
+            spectra = ax.imshow(color_data, cmap=BtoB_cmap, aspect='auto', extent=(min(X_wavelength), max(X_wavelength),1,0), vmin=0, vmax=1) # , aspect='auto'
             ax.invert_yaxis()
             # print (color_data[:])
         else:
             wavelength = np.linspace(10,3800, 400)
-            color_data = np.zeros(( int((FOV_size[3]-FOV_size[1])*100), len(wavelength) ))
-            spectra = ax.imshow(color_data, cmap=BtoB_cmap, aspect='auto', extent=(min(wavelength), max(wavelength), FOV_size[3],FOV_size[1]), vmin=0, vmax=1) # , aspect='auto'
+            color_data = np.zeros(( int(FOV_height*100), len(wavelength) ))
+            spectra = ax.imshow(color_data, cmap=BtoB_cmap, aspect='auto', extent=(min(wavelength), max(wavelength), 1, 0), vmin=0, vmax=1) # , aspect='auto'
             ax.invert_yaxis()
 
         return ax, spectra
@@ -621,19 +624,23 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         ax5.clear()
         ax5.set_title('Absorption Spectra of each star')
         ax5.set_xlabel(r'Wavelength $\AA$')
-        ax5.set_ylabel(r'Declination $^\circ$')
+        ax5.set_ylabel('FOV height')
+
 
         if (X_wavelength[0]!=0): #checks for stars in the field of view
-            twoD_array = np.zeros((int((Size[3]-Size[1])*100), len(X_wavelength)))
-            color_data = get_color_data(twoD_array, X_wavelength, Y_photons_per_star, dec, Size[1])
+            y_stars = compute_star_y(ra, dec, corners)
+            # print(y_stars)
+            twoD_array = np.zeros((int(FOV_height*100), len(X_wavelength)))
+            # twoD_array = np.zeros((int((Size[3]-Size[1])*100), len(X_wavelength)))
+            color_data = get_color_data(twoD_array, X_wavelength, Y_photons_per_star, y_stars)
 
             # Create the absorption Spectra plot
-            spectra = ax5.imshow(color_data, cmap=BtoB_cmap, aspect='auto', extent=(min(X_wavelength), max(X_wavelength), Size[3],Size[1]), vmin=0, vmax=1)
+            spectra = ax5.imshow(color_data, cmap=BtoB_cmap, aspect='auto', extent=(min(X_wavelength), max(X_wavelength), 1, 0), vmin=0, vmax=1)
             ax5.invert_yaxis()
         else:
             wavelength = np.linspace(10,3800, 400)
-            color_data = np.zeros(( int((Size[3]-Size[1])*100), len(wavelength)))
-            spectra = ax5.imshow(color_data, cmap=BtoB_cmap, aspect='auto', extent=(min(wavelength), max(wavelength), Size[3],Size[1]), vmin=0, vmax=1)
+            color_data = np.zeros(( int(FOV_height*100), len(wavelength)))
+            spectra = ax5.imshow(color_data, cmap=BtoB_cmap, aspect='auto', extent=(min(wavelength), max(wavelength), 1, 0), vmin=0, vmax=1)
             ax5.invert_yaxis()
         # return
         return satellite, orbit, sun, moon, sky, diffused, phots, spectra
@@ -795,7 +802,7 @@ def get_spectral_data_by_frame(i, spectral_FOV):
     ra = spectral_FOV.ra[i]
     dec = spectral_FOV.dec[i]
 
-    return Wavelength, Spectra_per_star,ra, dec
+    return Wavelength, Spectra_per_star, ra, dec
 
 # get photon number data of the stars for the given frame index 
 def get_photons_data_by_frame(i, spectral_FOV):
@@ -807,6 +814,53 @@ def get_photons_data_by_frame(i, spectral_FOV):
     dec = spectral_FOV.dec[i]
 
     return Wavelength, photon_per_star,ra, dec
+
+# compute normalized vertical position of stars in the FOV
+def compute_star_y(stars_ra, stars_dec, FOV_corners):
+    """
+    stars_ra, stars_dec : arrays Star coordinates in degrees
+    FOV_corners : array-like, shape (4,2) [[RA,Dec], ...] corners of the FOV (ordered bottom->top along one edge)
+    Returns    -------
+    star_y : float Normalized vertical position in FOV (0 = bottom, 1 = top)
+    """
+    # --- 1. Reference point (FOV center) ---
+    FOV = np.asarray(FOV_corners)
+    ra0  = np.mean(FOV[:, 0])
+    dec0 = np.mean(FOV[:, 1])
+    # print(ra0, dec0, FOV)
+
+    # --- 2. Gnomonic projection ---
+    def radec_to_tangent(ra, dec):
+        ra, dec = np.deg2rad([ra, dec])
+        ra0r, dec0r = np.deg2rad([ra0, dec0])
+
+        cosc = (np.sin(dec0r)*np.sin(dec) +
+                np.cos(dec0r)*np.cos(dec)*np.cos(ra - ra0r))
+
+        xi = np.cos(dec) * np.sin(ra - ra0r) / cosc
+        eta = ((np.cos(dec0r)*np.sin(dec) -
+                np.sin(dec0r)*np.cos(dec)*np.cos(ra - ra0r)) / cosc)
+
+        return np.array([xi, eta])
+
+    # --- 3. Project corners ---
+    C = np.array([radec_to_tangent(ra, dec) for ra, dec in FOV])
+
+    # --- 4. Vertical FOV axis (corner 0 -> 1 defines "height of FOV") ---
+    v = C[1] - C[0]
+    H = np.linalg.norm(v)
+    v /= H
+
+    # --- 5. Star projection ---
+    y_stars = []
+    for ra, dec in zip(stars_ra, stars_dec):
+        S = radec_to_tangent(ra, dec)
+        y =  (S - C[0]) @ v / H
+        if y > 1 or y < 0:
+            print(f"Warning: Star at RA, Dec = {ra, dec} projects outside FOV (y ={y}) \n FOV corners (RA, Dec):{FOV_corners}")
+        # print("Star projected position:", S, "Normalized y:", y)
+        y_stars.append(y)
+    return y_stars
 
 # get alpha values or inverse opacity 
 def calc_inv_opacity(data, Range, max_val): 
@@ -847,25 +901,26 @@ def get_max_photon(photons_data):
     return photons_max
 
 # make star spectra graph data from photons data
-def get_color_data(data, wavelength, photons_data, dec, min_dec):
-    spectra_width 
+def get_color_data(data, wavelength, photons_data, y_stars):
+    # spectra_width from parameters file
+    global spectra_width, FOV_height
     width = spectra_width * FOV_height/3
     star_row =[]
-    for decli in dec:
-        star_row.append(int(((decli) - min_dec)*100))
+    for y in y_stars:
+        star_row.append(int((y)*100))
     row_spread = int(width*100)
 
     photons_max = get_max_photon(photons_data)
 
     # for each star in the FOV edit color data rows for particular declination of the star
-    for i in range(len(dec)): # ith star
+    for i in range(len(y_stars)): # ith star
+        # print(star_row[i]) 
         for j, row  in enumerate(data): # edit color data in rows for star i
             if (j >= star_row[i]- row_spread/2) and (j <= star_row[i] + row_spread/2):
                 data[j] = row + get_photons_brightness(wavelength,photons_data[i], photons_max)
                 # print(j,"row edited to")
-    # print(data)
     return data
-
+ 
 # from the Number of photons per wavelength recieved from a star, obtain a relative photon ratio that gives the brightnressn of that wavelength
 def get_photons_brightness(wavelength, photon_data, photon_max):
     rel = np.zeros(len(wavelength))

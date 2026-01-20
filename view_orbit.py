@@ -290,7 +290,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
         frame_row_list.append([frame, tdf_values, frame_boundary ]) # print (frame_row_list)
 
         if sun == 'True':  # Check if Solar Position is on then check for proximity 
-            sun_ra, sun_dec = cel_positions["sun"][i]
+            sun_ra, sun_dec = cel_positions["sun"][int(frame)]
             sep_sun = angular_sep(r, d, sun_ra, sun_dec)
             if sep_sun < 5.0:
                 print(
@@ -299,7 +299,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
                 )     
 
         if moon == 'True': # Check if Lunar Position is on then check for proximity
-            moon_ra, moon_dec = cel_positions["moon"][i]
+            moon_ra, moon_dec = cel_positions["moon"][int(frame)]
             sep_moon = angular_sep(r, d, moon_ra, moon_dec)
             if sep_moon < 5.0:
                 print(

@@ -13,7 +13,7 @@ roll = False
 roll_rate_hrs = False
 number of revolutions = 1
 n_frames = False
-t_slice = 300
+t_slice = 200
 width = 0.5
 height = 1
 starmag_min_threshold = 0
@@ -34,13 +34,13 @@ interval_bw_frames = 1500
 
 [Params_2]
 sun = True
-moon = False
+moon = True
 galactic_plane = True
-diffused_bg = True
-zodiacal_bg = True
+diffused_bg = False
+zodiacal_bg = False
 spectra = True
 fix_start = False
-staring_mode = True
+staring_mode = False
 save_animation = False
-save_data = True
+save_data = False
 
