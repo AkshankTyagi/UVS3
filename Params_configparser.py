@@ -30,7 +30,7 @@ config['Params_0'] = {
 }
 
 config['Params_1'] = {
-    'sat_name' : 'ISS', 
+    'sat_name' : 'Astrosat', 
     'roll' : False,
     'roll_rate_hrs' : False,
 
@@ -40,8 +40,8 @@ config['Params_1'] = {
     't_slice' : 200, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
-    'width': 0.5, # 0.5 (shorter) width
-    'height': 1, # 1 (longer) height
+    'width': 0.3, # 0.5 (shorter) width
+    'height': 1.5, # 1 (longer) height
     'starmag_min_threshold' : 0, # B-band threshold for what bright stars we want to avoid
     'starmag_max_threshold' : 12, # threshold for what maximum apaarent magnitude stars we want/can to look at
 
@@ -72,8 +72,8 @@ config['Params_2'] = { ## All components take Boolean values:  True/False
     'sun': True,
     'moon':  True,
     'galactic_plane': True,
-    'diffused_bg': False,
-    'zodiacal_bg': False, 
+    'diffused_bg': True,
+    'zodiacal_bg': True, 
     'Spectra': True,
     'fix_start': False,
     'Staring_mode': False, 

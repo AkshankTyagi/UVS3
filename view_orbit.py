@@ -294,7 +294,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
             sep_sun = angular_sep(r, d, sun_ra, sun_dec)
             if sep_sun < 5.0:
                 print(
-                    f"⚠️ ALERT: FOV {i} is {sep_sun:.2f}° from SUN "
+                    f"⚠️ ALERT: Frame {int(frame)+1} is {sep_sun:.2f}° from SUN "
                     f"(RA={r:.2f}, Dec={d:.2f})"
                 )     
 
@@ -303,7 +303,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
             sep_moon = angular_sep(r, d, moon_ra, moon_dec)
             if sep_moon < 5.0:
                 print(
-                    f"⚠️ ALERT: FOV {i} is {sep_moon:.2f}° from MOON "
+                    f"⚠️ ALERT: Frame {int(frame)+1} is {sep_moon:.2f}° from MOON "
                     f"(RA={r:.2f}, Dec={d:.2f})"
                 )
 
