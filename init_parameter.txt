@@ -1,8 +1,8 @@
 [Params_0]
 hipparcos_catalogue = C:\Users\Akshank Tyagi\OneDrive - Indian Institute of Science\Documents\GitHub\UVS3\Star_catalogue\hip_main.dat
 castelli_data = C:\Users\Akshank Tyagi\OneDrive - Indian Institute of Science\Documents\GitHub\UVS3\Castelli_data\ckp00
-dust_c_section = C:\Users\Akshank Tyagi\OneDrive - Indian Institute of Science\Documents\GitHub\UVS3\Castelli_data\crossec1.dat
-filter = C:\Users\Akshank Tyagi\OneDrive - Indian Institute of Science\Documents\GitHub\UVS3\Castelli_data\Johnson_U.dat
+dust_c_section = C:\Users\Akshank Tyagi\OneDrive - Indian Institute of Science\Documents\GitHub\UVS3\Stellar_Spectra\crossec_interp.dat
+filter = C:\Users\Akshank Tyagi\OneDrive - Indian Institute of Science\Documents\GitHub\UVS3\Stellar_Spectra\Johnson_U.dat
 diffused_bg_file = C:\Users\Akshank Tyagi\OneDrive - Indian Institute of Science\Documents\GitHub\UVS3\diffused_UV_data\
 sol_spectra_file = C:\Users\Akshank Tyagi\OneDrive - Indian Institute of Science\Documents\GitHub\UVS3\Zodiacal_light_data\zodiacal_spec.txt
 zod_dist_table = C:\Users\Akshank Tyagi\OneDrive - Indian Institute of Science\Documents\GitHub\UVS3\Zodiacal_light_data\leinert_dist.txt

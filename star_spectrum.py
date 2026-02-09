@@ -540,9 +540,10 @@ def GET_SCALE_FACTOR(j, c, waveL_range, stellar_spectra, u_mag = False):
 # HD 122451 (HADAR) - HIP 68702 (B)
 # HD 172167 (VEGA) - HIP 91262 (A)
 # HD 61421 (PROCYON) - HIP 37279 (F)
+# HD 48915 (SIRIUS) - HIP 32349 (A)
 
-target_hips = [ 35415, 68702, 91262, 37279] # [32349,
-names= ['HD 57061', 'Hadar', 'Vega', 'Procyon'] # ['Sirius',
+target_hips = [ 35415, 68702, 91262, 37279, 32349]
+names= ['HD 57061', 'Hadar', 'Vega', 'Procyon', 'Sirius']
 
 df = pd.read_csv("Star_catalogue/hip_std.dat", header=None,
                     sep = '|', skipinitialspace=True).iloc[:, [1, 5, 8, 9, 11, 32, 34, 37, 76]]
@@ -561,12 +562,12 @@ df['distance'] = 1000/df["trig_parallax"]
 df['B_V'] = 0.85*(df['B_mag'] - df['V_mag'])
 print(df)
 
-ebv_array = np.array([ 0.140, 0.03, 0.009, 0.00])
-filename2 = r'Castelli_data/crossec1.dat'
+ebv_array = np.array([ 0.140, 0.03, 0.009, 0.00, 0.00])
+filename2 = r'Stellar_Spectra/crossec_interp.dat'
 new_df = pd.read_csv(filename2, delimiter=r'\s+', names=['wavelength', 'c_section'])
 
 
-for j in range (4): 
+for j in range (4,5): 
     all_spectra = READ_CASTELLI_SPECTRA(Castelli_data)
     stellar_spectra = StellarSpectrum()
     temperature = df['temp'][j]
@@ -614,6 +615,13 @@ for j in range (4):
     # print(list(zip(stellar_spectra.wavelength, tot_flux, tot_flux2)))
 
     if names[target_hips.index(df['hip'][j])] == 'Sirius':
+        file_path = fr'Stellar_Spectra\Test_Stars\{df['hip'][j]}_spectra.csv'
+        # Read the file into a DataFrame
+        df2 = pd.read_csv(file_path, delimiter=r',\s+', header=None, names=['wavelength', 'flux'])
+        print(df2.head())
+        low_UV2 = index_greater_than(df2['wavelength'], 800)
+        high_UV2 = index_greater_than(df2['wavelength'], 3500)
+
         # Create the initial figure and axes
         fig, ax1 = plt.subplots(figsize=(8, 5))
         ax2 = ax1.twinx()  # Create a twin axis sharing the same x-axis
@@ -623,23 +631,25 @@ for j in range (4):
         ax2.tick_params(axis='y', labelcolor=color2)
     
         # Plot the stellar spectrum on the primary y-axis (left)
-        color1 = 'grey'
+        color1 = 'black'
         ax1.set_xlabel(r'Wavelength (Å)')
         ax1.set_ylabel(r'Star Energy Flux at earth (ergs/s/cm²/A)', color=color1)
         ax1.plot(stellar_spectra.wavelength[low_UV:high_UV], tot_flux[low_UV:high_UV], color= 'black', label='Simulated Stellar Flux', zorder =2)
+        ax1.plot(df2['wavelength'][low_UV2:high_UV2], df2['flux'][low_UV2:high_UV2], linewidth = 1, color = 'grey', zorder =3)
+        ax1.scatter(df2['wavelength'][low_UV2:high_UV2], df2['flux'][low_UV2:high_UV2], color ='grey', s =6, zorder =3, label='Observed SED (INES)')
         ax1.tick_params(axis='y', labelcolor=color1)
         ax1.legend()
         # Add a title to the plot
         plt.title(f'SED for {names[j]} (HIP-{df['hip'][j]})')
         ax1.grid(True, which ="both", alpha = 0.2, linestyle='--')
-        # plt.savefig(fr'Output\Demo\{df['hip'][j]}_spectrum.pdf')
+        # plt.savefig(fr'Stellar_Spectra\Test_Stars\{names[j]}_spectrum.pdf')
         plt.show()
 
     else:
-        file_path = fr'Output\Demo\{df['hip'][j]}_spectra.txt'
-
+        file_path = fr'Stellar_Spectra\Test_Stars\{df['hip'][j]}_spectra.txt'
         # Read the file into a DataFrame
         df2 = pd.read_csv(file_path, delimiter=r'\s+', header=None, names=['wavelength', 'flux'])
+
         low_UV2 = index_greater_than(df2['wavelength'], 800)
         high_UV2 = index_greater_than(df2['wavelength'], 3800)
 
@@ -676,13 +686,13 @@ for j in range (4):
         # plt.legend()
 
 
-        # plt.savefig(fr'Output\Demo\{df['hip'][j]}_spectrum.pdf')
+        # plt.savefig(fr'Stellar_Spectra\Test_Stars\{names[j]}_spectrum.pdf')
         # Show the plot
         plt.show()
 
 
     # --- Load Johnson U filter ---
-    U_filter = np.loadtxt("Castelli_data/2MASS.J.dat")   # wavelength [Å], transmission
+    U_filter = np.loadtxt("Stellar_Spectra/2MASS.J.dat")   # wavelength [Å], transmission
     waveL_range = stellar_spectra.wavelength
 
     # --- Interpolate filter to spectrum grid ---
@@ -694,7 +704,7 @@ for j in range (4):
         right=0.0
     )
     df_interp = pd.DataFrame({'wavelength': stellar_spectra.wavelength, '2MASS_J': S_U})
-    filename2 = r'Castelli_data/2MASS_J_interp.dat'
+    filename2 = r'Stellar_Spectra/2MASS_J_interp.dat'
     df_interp.to_csv(filename2, sep='\t', index=False, header=False, float_format='%.8e')
 
     # --- Band-integrated flux ---
@@ -721,12 +731,12 @@ for j in range (4):
         den = np.trapz(vega_flux * S_U * waveL_range, waveL_range)
         print(f"Vega Total J band flux (ergs/s/cm²/A):  {den}")
         vega_data = pd.DataFrame({'wavelength': stellar_spectra.wavelength, 'flux': vega_flux})
-        vega_data.to_csv(r'Stellar_Spectra/vega__interp.dat', sep='\t', index=False, header=False, float_format='%.8e')
+        # vega_data.to_csv(r'Stellar_Spectra/vega__interp.dat', sep='\t', index=False, header=False, float_format='%.8e')
 
 
     u_mag = -2.5 * np.log10( num / den)
-    u_mag1 = -2.5 * np.log10( df2['flux'][uindex] / 3.08589188e-09)
-    u_mag2 = -2.5 * np.log10( tot_flux[uindex2] / 3.006893995802142e-09)
+    u_mag1 = "--x" #-2.5 * np.log10( df2['flux'][uindex] / 3.08589188e-09)
+    u_mag2 = "--x" #-2.5 * np.log10( tot_flux[uindex2] / 3.006893995802142e-09)
 
     print(f"{names[j]} (HIP-{df['hip'][j]}) \n J band magnitude: Integrated: {u_mag},   observed: {u_mag1},   Simulated: {u_mag2}")
 

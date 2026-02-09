@@ -19,8 +19,8 @@ config = ConfigParser()
 config['Params_0'] = {
     'hipparcos_catalogue' : fr'{folder_loc}Star_catalogue{os.sep}hip_main.dat', #path to the Hipparcos file Star_catalogue\hip_main.dat
     'Castelli_data' : fr'{folder_loc}Castelli_data{os.sep}ckp00', #path to the ckp00 file of the Castelli Kurucz Atlas
-    'dust_C_section' : fr'{folder_loc}Castelli_data{os.sep}crossec1.dat', #path to the dust_C file of the Castelli Kurucz Atlas
-    'filter' : fr'{folder_loc}Castelli_data{os.sep}Johnson_U.dat', #path to the Johnson U filter data 
+    'dust_C_section' : fr'{folder_loc}Stellar_Spectra{os.sep}crossec_interp.dat', #path to the dust_C file of the Castelli Kurucz Atlas
+    'filter' : fr'{folder_loc}Stellar_Spectra{os.sep}Johnson_U.dat', #path to the Johnson U filter data 
 
     # Diffused UV data files
     'diffused_BG_file': fr"{folder_loc}diffused_UV_data{os.sep}",
