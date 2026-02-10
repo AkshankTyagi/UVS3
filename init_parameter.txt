@@ -11,11 +11,11 @@ zod_dist_table = C:\Users\Akshank Tyagi\OneDrive - Indian Institute of Science\D
 sat_name = Astrosat
 roll = False
 roll_rate_hrs = False
-number of revolutions = 1
+number of revolutions = 0.1
 n_frames = False
-t_slice = 200
+t_slice = 2
 width = 0.3
-height = 1.5
+height = 1
 starmag_min_threshold = 0
 starmag_max_threshold = 12
 allignment_with_orbit = 90
@@ -30,7 +30,7 @@ bg_wavelength = [1100, 1500, 2300]
 azm = 104
 ele = 60
 longitudinal_spectral_width = 0.1
-interval_bw_frames = 1500
+interval_bw_frames = 500
 
 [Params_2]
 sun = True
@@ -39,8 +39,10 @@ galactic_plane = True
 diffused_bg = True
 zodiacal_bg = True
 spectra = True
-fix_start = False
+global = True
+circular_fov = True
+fix_start = True
 staring_mode = False
-save_animation = False
+save_animation = True
 save_data = False
 

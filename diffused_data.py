@@ -21,10 +21,11 @@ def read_parameter_file(filename= params_file):
     diffused_file = config.get(file_loc_set, 'diffused_BG_file')
     diffused_wavelength = config.get(param_set, 'BG_wavelength')
     diffused_wavelength = [int(val) for val in diffused_wavelength[1:-1].split(',')]
+    # radius = float(config.get(param_set, 'radius'))
     return diffused_wavelength, diffused_file
 
 
-def get_diffused_in_FOV( data ):
+def get_diffused_in_FOV( data, circular_FOV = 'False'):
     print('Reading Diffused UV ISRF in the FOV.')
     wavelength_array, diffused_BG_file = read_parameter_file()
 
@@ -72,8 +73,18 @@ def get_diffused_in_FOV( data ):
             filtered_points = []
             for ra, dec, flux  in zip(ra_arr[idx_candidates], dec_arr[idx_candidates], flux_arr[idx_candidates]):
                 # ra, dec, flux = point
-                if is_point_in_polygon(ra, dec, polygon):
-                    filtered_points.append([ra, dec, flux])
+                if circular_FOV == 'True':
+                    # Calculate the center of the polygon (FOV)
+                    center_ra = (xmin + xmax) / 2
+                    center_dec = (ymin + ymax) / 2
+                    # Calculate the distance from the point to the center
+                    distance = np.sqrt((ra - center_ra) ** 2 + (dec - center_dec) ** 2)
+                    radius = (ymax - ymin)/2 # Assuming the circular FOV is inscribed in the bounding box
+                    if distance <= radius:
+                        filtered_points.append([ra, dec, flux])
+                else:
+                    if is_point_in_polygon(ra, dec, polygon):
+                        filtered_points.append([ra, dec, flux])
 
             diffused_data[f'{wavelength}'].append(filtered_points)
 

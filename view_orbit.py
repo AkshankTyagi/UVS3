@@ -71,13 +71,15 @@ def read_parameter_file(filename=params_file ):
 def read_components(filename= params_file, param_set = 'Params_2'):
     config = ConfigParser()
     config.read(filename)
-    global diffused_bg
+    # global circular_FOV
+    circular_FOV = config.get(param_set, 'Circular_FOV')
     save_data = config.get(param_set, 'Save_data')
     diffused_bg = config.get(param_set, 'diffused_bg')  
     zodiacal_bg = config.get(param_set, 'zodiacal_bg')
     stare_mode = config.get(param_set, 'Staring_mode')
+    fixed_start = config.get(param_set, 'fix_start')
 
-    return stare_mode, diffused_bg, zodiacal_bg, save_data
+    return stare_mode, diffused_bg, zodiacal_bg, save_data, circular_FOV, fixed_start
 
 def read_stare_params(filename= params_file, param_set = 'Params_1'):
     config = ConfigParser()
@@ -225,7 +227,7 @@ def propagate(sat, time_start, time_end, dt, theta):
     return time_arr, state_vectors, celestial_coordinates
 
 # get list of star data in view along with satellite state_vectors
-def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignment, roll=False, stare_mode=False):
+def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignment, roll="False", stare_mode="False", circular_FOV = 'False'):
     
     print('Calculating Satellite State Vectors and Objects in the FOV.')
 
@@ -280,7 +282,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
 
     for frame, (r, d, chi_angle) in enumerate(zip(ra, dec, chi)):
         # print (frame, tdf_values) # print(frame, frame_boundary) # print(f"Frame {frame+1} has {len(tdf_values)} stars, and frame corners = {frame_boundary}")
-        tdf_values, frame_boundary = filter_by_fov(df, r, d, chi_angle) 
+        tdf_values, frame_boundary = filter_by_fov(df, r, d, chi_angle, circular_FOV) # print(tdf_values)
         tdf_values = tdf_values.values.tolist()
         frame = f"{frame}"
         if stare_mode == 'True':
@@ -376,6 +378,9 @@ def main():
     t_period = N_revolutions* t_rev
     print(f"Orbital Time period of Satellite = {t_rev} sec; Run Time of Simulation: {t_period} " )
 
+    # Read components to include in simulation
+    stare_mode, diffused_bg, zodiacal_bg, save_data, circular_FOV, fixed_start = read_components()
+
     # each time slice
     if t_slice:
         t_step = int(t_period / t_slice) + 1
@@ -388,15 +393,17 @@ def main():
         else:
             print('T_slice not found')
 
-    # simulation starts from current time to one full orbit
-    start = Time.now()          
-    print(f"Start time of Simulation (UTC): {start}\n------------------")
+    if fixed_start == 'True':
+        start = Time("2026-01-01T00:00:00", scale='utc')
+        print(f"! Fixed Start time of Simulation (UTC): {start}\n------------------")
+    else:
+        # simulation starts from current time to one full orbit
+        start = Time.now()          
+        print(f"Start time of Simulation (UTC): {start}\n------------------")
 
-    # Read components to include in simulation
-    stare_mode, diffused_bg, zodiacal_bg, save_data = read_components()
 
     # times, state_vectors, celestial_coordinates
-    time_arr, state_vectors, celestial_data, sol_position = get_simulation_data(satellite, df, start, t_period, t_slice, theta, allignment, roll, stare_mode)
+    time_arr, state_vectors, celestial_data, sol_position = get_simulation_data(satellite, df, start, t_period, t_slice, theta, allignment, roll, stare_mode, circular_FOV)
     Spectra = GET_SPECTRA(castelli_dir, celestial_data)
 
     for i in range(len(celestial_data)):
@@ -407,7 +414,7 @@ def main():
     # print(celestial_data)
 
     if diffused_bg == 'True':
-        diffused_data, diffused_wavelengths = get_diffused_in_FOV(celestial_data)
+        diffused_data, diffused_wavelengths = get_diffused_in_FOV(celestial_data, circular_FOV)
         # print( diffused_data["1100"][0], diffused_data["1100"][0][0], diffused_data["1100"][0][0][0],diffused_data["1100"][0][0][1] , diffused_data["1100"][0][0][2] )
     else: 
         diffused_data = [0]
@@ -415,7 +422,7 @@ def main():
 
     if zodiacal_bg == 'True':
         # print('Zodiacal Background not included in the simulation yet')
-        zodiacal_data, zod_wavelengths = get_zodiacal_in_FOV(celestial_data, time_arr)
+        zodiacal_data, zod_wavelengths = get_zodiacal_in_FOV(celestial_data, time_arr, circular_FOV)
     else: 
         zodiacal_data = [0]
         zod_wavelengths = [0]

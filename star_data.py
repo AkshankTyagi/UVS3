@@ -196,14 +196,19 @@ def get_frame_boundaries(w, h, x, y, chi=0):
 
 
 # camera fov : height◦ × width◦
-def filter_by_fov(mdf, ra, de, chi): 
+def filter_by_fov(mdf, ra, de, chi, circular_FOV): 
     # Frame field of view
     # Get valid boundaries  
     w, h, _, _ = read_parameter_file()
     
-    # Get the rotated corners of the FOV
-    rotated_corners = get_frame_boundaries(w, h, ra, de, chi)
-    # print(rotated_corners)
+    if circular_FOV == 'True':
+        radius = h/2  # diameter of circular FOV
+        w = h 
+        rotated_corners = get_frame_boundaries(w, h, ra, de)
+    else:
+        # Get the rotated corners of the FOV
+        rotated_corners = get_frame_boundaries(w, h, ra, de, chi)
+        # print(rotated_corners)
 
     # Calculate min and max RA and Dec from rotated corners
     min_ra, min_dec = rotated_corners.min(axis=0)
@@ -211,7 +216,8 @@ def filter_by_fov(mdf, ra, de, chi):
 
     # Extract useful columns
     mdf = mdf[['ra_deg', 'de_deg', 'mar_size', 'hip','B_Tmag', 'trig_parallax', 'Spectral_type', 'V_Jmag', 'V_Tmag', 'B-V', 'U_mag']]
-    
+
+
     # Filter data within the boundaries
     if min_ra < 0:
         q = '(ra_deg >= 360 + @min_ra | ra_deg <= @max_ra) & de_deg >= @min_dec & de_deg <= @max_dec' # wrap around 0
@@ -227,13 +233,21 @@ def filter_by_fov(mdf, ra, de, chi):
         mdf_filtered.loc[mdf_filtered['ra_deg'] <= min_ra, 'ra_deg'] += 360
     else:
         q = 'ra_deg >= @min_ra & ra_deg <= @max_ra & de_deg >= @min_dec & de_deg <= @max_dec' 
-        mdf_filtered = mdf.query(q)
+        mdf_filtered = mdf.query(q).copy()
 
-    # Convert rotated corners to a list of tuples for polygon testing
-    polygon = [tuple(corner) for corner in rotated_corners]
-    # Apply polygonal filtering
-    mdf_filtered = mdf_filtered[mdf_filtered.apply(lambda row: is_point_in_polygon(row['ra_deg'], row['de_deg'], polygon), axis=1)]
-    # frame_boundaries = [min_ra, min_dec, max_ra, max_dec]
+
+    if circular_FOV == 'True':
+        # For circular FOV, also filter by radius from center
+        center = np.array([ra, de])
+        distance = np.sqrt((mdf_filtered['ra_deg'] - center[0])**2 + (mdf_filtered['de_deg'] - center[1])**2)
+        mdf_filtered = mdf_filtered[distance <= radius]
+        # mdf_filtered.drop(columns=['distance'], inplace=True)
+    else:
+        # Convert rotated corners to a list of tuples for polygon testing
+        polygon = [tuple(corner) for corner in rotated_corners]
+        # Apply polygonal filtering
+        mdf_filtered = mdf_filtered[mdf_filtered.apply(lambda row: is_point_in_polygon(row['ra_deg'], row['de_deg'], polygon), axis=1)]
+        # frame_boundaries = [min_ra, min_dec, max_ra, max_dec]
     
     return mdf_filtered, rotated_corners #, frame_boundaries 
 

@@ -221,7 +221,7 @@ def scale_zodiacal_spectrum(zod_dist, table_ecl, table_beta, sol_wavelengths, so
     return Zodiacal_spec_arr, sol_wavelengths[low_lim:high_lim]
 
 
-def get_zodiacal_in_FOV( data, time_arr ):
+def get_zodiacal_in_FOV( data, time_arr, Circular_FOV = 'False'):
     """
     Calculate zodiacal spectra for points inside each frame and report timing.
     Args:
@@ -268,8 +268,17 @@ def get_zodiacal_in_FOV( data, time_arr ):
         filtered_points = []
         for ra, dec in zip(X.ravel(), Y.ravel()):
             # print(ra,dec)
-            if is_point_in_polygon(ra, dec, polygon):
-                filtered_points.append([ra, dec])
+            if Circular_FOV == 'True':
+                # Check if point is within circular FOV radius from center
+                center_ra = (xmin + xmax) / 2
+                center_dec = (ymin + ymax) / 2
+                distance = np.sqrt((ra - center_ra)**2 + (dec - center_dec)**2)
+                radius = max(FOV_height, FOV_width)/2  # Assuming circular FOV is inscribed in bounding box
+                if distance <= radius:
+                    filtered_points.append([ra, dec])
+            else:
+                if is_point_in_polygon(ra, dec, polygon):
+                    filtered_points.append([ra, dec])
 
         # Calculate the elongation and beta angle for each mesh point
         elong_arr, beta_arr = pointing_geometry(filtered_points, time_arr[f])

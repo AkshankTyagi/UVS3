@@ -48,15 +48,16 @@ def read_parameter_file(filename= params_file):
 def read_components(filename= params_file, param_set = 'Params_2'):
     config = ConfigParser()
     config.read(filename)
-    global diffused_bg, Spectra
+    global Spectra, circular_FOV # diffused_bg,
     solar_marker = config.get(param_set, 'sun')
     lunar_marker = config.get(param_set, 'moon')
     G_plane = config.get(param_set, 'galactic_plane')
-    diffused_bg = config.get(param_set, 'diffused_bg')
+    # diffused_bg = config.get(param_set, 'diffused_bg')
     Spectra = config.get(param_set, 'Spectra')  
     save_ani = config.get(param_set, 'save_animation')
+    circular_FOV = config.get(param_set, 'Circular_FOV')
 
-    return solar_marker, lunar_marker, G_plane,  save_ani 
+    return solar_marker, lunar_marker, G_plane, save_ani 
 
 
 # print("plotting animation")
@@ -286,7 +287,14 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             sky = ax.scatter(P[:,0], P[:,1], s=S, facecolors='white')
         
         # plot for FOV boundary
-        if allignment != 'False':
+        if circular_FOV == 'True':
+            center_ra = (corners[:, 0].min() + corners[:, 0].max()) / 2
+            center_dec = (corners[:, 1].min() + corners[:, 1].max()) / 2
+            circle = plt.Circle((center_ra, center_dec), FOV_height/2, color='grey', linestyle='--', linewidth=0.5, fill=False, label='FOV boundary')
+            ax.add_patch(circle)
+            ax.autoscale(False)
+            ax.set_aspect('equal', adjustable='box')
+        elif allignment != 'False':
             ax.plot(corners[:, 0], corners[:, 1], 'grey', linestyle='--', linewidth = 0.5, label = 'FOV boundary')
             ax.plot([corners[0, 0], corners[3, 0]], [corners[0, 1], corners[3, 1]], 'grey', linestyle='--', linewidth = 0.5)
             ax.autoscale(False)
@@ -486,7 +494,14 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         P, S, corners, Size, stare = get_cles_data_by_frame(i, celestial_coordinates)
 
         # plot for FOV boundary
-        if allignment!= 'False':
+        if circular_FOV == 'True':
+            center_ra = (corners[:, 0].min() + corners[:, 0].max()) / 2
+            center_dec = (corners[:, 1].min() + corners[:, 1].max()) / 2
+            circle = plt.Circle((center_ra, center_dec), FOV_height/2, color='grey', linestyle='--', linewidth=0.5, fill=False, label='FOV boundary')
+            ax3.add_patch(circle)
+            ax3.autoscale(False)
+            ax3.set_aspect('equal', adjustable='box')
+        elif allignment != 'False':
             ax3.set_aspect('equal')
             ax3.plot(corners[:, 0], corners[:, 1], 'grey', linestyle='--', linewidth = 0.5, label = 'FOV boundary')
             ax3.plot([corners[0, 0], corners[3, 0]], [corners[0, 1], corners[3, 1]], 'grey', linestyle='--', linewidth = 0.5)

@@ -35,13 +35,14 @@ config['Params_1'] = {
     'roll_rate_hrs' : False,
 
     # Specify either Number of frames or period in sec after which the next Frame is given
-    'number of Revolutions' : 1,
+    'number of Revolutions' : 0.01,
     'N_frames' : False,
-    't_slice' : 200, # Seconds,
+    't_slice' : 1, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
     'width': 0.3, # 0.5 (shorter) width
-    'height': 1.5, # 1 (longer) height
+    'height': 1, # 1 (longer) height / Diameter of circular FOV in degrees, if "circular" is True,
+    # 'radius': now = FOV_height/2
     'starmag_min_threshold' : 0, # B-band threshold for what bright stars we want to avoid
     'starmag_max_threshold' : 12, # threshold for what maximum apaarent magnitude stars we want/can to look at
 
@@ -65,7 +66,7 @@ config['Params_1'] = {
     'azm': 104,
     'ele': 60,
     'longitudinal_spectral_width' : 0.1, # Declination width of spectral spread to fall on detector in degrees
-    'interval_bw_Frames' : 1500 # in milliSec
+    'interval_bw_Frames' : 500 # in milliSec
 }
 
 config['Params_2'] = { ## All components take Boolean values:  True/False
@@ -75,6 +76,8 @@ config['Params_2'] = { ## All components take Boolean values:  True/False
     'diffused_bg': True,
     'zodiacal_bg': True, 
     'Spectra': True,
+    'Global': True,
+    'Circular_FOV': True,   # radius = FOV_height/2
     'fix_start': False,
     'Staring_mode': False, 
 
