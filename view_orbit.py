@@ -106,21 +106,21 @@ def read_satellite_TLE(filename= sat_file, sat_name = 'ISS'):
 
 # get satellite object from TLE (2 lines data)
 def get_satellite(line1, line2):
-    global mu, r, a
+    global radius, mu, a
     
     # create satellite object from TLE
     satellite = twoline2rv(line1, line2, wgs72)
 
     # constants
     mu = satellite.mu           # Earth’s gravitational parameter (km³/s²)
-    r = satellite.radiusearthkm # Radius of the earth (km).
+    radius = satellite.radiusearthkm # Radius of the earth (km).
 
     # orbital parameters
-    a = satellite.a * r
-    apo, peri = satellite.alta * r, satellite.altp * r
+    a = satellite.a * radius
+    apo, peri = satellite.alta * radius, satellite.altp * radius
 
-    print(f'mu ={mu} km^3/s^2, Earth Radius = {r} km ')
-    print(f'Orbital Perigee Height : {peri:.2f} km, Apogee Height:{apo:.2f} km \nDistances from Center of Earth: Perigee = {r+peri} km, Semi major = {a} km, Apogee = {r+apo} km' )
+    print(f'mu ={mu} km^3/s^2, Earth Radius = {radius} km ')
+    print(f'Orbital Perigee Height : {peri:.2f} km, Apogee Height:{apo:.2f} km \nDistances from Center of Earth: Perigee = {radius+peri} km, Semi major = {a} km, Apogee = {radius+apo} km' )
 
     return satellite
 
@@ -194,9 +194,9 @@ def get_ra_dec_from_sv(r, v, theta):
     RA = np.array([-U[1], U[0], 0])  # Tangent in xy-plane
     angle_rad = angle_between_vectors(N, RA)
 
-    angle_deg = np.degrees(angle_rad)  # angle between Normal and RA - angle_deg
+    angle_chi = np.degrees(angle_rad)  # angle between Normal and RA - angle_deg
 
-    return alfa, delta, angle_deg
+    return alfa, delta, angle_chi
 
 # returns a list of state vectors, ra, dec for a given sgp4 satellite object
 def propagate(sat, time_start, time_end, dt, theta):
@@ -284,12 +284,12 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
         # print (frame, tdf_values) # print(frame, frame_boundary) # print(f"Frame {frame+1} has {len(tdf_values)} stars, and frame corners = {frame_boundary}")
         tdf_values, frame_boundary = filter_by_fov(df, r, d, chi_angle, circular_FOV) # print(tdf_values)
         tdf_values = tdf_values.values.tolist()
-        frame = f"{frame}"
+        frame_str = f"{frame}"
         if stare_mode == 'True':
             if int(frame)>= first_idx and int(frame) <= first_idx + n_frames_stare:
-                frame += "*" 
+                frame_str += "*" 
 
-        frame_row_list.append([frame, tdf_values, frame_boundary ]) # print (frame_row_list)
+        frame_row_list.append([frame_str, tdf_values, frame_boundary ]) # print (frame_row_list)
 
         if sun == 'True':  # Check if Solar Position is on then check for proximity 
             sun_ra, sun_dec = cel_positions["sun"][int(frame)]
@@ -436,7 +436,7 @@ def main():
 
     
     #  animate
-    animate(time_arr, state_vectors, celestial_data, sol_position, Spectra, diffused_data, (zodiacal_data, zod_wavelengths), r)
+    animate(time_arr, state_vectors, celestial_data, sol_position, Spectra, diffused_data, (zodiacal_data, zod_wavelengths), radius)
     return
 
 # main

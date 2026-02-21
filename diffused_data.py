@@ -43,6 +43,7 @@ def get_diffused_in_FOV( data, circular_FOV = 'False'):
 
         except FileNotFoundError:
             print("df is empty. File not found.")
+            continue
 
         # Convert to numpy arrays once (fast)
         ra_arr = df['ra'].to_numpy()

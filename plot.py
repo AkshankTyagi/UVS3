@@ -18,6 +18,8 @@ from star_spectrum import *
 from diffused_data import *
 from zodiacal_light import *
 from Coordinates import *
+# from global_sky_map import *
+
 from Params_configparser import get_folder_loc
 
 folder_loc, params_file = get_folder_loc()
@@ -42,13 +44,12 @@ def read_parameter_file(filename= params_file):
     BG_wavelength  = [int(val) for val in BG_wavelength[1:-1].split(',')]
     Stare_RA = float(config.get(param_set, 'staring RA'))
     Stare_Dec = float(config.get(param_set, 'staring Dec'))
-
     return azm, ele
 
 def read_components(filename= params_file, param_set = 'Params_2'):
     config = ConfigParser()
     config.read(filename)
-    global Spectra, circular_FOV # diffused_bg,
+    global Spectra, circular_FOV, Global_map # diffused_bg,
     solar_marker = config.get(param_set, 'sun')
     lunar_marker = config.get(param_set, 'moon')
     G_plane = config.get(param_set, 'galactic_plane')
@@ -56,6 +57,7 @@ def read_components(filename= params_file, param_set = 'Params_2'):
     Spectra = config.get(param_set, 'Spectra')  
     save_ani = config.get(param_set, 'save_animation')
     circular_FOV = config.get(param_set, 'Circular_FOV')
+    Global_map = config.get(param_set, 'full_sky_map')
 
     return solar_marker, lunar_marker, G_plane, save_ani 
 
@@ -301,7 +303,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             ax.set_aspect('equal', adjustable='box')
 
         # background_flux = get_flux_ipixel(diffused_BG_wavelength, Size)
-        ax.legend(loc='center left', bbox_to_anchor=(1, -0.04), fontsize='small', markerscale=15)
+        ax.legend(loc='bottom right', bbox_to_anchor=(1, -0.04), fontsize='small', markerscale=15)
         # return
         return ax, sky , diffused
     
@@ -413,12 +415,69 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
 
         return ax, spectra
 
+    # init global sky map in equatorial coordinates all stars in the sky, with Diffused background and Zodiacal light
+    def init_global_sky_map(ax):
+        global full_sky_map
+
+        # # set title
+        # ax.set_facecolor("black")
+        # ax.set_title('Full Sky Map in Equatorial Coordinates', color="white", pad=20)
+        # # set labels
+        # ax.set_xlabel(r'Right Ascension $^\circ$', color="white")
+        # ax.set_ylabel(r'Declination $^\circ$')
+
+        # diffused_wave = BG_wavelength[-1]
+        # zodiacal_wave = BG_wavelength[-1]
+
+        # if diffused_data != [0]:
+        #     diffused_sky_df = get_diffused_global(diffused_wave)
+        #     aitoff_coords_diff = ra_dec_to_aitoff(diffused_sky_df["ra"].values, diffused_sky_df["dec"].values)
+        #     diffused_cmap = mc.LinearSegmentedColormap.from_list("diffused", [(0,0,0), (0.2,0.4,1)]) # Black to blue gradient
+        #     sc_diff = ax.scatter(
+        #         aitoff_coords_diff[0],
+        #         aitoff_coords_diff[1],
+        #         c=diffused_sky_df["flux"].values,
+        #         cmap=diffused_cmap,
+        #         s=1,
+        #         alpha=0.9,
+        #         label = f'Diffused ISRF ({diffused_wave} $\\AA$)'
+        #     )
+
+        # if zodiacal_data != [0]:
+        #     zod_sky_df = get_zodiacal_global(zodiacal_wave, [time_arr[0]])
+        #     aitoff_coords_zod = ra_dec_to_aitoff(zod_sky_df["ra"].values, zod_sky_df["dec"].values)
+        #     zod_cmap = mc.LinearSegmentedColormap.from_list("zod", [(0,0,0), (1,0.4,1)]) # Black to pink gradient
+        #     sc_zod = ax.scatter(
+        #         aitoff_coords_zod[0],
+        #         aitoff_coords_zod[1],
+        #         c=zod_sky_df["0"].values,
+        #         cmap=zod_cmap,
+        #         s=10,
+        #         alpha=0.9,
+        #         label = f'Zodiacal light ({zodiacal_wave} $\\AA$)'
+        #     )
+        # ax.grid(True, color='white', linestyle='--', linewidth=0.5, alpha=0.5)
+        # ax.tick_params(colors="white")
+
+        # plt.colorbar(sc_diff, ax=ax, orientation="horizontal", pad=0.12, label="Diffuse background")
+
+        # plt.colorbar(sc_zod, ax=ax, orientation="horizontal", pad=0.05, label="Zodiacal light")
+
+        # # Create the global sky map plot
+        # full_sky_map = {
+        #     "ax": ax,
+        #     "zodiacal": sc_zod,
+        #     "diffuse": sc_diff,
+        #     # "stars": sc_stars
+        # }
+        # return ax, full_sky_map
+        return 0, 0
+
     # initialize plot
     def init():
         global fig, ax2, ax3, ax4, ax_r, ax5
-        global orbit, satellite, sky, diffused, phots, spectra, sun, moon
+        global orbit, satellite, sky, diffused, phots, spectra, sun, moon, full_sky_map
         global X, Y, Z
-        global RA, DEC
         
         # position vectors
         X, Y, Z = state_vectors[0], state_vectors[1], state_vectors[2]
@@ -446,14 +505,21 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         ax4, ax_r, phots = init_photons(ax4)
 
         # row 1, col 1
-        ax5 = fig.add_subplot(gs[1, 1])
-        # initialize abs Spectra Plot
-        ax5, spectra = init_spectra(ax5)
+        if Global_map == "True":
+            # Initialize the Global Sky Map
+            ax5 = fig.add_subplot(gs[1, 1], projection='aitoff')
+            ax5, full_sky_map = init_global_sky_map(ax5)
+            spectra = 0
+        else:
+            # initialize abs Spectra Plot
+            ax5 = fig.add_subplot(gs[1, 1])
+            ax5, spectra = init_spectra(ax5)
+            full_sky_map = 0
 
         # return
-        return fig, satellite, orbit, sun, moon, sky, diffused, phots, spectra
+        return fig, satellite, orbit, sun, moon, sky, diffused, phots, spectra, full_sky_map
 
-    def update(i, satellite, orbit, sun, moon, sky, diffused, phots, spectra):
+    def update(i, satellite, orbit, sun, moon, sky, diffused, phots, spectra, full_sky_map):
         # stack as np columns for scatter plot
         xyi, xi, yi, zi = get_pos_data_by_frame(i)
         # print ('frame number',i+1,'- satellite path:', xi, yi, zi)
@@ -663,7 +729,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
     # run animation
     def run():
         # plot init
-        fig, satellite, orbit, sun, moon, sky, diffused, phots, spectra = init()
+        fig, satellite, orbit, sun, moon, sky, diffused, phots, spectra, full_sky_map = init()
         # total no of frames
         frame_count = len(X)
         
@@ -674,7 +740,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         # create animation using the animate() function
         ani = animation.FuncAnimation(fig, update,
                                       frames=frame_count, interval= Interval, 
-                                      fargs=(satellite, orbit, sun, moon, sky, diffused, phots, spectra ),
+                                      fargs=(satellite, orbit, sun, moon, sky, diffused, phots, spectra, full_sky_map),
                                       blit=False, repeat=False)
 
         # show

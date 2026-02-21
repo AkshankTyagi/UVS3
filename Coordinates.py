@@ -145,10 +145,44 @@ def get_world_coordinates(x, y, fits_file):
         wcs = WCS(hdul[0].header)  # Create WCS object from FITS header
         print(wcs)
         # Convert pixel coordinates to world coordinates (RA, Dec)
-        ra, dec = wcs.all_pix2world(x, y, 1)  # Assumes pixel indices start from 1
+        glon, glat = wcs.all_pix2world(x, y, 1)  # Assumes pixel indices start from 1
         # print(ra,dec)
-        return ra, dec
-           
+        return glon, glat
+    
+
+def make_aitoff_wcs_deg(bin_size=1):
+    hdr = fits.Header()
+
+    # Image size (container)
+    hdr['NAXIS']  = 2  # number of axes
+    hdr['NAXIS1'] = 360/bin_size   # RA
+    hdr['NAXIS2'] = 180/bin_size    # Dec
+
+    # Coordinate types
+    hdr['CTYPE1'] = 'RA---AIT'
+    hdr['CTYPE2'] = 'DEC--AIT'
+
+    # Reference pixel = image center
+    hdr['CRPIX1'] = 180/bin_size + 0.5
+    hdr['CRPIX2'] = 90/bin_size + 0.5
+
+    # Reference coordinate = (RA, Dec) = (0, 0)
+    hdr['CRVAL1'] = 0.0
+    hdr['CRVAL2'] = 0.0
+
+    # Pixel scale (deg/pixel)
+    hdr['CDELT1'] = -bin_size  # RA increases to the left
+    hdr['CDELT2'] =  bin_size   # Dec increases upwards
+
+    return WCS(hdr)
+
+def ra_dec_to_aitoff(ra_deg, dec_deg):
+    ra = np.deg2rad(ra_deg)
+    ra = np.remainder(ra + np.pi, 2*np.pi) - np.pi  # wrap to [-π, π]
+    dec = np.deg2rad(dec_deg)
+    return -ra, dec # astronomical convention
+
+
 def angular_sep(ra1, dec1, ra2, dec2):
     ra1, dec1, ra2, dec2 = map(np.deg2rad, [ra1, dec1, ra2, dec2])
     cosang = (

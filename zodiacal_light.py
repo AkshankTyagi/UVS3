@@ -200,7 +200,7 @@ def scale_zodiacal_spectrum(zod_dist, table_ecl, table_beta, sol_wavelengths, so
 
         # Evaluate zodiacal intensity at the target coordinates # Absolute latitude because table is symmetric
         zod_intensity = interpolator([[abs(helio_ecl), abs(helio_beta)]])[0]
-        print
+
         # Find index closest to 5000 Å
         wave_index = np.searchsorted(sol_wavelengths, 5000, side='right') - 1
         wave_index = np.clip(wave_index, 0, len(sol_wavelengths)-1)
@@ -221,7 +221,7 @@ def scale_zodiacal_spectrum(zod_dist, table_ecl, table_beta, sol_wavelengths, so
     return Zodiacal_spec_arr, sol_wavelengths[low_lim:high_lim]
 
 
-def get_zodiacal_in_FOV( data, time_arr, Circular_FOV = 'False'):
+def get_zodiacal_in_FOV( data, time_arr, circular_FOV = 'False'):
     """
     Calculate zodiacal spectra for points inside each frame and report timing.
     Args:
@@ -268,7 +268,7 @@ def get_zodiacal_in_FOV( data, time_arr, Circular_FOV = 'False'):
         filtered_points = []
         for ra, dec in zip(X.ravel(), Y.ravel()):
             # print(ra,dec)
-            if Circular_FOV == 'True':
+            if circular_FOV == 'True':
                 # Check if point is within circular FOV radius from center
                 center_ra = (xmin + xmax) / 2
                 center_dec = (ymin + ymax) / 2
