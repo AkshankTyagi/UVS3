@@ -249,12 +249,14 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
                 wave_index = np.searchsorted(zod_wavelengths, BG_wavelength[-1], side='right') - 1
                 wave_index = np.clip(wave_index, 0, len(zod_wavelengths)-1)
                 loc_ra_zod, loc_dec_zod = random_scatter_zodiacal_data(zod_data[0], wave_index)
-                zodiacal_wave = ax.scatter(loc_ra_zod, loc_dec_zod, s= 0.04, alpha= a, facecolors=colours[1], label = 'Zodiacal UV')
+                ax.scatter([],[], s=10, alpha=0.5, facecolors=colours[1], label = 'Zodiacal UV') # for legend
+                zodiacal_wave = ax.scatter(loc_ra_zod, loc_dec_zod, s= 0.04, alpha= a, facecolors=colours[1])
                 diffused.append(zodiacal_wave)
 
             if diffused_data != [0]:
                 loc_ra, loc_dec = random_scatter_data(diffused_data[f'{BG_wavelength[-1]}'][0])
-                diffused_wave = ax.scatter(loc_ra, loc_dec, s= 0.04, alpha= a, facecolors=colours[0], label = 'UV ISRF')
+                ax.scatter([],[],s=10, alpha=0.5, facecolors=colours[0], label = 'UV ISRF') # for legend
+                diffused_wave = ax.scatter(loc_ra, loc_dec, s= 0.04, alpha= a, facecolors=colours[0])
                 diffused.append(diffused_wave)
 
             # print(f"Diffused Data: {diffused_data}, {type(diffused_data)},  Zodiacal Data: {zodiacal_data}, {type(zodiacal_data)}")
@@ -303,7 +305,8 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             ax.set_aspect('equal', adjustable='box')
 
         # background_flux = get_flux_ipixel(diffused_BG_wavelength, Size)
-        ax.legend(loc='bottom right', bbox_to_anchor=(1, -0.04), fontsize='small', markerscale=15)
+        ax.legend(loc='center left', bbox_to_anchor=(1.2, -0.04), fontsize='small')
+        # ax.legend(bbox_to_anchor=(1.4, -0.1), fontsize='small')
         # return
         return ax, sky , diffused
     
@@ -399,8 +402,8 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
 
         if (X_wavelength[0]!=0): #checks for stars in the field of view
             y_stars = compute_star_y(ra, dec, FOV_corners)
-            # print(y_stars)
-            twoD_array = np.zeros((int((FOV_height)*100), len(X_wavelength)))
+            print(y_stars)
+            twoD_array = np.zeros((int((FOV_height*100)), len(X_wavelength)))
             color_data = get_color_data(twoD_array, X_wavelength, Y_photons_per_star, y_stars)
 
             # Create the absorption Spectra plot
@@ -408,7 +411,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             ax.invert_yaxis()
             # print (color_data[:])
         else:
-            wavelength = np.linspace(10,3800, 400)
+            wavelength = np.linspace(10, 3800, 400)
             color_data = np.zeros(( int(FOV_height*100), len(wavelength) ))
             spectra = ax.imshow(color_data, cmap=BtoB_cmap, aspect='auto', extent=(min(wavelength), max(wavelength), 1, 0), vmin=0, vmax=1) # , aspect='auto'
             ax.invert_yaxis()
@@ -591,12 +594,14 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
                 wave_index = np.searchsorted(zod_wavelengths, BG_wavelength[-1], side='right') - 1
                 wave_index = np.clip(wave_index, 0, len(zod_wavelengths)-1)
                 loc_ra_zod, loc_dec_zod = random_scatter_zodiacal_data(zod_data[i], wave_index)
-                zodiacal_wave = ax3.scatter(loc_ra_zod, loc_dec_zod, s= 0.04, alpha= a, facecolors=colours[1], label = 'Zodiacal UV')
+                ax3.scatter([],[], s=10, alpha=0.5, facecolors=colours[1], label = 'Zodiacal UV') # for legend
+                zodiacal_wave = ax3.scatter(loc_ra_zod, loc_dec_zod, s= 0.04, alpha= a, facecolors=colours[1])
                 diffused.append(zodiacal_wave)
 
             if diffused_data != [0]:
                 loc_ra, loc_dec = random_scatter_data(diffused_data[f'{BG_wavelength[-1]}'][i])
-                diffused_wave = ax3.scatter(loc_ra, loc_dec, s= 0.04, alpha= a, facecolors=colours[0], label = 'UV ISRF')
+                ax3.scatter([],[],s=10, alpha=0.5, facecolors=colours[0], label = 'UV ISRF') # for legend
+                diffused_wave = ax3.scatter(loc_ra, loc_dec, s= 0.04, alpha= a, facecolors=colours[0])
                 diffused.append(diffused_wave)
 
 
@@ -637,7 +642,8 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
         else:
             sky = ax3.scatter(P[:,0], P[:,1], s=S, facecolors='white')
 
-        ax3.legend(loc='center left', bbox_to_anchor=(1.0, -0.04), fontsize='small', markerscale=15)
+        ax3.legend(loc='center left', bbox_to_anchor=(1.2, -0.04), fontsize='small')
+
 
         # change sky limits
         ax3.set_xlim(Size[0], Size[2])
@@ -719,7 +725,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
             spectra = ax5.imshow(color_data, cmap=BtoB_cmap, aspect='auto', extent=(min(X_wavelength), max(X_wavelength), 1, 0), vmin=0, vmax=1)
             ax5.invert_yaxis()
         else:
-            wavelength = np.linspace(10,3800, 400)
+            wavelength = np.linspace(10, 3800, 400)
             color_data = np.zeros(( int(FOV_height*100), len(wavelength)))
             spectra = ax5.imshow(color_data, cmap=BtoB_cmap, aspect='auto', extent=(min(wavelength), max(wavelength), 1, 0), vmin=0, vmax=1)
             ax5.invert_yaxis()
@@ -752,7 +758,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
 
         if save_ani == "True":
             current_date = time_arr[0].datetime.strftime('%d_%m_%Y')
-            ani.save(fr'{folder_loc}Output{os.sep}{sat_name}satellite-{current_date}.gif', writer="ffmpeg") #_Large-Field_
+            ani.save(fr'{folder_loc}Output{os.sep}{sat_name}satellite-{current_date}.mp4', writer="ffmpeg") #_Large-Field_
             print("Animation Saved")
         else:
             print("Animation not Saved")
@@ -908,7 +914,7 @@ def compute_star_y(stars_ra, stars_dec, FOV_corners):
     FOV = np.asarray(FOV_corners)
     ra0  = np.mean(FOV[:, 0])
     dec0 = np.mean(FOV[:, 1])
-    # print(ra0, dec0, FOV)
+    # print(f"ra0, dec0, FOV: {ra0:.3f}, {dec0:.3f}, {FOV}")
 
     # --- 2. Gnomonic projection ---
     def radec_to_tangent(ra, dec):
@@ -939,7 +945,7 @@ def compute_star_y(stars_ra, stars_dec, FOV_corners):
         y =  (S - C[0]) @ v / H
         if y > 1 or y < 0:
             print(f"Warning: Star at RA, Dec = {ra, dec} projects outside FOV (y ={y}) \n FOV corners (RA, Dec):{FOV_corners}")
-        # print("Star projected position:", S, "Normalized y:", y)
+        # print(f"Star at ra, dec: {ra:.3f}, {dec:.3f} projected position: {S} Normalized y: {y}")
         y_stars.append(y)
     return y_stars
 
@@ -987,9 +993,10 @@ def get_color_data(data, wavelength, photons_data, y_stars):
     global spectra_width, FOV_height
     width = spectra_width * FOV_height/3
     star_row =[]
-    for y in y_stars:
-        star_row.append(int((y)*100))
-    row_spread = int(width*100)
+    nrows = data.shape[0]
+
+    star_row = [int(y * (nrows - 1)) for y in y_stars]
+    row_spread = int(width * (nrows - 1))
 
     photons_max = get_max_photon(photons_data)
 

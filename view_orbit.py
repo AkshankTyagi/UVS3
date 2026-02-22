@@ -12,6 +12,7 @@ from sgp4.io import twoline2rv
 from sgp4.earth_gravity import wgs72
 from astropy.coordinates import SkyCoord, get_body
 from astropy.time import Time, TimeDelta
+import astropy.units as u
 
 
 from configparser import ConfigParser
@@ -260,6 +261,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
                     dec[idx] = stare_Dec
         else:
             print("No Stare opportunity in this simulation window")
+            first_idx = np.inf
 
 
     # [TESTING] Roll about velocity direction 
@@ -285,7 +287,7 @@ def get_simulation_data(sat, df, start_time, sim_secs, time_step, theta, allignm
         tdf_values, frame_boundary = filter_by_fov(df, r, d, chi_angle, circular_FOV) # print(tdf_values)
         tdf_values = tdf_values.values.tolist()
         frame_str = f"{frame}"
-        if stare_mode == 'True':
+        if stare_mode == 'True':  
             if int(frame)>= first_idx and int(frame) <= first_idx + n_frames_stare:
                 frame_str += "*" 
 
@@ -398,7 +400,7 @@ def main():
         print(f"! Fixed Start time of Simulation (UTC): {start}\n------------------")
     else:
         # simulation starts from current time to one full orbit
-        start = Time.now()          
+        start = Time.now() #+ 25*u.min
         print(f"Start time of Simulation (UTC): {start}\n------------------")
 
 

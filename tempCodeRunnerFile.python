@@ -1,0 +1,12 @@
+import shutil
+print(shutil.which("ffmpeg"))
+
+
+import matplotlib.animation as animation
+print(animation.writers.list())
+
+from matplotlib.animation import FFMpegWriter
+
+writer = FFMpegWriter(fps=24)
+
+# ani.save("output.mp4", writer=writer)
