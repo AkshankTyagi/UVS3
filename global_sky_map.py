@@ -42,7 +42,6 @@ def read_parameter_file(filename= params_file):
 # def get_diffused_global(wavelength):
 #     diffused_file, diffused_wavelength, _, _ = read_parameter_file()
 
-
 #     if wavelength in diffused_wavelength:
 #         filename = diffused_file+f'RA_sorted_flux_{wavelength}.feather'
 #         fits_filename = diffused_file+f"scattered_1e10_{wavelength}_a40_g6{os.sep}scattered.fits"

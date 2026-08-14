@@ -8,19 +8,19 @@ sol_spectra_file = C:\Users\Akshank Tyagi\OneDrive - Indian Institute of Science
 zod_dist_table = C:\Users\Akshank Tyagi\OneDrive - Indian Institute of Science\Documents\GitHub\UVS3\Zodiacal_light_data\leinert_dist.txt
 
 [Params_1]
-sat_name = ISS
+sat_name = Astrosat
 roll = False
 roll_rate_hrs = False
-number of revolutions = 0.06
+number of revolutions = 1
 n_frames = False
-t_slice = 5
+t_slice = 50
 width = 0.3
 height = 2
 starmag_min_threshold = 0
 starmag_max_threshold = 10
 allignment_with_orbit = 90
 inclination_from_v = 0
-staring ra = 69
+staring ra = 269
 staring dec = 19.7
 staring_time = 700
 trigger_radius = 70
@@ -30,7 +30,7 @@ bg_wavelength = [1100, 1500, 2300]
 azm = 104
 ele = 60
 longitudinal_spectral_width = 0.1
-interval_bw_frames = 1000
+interval_bw_frames = 1200
 
 [Params_2]
 sun = True
@@ -41,8 +41,8 @@ zodiacal_bg = True
 spectra = True
 full_sky_map = False
 circular_fov = True
-fix_start = False
-staring_mode = True
+fix_start = True
+staring_mode = False
 save_animation = True
 save_data = False
 

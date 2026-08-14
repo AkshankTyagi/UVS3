@@ -396,7 +396,7 @@ def main():
             print('T_slice not found')
 
     if fixed_start == 'True':
-        start = Time("2026-01-01T00:00:00", scale='utc')
+        start = Time("2026-02-22T06:31:26", scale='utc')
         print(f"! Fixed Start time of Simulation (UTC): {start}\n------------------")
     else:
         # simulation starts from current time to one full orbit

@@ -30,14 +30,14 @@ config['Params_0'] = {
 }
 
 config['Params_1'] = {
-    'sat_name' : 'ISS', 
+    'sat_name' : 'Astrosat', 
     'roll' : False,
     'roll_rate_hrs' : False,
 
     # Specify either Number of frames or period in sec after which the next Frame is given
-    'number of Revolutions' : 0.06,
+    'number of Revolutions' : 1,
     'N_frames' : False,
-    't_slice' : 5, # Seconds,
+    't_slice' : 50, # Seconds,
 
     # Camera Field of View in Deg default 9.3 X 7
     'width': 0.3, # 0.5 (shorter) width
@@ -51,7 +51,7 @@ config['Params_1'] = {
     'inclination_from_V': 0, #gives the angle of inclination 0 to 180 deg, of the the camera from V vector in ORBITAL PLANE (default 0)
 
     # Staring Mode parameters
-    'staring RA' : 69, # in degrees
+    'staring RA' : 269, # in degrees
     'staring Dec' : 19.7, # in degrees 
     'staring_time' : 700, # in seconds (default 0)
     'trigger_radius' : 70, # distance from the general FOV to trigger stare in degrees
@@ -66,7 +66,7 @@ config['Params_1'] = {
     'azm': 104,
     'ele': 60,
     'longitudinal_spectral_width' : 0.1, # Declination width of spectral spread to fall on detector in degrees
-    'interval_bw_Frames' : 1000 # in milliSec
+    'interval_bw_Frames' : 1200 # in milliSec
 }
 
 config['Params_2'] = { ## All components take Boolean values:  True/False
@@ -78,8 +78,8 @@ config['Params_2'] = { ## All components take Boolean values:  True/False
     'Spectra': True,
     'full_sky_map': False,
     'Circular_FOV': True,   # radius = FOV_height/2
-    'fix_start': False,
-    'Staring_mode': True, 
+    'fix_start': True,
+    'Staring_mode': False, 
 
     'save_animation': True, #True,
     'Save_data': False #True 

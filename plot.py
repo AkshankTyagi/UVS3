@@ -402,7 +402,7 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
 
         if (X_wavelength[0]!=0): #checks for stars in the field of view
             y_stars = compute_star_y(ra, dec, FOV_corners)
-            print(y_stars)
+            # print(y_stars)
             twoD_array = np.zeros((int((FOV_height*100)), len(X_wavelength)))
             color_data = get_color_data(twoD_array, X_wavelength, Y_photons_per_star, y_stars)
 
@@ -748,20 +748,20 @@ def animate(time_arr, state_vectors, celestial_coordinates, sol_position, spectr
                                       frames=frame_count, interval= Interval, 
                                       fargs=(satellite, orbit, sun, moon, sky, diffused, phots, spectra, full_sky_map),
                                       blit=False, repeat=False)
-
-        # show
-        plt.show()
-        print("Animation complete")
         
         # save
         _, _, _, save_ani =read_components()
 
         if save_ani == "True":
             current_date = time_arr[0].datetime.strftime('%d_%m_%Y')
-            ani.save(fr'{folder_loc}Output{os.sep}{sat_name}satellite-{current_date}.mp4', writer="ffmpeg") #_Large-Field_
+            ani.save(fr'{folder_loc}Output{os.sep}{sat_name}_satellite-{current_date}.gif', writer="ffmpeg", dpi=200) #_Large-Field_
             print("Animation Saved")
         else:
             print("Animation not Saved")
+
+        # show
+        plt.show()
+        print("Animation complete")
 
         return ani
     
